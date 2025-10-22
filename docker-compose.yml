@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: acetrack-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: acetrack
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - acetrack-network
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: acetrack-server
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongodb:27017/acetrack
+      - JWT_SECRET=your-production-jwt-secret
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - GOOGLE_SEARCH_ENGINE_ID=${GOOGLE_SEARCH_ENGINE_ID}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    depends_on:
+      - mongodb
+    volumes:
+      - ./server/uploads:/app/uploads
+    networks:
+      - acetrack-network
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: acetrack-client
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - server
+    networks:
+      - acetrack-network
+
+volumes:
+  mongodb_data:
+
+networks:
+  acetrack-network:
+    driver: bridge
+
+
+

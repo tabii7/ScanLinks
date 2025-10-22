@@ -1,0 +1,101 @@
+⚠️ OpenAI API key not configured, using mock sentiment analysis
+(node:66283) [MONGOOSE] Warning: `errors` is a reserved schema pathname and may break some functionality. You are allowed to use it, but use at your own risk. To disable this warning pass `suppressReservedKeysWarning` as a schema option.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:66283) [MONGODB DRIVER] Warning: useNewUrlParser is a deprecated option: useNewUrlParser has no effect since Node.js Driver version 4.0.0 and will be removed in the next major version
+(node:66283) [MONGODB DRIVER] Warning: useUnifiedTopology is a deprecated option: useUnifiedTopology has no effect since Node.js Driver version 4.0.0 and will be removed in the next major version
+🚀 AceTrack™ Server running on port 5000
+📊 ORM Tracking System Active (Demo Mode)
+🔗 Frontend: http://localhost:3000
+🔗 Backend: http://localhost:5000
+
+📝 Demo Credentials:
+   Admin: admin@acetrack.com / admin123
+   Client: client@acetrack.com / client123
+🚀 Starting ORM scan scheduler...
+✅ Scheduler started successfully
+⏰ Scheduler service started - Weekly scans scheduled
+🗄️ MongoDB connected successfully
+🧪 Development mode: Running test scan...
+🧪 Running test scan for client: Test Client
+Scan failed: Error: Scan validation failed: scanType: `test` is not a valid enum value for path `scanType`.
+    at ValidationError.inspect (/Users/macbookpro/Desktop/Uzair/Link detection/server/node_modules/mongoose/lib/error/validation.js:52:26)
+    at formatValue (node:internal/util/inspect:897:19)
+    at inspect (node:internal/util/inspect:409:10)
+    at formatWithOptionsInternal (node:internal/util/inspect:2592:40)
+    at formatWithOptions (node:internal/util/inspect:2454:10)
+    at console.value (node:internal/console/constructor:356:14)
+    at console.error (node:internal/console/constructor:423:61)
+    at ScanService.runScan (/Users/macbookpro/Desktop/Uzair/Link detection/server/services/scanService.js:106:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async SchedulerService.runTestScan (/Users/macbookpro/Desktop/Uzair/Link detection/server/services/schedulerService.js:161:22)
+    at async cron.schedule.scheduled [as _execution] (/Users/macbookpro/Desktop/Uzair/Link detection/server/services/schedulerService.js:41:9) {
+  errors: {
+    scanType: ValidatorError: `test` is not a valid enum value for path `scanType`.
+        at validate (/Users/macbookpro/Desktop/Uzair/Link detection/server/node_modules/mongoose/lib/schemaType.js:1414:13)
+        at SchemaType.doValidate (/Users/macbookpro/Desktop/Uzair/Link detection/server/node_modules/mongoose/lib/schemaType.js:1398:7)
+        at /Users/macbookpro/Desktop/Uzair/Link detection/server/node_modules/mongoose/lib/document.js:3115:18
+        at process.processTicksAndRejections (node:internal/process/task_queues:85:11) {
+      properties: [Object],
+      kind: 'enum',
+      path: 'scanType',
+      value: 'test',
+      reason: undefined,
+      Symbol(mongoose#validatorError): true
+    }
+  },
+  _message: 'Scan validation failed'
+}
+❌ Test scan failed: Error: Scan validation failed: scanType: `test` is not a valid enum value for path `scanType`.
+    at ValidationError.inspect (/Users/macbookpro/Desktop/Uzair/Link detection/server/node_modules/mongoose/lib/error/validation.js:52:26)
+    at formatValue (node:internal/util/inspect:897:19)
+    at inspect (node:internal/util/inspect:409:10)
+    at formatWithOptionsInternal (node:internal/util/inspect:2592:40)
+    at formatWithOptions (node:internal/util/inspect:2454:10)
+    at console.value (node:internal/console/constructor:356:14)
+    at console.error (node:internal/console/constructor:423:61)
+    at SchedulerService.runTestScan (/Users/macbookpro/Desktop/Uzair/Link detection/server/services/schedulerService.js:165:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async cron.schedule.scheduled [as _execution] (/Users/macbookpro/Desktop/Uzair/Link detection/server/services/schedulerService.js:41:9) {
+  errors: {
+    scanType: ValidatorError: `test` is not a valid enum value for path `scanType`.
+        at validate (/Users/macbookpro/Desktop/Uzair/Link detection/server/node_modules/mongoose/lib/schemaType.js:1414:13)
+        at SchemaType.doValidate (/Users/macbookpro/Desktop/Uzair/Link detection/server/node_modules/mongoose/lib/schemaType.js:1398:7)
+        at /Users/macbookpro/Desktop/Uzair/Link detection/server/node_modules/mongoose/lib/document.js:3115:18
+        at process.processTicksAndRejections (node:internal/process/task_queues:85:11) {
+      properties: [Object],
+      kind: 'enum',
+      path: 'scanType',
+      value: 'test',
+      reason: undefined,
+      Symbol(mongoose#validatorError): true
+    }
+  },
+  _message: 'Scan validation failed'
+}
+⚠️ Google Custom Search Engine ID not configured, using enhanced mock results
+❌ Error creating scan: Error: Scan validation failed: weekNumber: Path `weekNumber` is required.
+    at ValidationError.inspect (/Users/macbookpro/Desktop/Uzair/Link detection/server/node_modules/mongoose/lib/error/validation.js:52:26)
+    at formatValue (node:internal/util/inspect:897:19)
+    at inspect (node:internal/util/inspect:409:10)
+    at formatWithOptionsInternal (node:internal/util/inspect:2592:40)
+    at formatWithOptions (node:internal/util/inspect:2454:10)
+    at console.value (node:internal/console/constructor:356:14)
+    at console.error (node:internal/console/constructor:423:61)
+    at /Users/macbookpro/Desktop/Uzair/Link detection/server/index-simple.js:350:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  errors: {
+    weekNumber: ValidatorError: Path `weekNumber` is required.
+        at validate (/Users/macbookpro/Desktop/Uzair/Link detection/server/node_modules/mongoose/lib/schemaType.js:1414:13)
+        at SchemaType.doValidate (/Users/macbookpro/Desktop/Uzair/Link detection/server/node_modules/mongoose/lib/schemaType.js:1398:7)
+        at /Users/macbookpro/Desktop/Uzair/Link detection/server/node_modules/mongoose/lib/document.js:3115:18
+        at process.processTicksAndRejections (node:internal/process/task_queues:85:11) {
+      properties: [Object],
+      kind: 'required',
+      path: 'weekNumber',
+      value: undefined,
+      reason: undefined,
+      Symbol(mongoose#validatorError): true
+    }
+  },
+  _message: 'Scan validation failed'
+}
