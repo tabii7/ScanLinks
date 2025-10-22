@@ -11,12 +11,6 @@ import {
   RefreshCw,
   BarChart3,
   TrendingUp,
-  Globe,
-  Clock,
-  CheckCircle,
-  AlertCircle,
-  ArrowDown,
-  ArrowUp,
 } from 'lucide-react';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
@@ -27,7 +21,6 @@ const ModernReportManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterRegion, setFilterRegion] = useState('all');
-  const [selectedReports, setSelectedReports] = useState([]);
   const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
@@ -112,7 +105,7 @@ const ModernReportManagement = () => {
         weekNumber: latestScan.weekNumber
       });
       
-      const response = await api.post('/reports/generate-from-scan', {
+      await api.post('/reports/generate-from-scan', {
         scanId: latestScan._id,
         clientId: latestScan.clientId._id || latestScan.clientId,
         region: latestScan.region || 'US',

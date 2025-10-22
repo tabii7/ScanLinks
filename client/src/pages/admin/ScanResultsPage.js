@@ -182,7 +182,7 @@ const ScanResultsPage = () => {
       setIsSearching(false);
       setSearchInProgress(false);
     }
-  }, [searchQuery, searchInProgress]);
+  }, [searchQuery, searchInProgress, scan?.clientId?.name, scan?.clientId?.settings?.businessType, scan?.clientName, scan?.clientId?.settings?.industry, scan?.clientId?.settings?.targetAudience, scan?.region, scan?.clientId?.settings?.website, scan?.clientId?.settings?.description]);
 
   const fetchScanDetails = useCallback(async () => {
     // Prevent multiple initializations
