@@ -4,8 +4,6 @@ import {
   ArrowLeft, 
   BarChart3, 
   AlertCircle, 
-  CheckCircle, 
-  Clock, 
   ExternalLink, 
   TrendingUp,
   TrendingDown,
