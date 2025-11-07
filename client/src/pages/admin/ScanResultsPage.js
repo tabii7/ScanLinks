@@ -11,7 +11,10 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
-  Plus
+  Plus,
+  Globe,
+  CheckCircle,
+  Clock
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../services/api';
@@ -388,18 +391,29 @@ const ScanResultsPage = () => {
       setIsSending(true);
       console.log('📤 Sending results to client portal...');
       
+      // IMPORTANT: Always send the parent scan ID, not the child scan ID
+      // This ensures the entire report (parent + all children) is sent together
+      let parentScanId = scanId;
+      if (scan?.parentId) {
+        // If this is a child scan, use the parent ID instead
+        parentScanId = scan.parentId?._id || scan.parentId;
+        console.log('🔍 Current scan is a child, sending parent scan instead:', parentScanId);
+      }
+      
       // Get client information from the scan
       const clientInfo = scan?.clientId || scan?.client || {};
       
       console.log('🔍 Scan data for send:', {
         scanId,
+        parentScanId,
+        isChild: !!scan?.parentId,
         scanClientId: scan?.clientId,
         scanClientName: scan?.clientId?.name,
         clientInfo
       });
       
       const response = await api.post('/scans/send-to-client', {
-        scanId: scanId,
+        scanId: parentScanId, // Always send parent scan ID
         query: searchQuery,
         results: results,
         clientData: {
@@ -415,7 +429,7 @@ const ScanResultsPage = () => {
       });
       
       console.log('✅ Results sent to client successfully:', response.data);
-      toast.success(`Sent ${results.length} results to client portal`);
+      toast.success(`Report sent to client (includes all weeks)`);
       
     } catch (error) {
       console.error('❌ Error sending to client:', error);
@@ -536,6 +550,23 @@ const ScanResultsPage = () => {
     }
   };
 
+  const getSentimentText = (result) => {
+    // Check if sentiment was actually analyzed (from metadata)
+    const sentimentAnalyzed = result?.metadata?.sentimentAnalyzed !== false;
+    const sentiment = result?.sentiment || result?.sentiment;
+    
+    if (!sentimentAnalyzed || sentiment === null || sentiment === undefined) {
+      return 'Sentiments Not Created';
+    }
+    return sentiment || 'neutral';
+  };
+  
+  const isSentimentAnalyzed = (result) => {
+    return result?.metadata?.sentimentAnalyzed !== false && 
+           result?.sentiment !== null && 
+           result?.sentiment !== undefined;
+  };
+
   const getConfidenceColor = (confidence) => {
     if (confidence >= 0.8) return 'text-green-600';
     if (confidence >= 0.6) return 'text-yellow-600';
@@ -642,15 +673,15 @@ const ScanResultsPage = () => {
   const neutralPercentage = totalResults > 0 ? Math.round((sentimentStats.neutral / totalResults) * 100) : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen" style={{backgroundColor: '#060b16'}}>
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+        <div className="rounded-xl shadow-lg p-6 mb-6 border border-gray-700" style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => navigate('/admin/scans')}
-                className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors"
+                className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors"
               >
                 <ArrowLeft className="w-5 h-5" />
                 <span>Back to Scans</span>
@@ -704,31 +735,31 @@ const ScanResultsPage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+        <h1 className="text-2xl font-bold text-white mb-2">
           {scan?.clientId?.name || scan?.clientName || 'Unknown Client'}
         </h1>
         {scan?.clientId?.contact?.email && (
-          <p className="text-sm text-gray-600">{scan.clientId.contact.email}</p>
+          <p className="text-sm text-gray-400">{scan.clientId.contact.email}</p>
         )}
-              <p className="text-gray-600">Scan Results</p>
+              <p className="text-gray-400">Scan Results</p>
             </div>
             
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <Globe className="w-5 h-5 text-blue-600" />
-                <span className="text-sm text-gray-600">{scan.region}</span>
+                <Globe className="w-5 h-5 text-blue-400" />
+                <span className="text-sm text-gray-300">{scan.region}</span>
               </div>
               <div className="flex items-center space-x-2">
-                <Clock className="w-5 h-5 text-gray-600" />
-                <span className="text-sm text-gray-600">
-                  {new Date(scan.createdAt).toLocaleDateString()}
+                <Clock className="w-5 h-5 text-gray-400" />
+                <span className="text-sm text-gray-300">
+                  {scan.createdAt ? new Date(scan.createdAt).toLocaleDateString() : scan.startedAt ? new Date(scan.startedAt).toLocaleDateString() : 'N/A'}
                 </span>
               </div>
             </div>
             
             <div className="text-right">
-              <div className="text-3xl font-bold text-blue-600">{totalResults}</div>
-              <div className="text-sm text-gray-600">Total Results</div>
+              <div className="text-3xl font-bold text-white">{totalResults}</div>
+              <div className="text-sm text-gray-300">Total Results</div>
             </div>
           </div>
         </div>
@@ -738,13 +769,14 @@ const ScanResultsPage = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-xl shadow-lg p-6"
+            className="rounded-xl shadow-lg p-6 border border-gray-700"
+            style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Positive</p>
-                <p className="text-2xl font-bold text-green-600">{sentimentStats.positive}</p>
-                <p className="text-xs text-gray-500">{positivePercentage}%</p>
+                <p className="text-sm text-gray-400">Positive</p>
+                <p className="text-2xl font-bold text-green-400">{sentimentStats.positive}</p>
+                <p className="text-xs text-gray-300">{positivePercentage}%</p>
               </div>
               <CheckCircle className="w-8 h-8 text-green-500" />
             </div>
@@ -754,13 +786,14 @@ const ScanResultsPage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-white rounded-xl shadow-lg p-6"
+            className="rounded-xl shadow-lg p-6 border border-gray-700"
+            style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Negative</p>
-                <p className="text-2xl font-bold text-red-600">{sentimentStats.negative}</p>
-                <p className="text-xs text-gray-500">{negativePercentage}%</p>
+                <p className="text-sm text-gray-400">Negative</p>
+                <p className="text-2xl font-bold text-red-400">{sentimentStats.negative}</p>
+                <p className="text-xs text-gray-300">{negativePercentage}%</p>
               </div>
               <AlertCircle className="w-8 h-8 text-red-500" />
             </div>
@@ -770,13 +803,14 @@ const ScanResultsPage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-white rounded-xl shadow-lg p-6"
+            className="rounded-xl shadow-lg p-6 border border-gray-700"
+            style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Neutral</p>
-                <p className="text-2xl font-bold text-yellow-600">{sentimentStats.neutral}</p>
-                <p className="text-xs text-gray-500">{neutralPercentage}%</p>
+                <p className="text-sm text-gray-400">Neutral</p>
+                <p className="text-2xl font-bold text-yellow-400">{sentimentStats.neutral}</p>
+                <p className="text-xs text-gray-300">{neutralPercentage}%</p>
               </div>
               <Clock className="w-8 h-8 text-yellow-500" />
             </div>
@@ -786,12 +820,13 @@ const ScanResultsPage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-white rounded-xl shadow-lg p-6"
+            className="rounded-xl shadow-lg p-6 border border-gray-700"
+            style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Avg Confidence</p>
-                <p className="text-2xl font-bold text-blue-600">
+                <p className="text-sm text-gray-400">Avg Confidence</p>
+                <p className="text-2xl font-bold text-blue-400">
                   {results.length > 0 ? Math.round(results.reduce((sum, r) => sum + r.confidence, 0) / results.length * 100) : 0}%
                 </p>
               </div>
@@ -806,12 +841,13 @@ const ScanResultsPage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="bg-white rounded-xl shadow-lg p-6"
+            className="rounded-xl shadow-lg p-6 border border-gray-700"
+            style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">New Entries</p>
-                <p className="text-2xl font-bold text-blue-600">{movementStats.new}</p>
+                <p className="text-sm text-gray-400">New Entries</p>
+                <p className="text-2xl font-bold text-blue-400">{movementStats.new}</p>
               </div>
               <Plus className="w-8 h-8 text-blue-500" />
             </div>
@@ -821,12 +857,13 @@ const ScanResultsPage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="bg-white rounded-xl shadow-lg p-6"
+            className="rounded-xl shadow-lg p-6 border border-gray-700"
+            style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Improved</p>
-                <p className="text-2xl font-bold text-green-600">{movementStats.improved}</p>
+                <p className="text-sm text-gray-400">Improved</p>
+                <p className="text-2xl font-bold text-green-400">{movementStats.improved}</p>
               </div>
               <TrendingUp className="w-8 h-8 text-green-500" />
             </div>
@@ -836,12 +873,13 @@ const ScanResultsPage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
-            className="bg-white rounded-xl shadow-lg p-6"
+            className="rounded-xl shadow-lg p-6 border border-gray-700"
+            style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Dropped</p>
-                <p className="text-2xl font-bold text-red-600">{movementStats.dropped}</p>
+                <p className="text-sm text-gray-400">Dropped</p>
+                <p className="text-2xl font-bold text-red-400">{movementStats.dropped}</p>
               </div>
               <TrendingDown className="w-8 h-8 text-red-500" />
             </div>
@@ -851,12 +889,13 @@ const ScanResultsPage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7 }}
-            className="bg-white rounded-xl shadow-lg p-6"
+            className="rounded-xl shadow-lg p-6 border border-gray-700"
+            style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Unchanged</p>
-                <p className="text-2xl font-bold text-gray-600">{movementStats.unchanged}</p>
+                <p className="text-sm text-gray-400">Unchanged</p>
+                <p className="text-2xl font-bold text-gray-400">{movementStats.unchanged}</p>
               </div>
               <Minus className="w-8 h-8 text-gray-500" />
             </div>
@@ -866,12 +905,13 @@ const ScanResultsPage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8 }}
-            className="bg-white rounded-xl shadow-lg p-6"
+            className="rounded-xl shadow-lg p-6 border border-gray-700"
+            style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Disappeared</p>
-                <p className="text-2xl font-bold text-orange-600">{movementStats.disappeared}</p>
+                <p className="text-sm text-gray-400">Disappeared</p>
+                <p className="text-2xl font-bold text-orange-400">{movementStats.disappeared}</p>
               </div>
               <AlertCircle className="w-8 h-8 text-orange-500" />
             </div>
@@ -879,7 +919,7 @@ const ScanResultsPage = () => {
         </div>
 
         {/* Google Search Interface */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+        <div className="rounded-xl shadow-lg p-6 mb-6 border border-gray-700" style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}>
           <div className="flex flex-col lg:flex-row gap-4 items-center">
             <div className="flex-1">
             <div className="relative">
@@ -890,7 +930,7 @@ const ScanResultsPage = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && performGoogleSearch()}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white placeholder-gray-400"
                 />
               </div>
             </div>
@@ -917,11 +957,11 @@ const ScanResultsPage = () => {
           {searchResults.length > 0 && (
             <div className="mt-4 flex flex-col lg:flex-row gap-4 items-center justify-between">
               <div className="flex items-center space-x-4">
-                <label className="text-sm font-medium text-gray-700">Sort by:</label>
+                <label className="text-sm font-medium text-gray-300">Sort by:</label>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-4 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white"
             >
                   <option value="position">Position</option>
                   <option value="sentiment">Sentiment</option>
@@ -930,7 +970,7 @@ const ScanResultsPage = () => {
             </select>
           </div>
               
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-gray-300">
                 {sortedResults.length} search results
               </div>
             </div>
@@ -938,20 +978,20 @@ const ScanResultsPage = () => {
         </div>
 
         {/* Results List */}
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">
+        <div className="rounded-xl shadow-lg overflow-hidden border border-gray-700" style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}>
+          <div className="p-6 border-b border-gray-600">
+            <h2 className="text-xl font-bold text-white">
               {searchResults.length > 0 ? 'Google Search Results' : 'Scan Results'} ({sortedResults.length} total)
             </h2>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-gray-300 mt-1">
               {shouldPaginate 
                 ? `Showing ${startIndex + 1}-${Math.min(endIndex, sortedResults.length)} of ${sortedResults.length} results`
                 : `Showing all ${sortedResults.length} results`
               }
-              {searchQuery && <span className="ml-2 text-blue-600">for "{searchQuery}"</span>}
+              {searchQuery && <span className="ml-2 text-blue-400">for "{searchQuery}"</span>}
             </p>
             {sortedResults.length > 0 && (
-              <div className="mt-2 text-xs text-gray-500">
+              <div className="mt-2 text-xs text-gray-400">
                 Actual results count: {sortedResults.length} | 
                 Scan data count: {scan?.resultsCount || 0} | 
                 Search results: {searchResults.length}
@@ -961,21 +1001,21 @@ const ScanResultsPage = () => {
 
           {/* Pagination Info */}
           {sortedResults.length > 0 && (
-            <div className="px-6 py-3 bg-blue-50 border-b border-blue-200">
-              <div className="flex items-center justify-between text-sm text-blue-700">
+            <div className="px-6 py-3 bg-gray-800 border-b border-gray-600">
+              <div className="flex items-center justify-between text-sm text-gray-300">
                 <div>
                   {searchResults.length > 0 ? 'Search Results' : 'Scan Results'} - 
                   Showing {startIndex + 1}-{Math.min(endIndex, sortedResults.length)} of {sortedResults.length} results
                   {totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
                 </div>
-                <div className="text-xs text-blue-600">
+                <div className="text-xs text-gray-400">
                   💡 Use Ctrl+←/→ to navigate pages, Ctrl+Home/End for first/last page
                 </div>
               </div>
             </div>
           )}
 
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-gray-600">
             {paginatedResults.map((result, index) => {
               console.log('🔍 Rendering result:', result.sentiment, result.confidence, result);
               return (
@@ -984,7 +1024,7 @@ const ScanResultsPage = () => {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className="p-6 hover:bg-gray-50 transition-colors"
+                className="p-6 hover:bg-gray-700 transition-colors"
               >
                 <div className="flex items-start space-x-4">
                   <div className="flex-shrink-0">
@@ -994,12 +1034,12 @@ const ScanResultsPage = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+                        <h3 className="text-lg font-semibold text-white mb-2 line-clamp-2">
                           <a
                             href={result.link || result.url || '#'}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="hover:text-blue-600 transition-colors"
+                            className="hover:text-blue-400 transition-colors"
                             onClick={(e) => {
                               const url = result.link || result.url;
                               if (!url || url === '#') {
@@ -1013,11 +1053,11 @@ const ScanResultsPage = () => {
                           </a>
                         </h3>
                         
-                        <p className="text-gray-600 mb-3 line-clamp-2">
+                        <p className="text-gray-300 mb-3 line-clamp-2">
                           {result.snippet}
                         </p>
                         
-                        <div className="flex items-center space-x-4 text-sm text-gray-500">
+                        <div className="flex items-center space-x-4 text-sm text-gray-400">
                           <span>Position: {result.position || 'N/A'}</span>
                           {result.page && <span>Page: {result.page}</span>}
                           <span>Domain: {result.domain || new URL(result.url || result.link || '').hostname}</span>
@@ -1033,12 +1073,18 @@ const ScanResultsPage = () => {
                       </div>
                       
                       <div className="flex items-center space-x-2 ml-4">
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getSentimentColor(result.sentiment)}`}>
-                          {result.sentiment || 'neutral'}
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium border ${
+                          !isSentimentAnalyzed(result)
+                            ? 'bg-gray-100 text-gray-600 border-gray-300' 
+                            : getSentimentColor(result.sentiment)
+                        }`}>
+                          {getSentimentText(result)}
                         </span>
-                        <span className={`text-sm font-medium ${getConfidenceColor(result.confidence)}`}>
-                          {Math.round((result.confidence || 0.5) * 100)}%
-                        </span>
+                        {isSentimentAnalyzed(result) && result.confidence !== null && result.confidence !== undefined && (
+                          <span className={`text-sm font-medium ${getConfidenceColor(result.confidence)}`}>
+                            {Math.round(result.confidence * 100)}%
+                          </span>
+                        )}
                       </div>
                     </div>
                     
@@ -1124,7 +1170,7 @@ const ScanResultsPage = () => {
                     setSearchResults([]);
                     setCurrentPage(1);
                   }}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="px-4 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 transition-colors"
                 >
                   Clear Search
                 </button>
@@ -1140,7 +1186,7 @@ const ScanResultsPage = () => {
                   <button
                     onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
                     disabled={currentPage === 1}
-                    className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-3 py-2 text-sm font-medium text-gray-300 bg-gray-800 border border-gray-600 rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Previous
                   </button>
@@ -1190,7 +1236,7 @@ const ScanResultsPage = () => {
                             className={`px-3 py-2 text-sm font-medium rounded-md ${
                               currentPage === page
                                 ? 'bg-blue-600 text-white'
-                                : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50'
+                                : 'text-gray-300 bg-gray-800 border border-gray-600 hover:bg-gray-700'
                             }`}
                           >
                             {page}
@@ -1203,7 +1249,7 @@ const ScanResultsPage = () => {
                   <button
                     onClick={() => handlePageChange(Math.min(currentPage + 1, totalPages))}
                     disabled={currentPage === totalPages}
-                    className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-3 py-2 text-sm font-medium text-gray-300 bg-gray-800 border border-gray-600 rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Next
                   </button>

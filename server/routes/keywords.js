@@ -146,6 +146,50 @@ router.post('/bulk', adminAuth, async (req, res) => {
   }
 });
 
+// Bulk create keywords (alias for bulk-create)
+router.post('/bulk-create', adminAuth, async (req, res) => {
+  try {
+    const { clientId, keywords } = req.body;
+
+    if (!Array.isArray(keywords)) {
+      return res.status(400).json({ message: 'Keywords must be an array' });
+    }
+
+    // Check if keywords already exist for this client
+    const existingKeywords = await Keyword.find({ 
+      clientId, 
+      keyword: { $in: keywords.map(kw => kw.keyword) }
+    });
+
+    const existingKeywordTexts = existingKeywords.map(kw => kw.keyword);
+    const newKeywords = keywords.filter(kw => !existingKeywordTexts.includes(kw.keyword));
+
+    if (newKeywords.length === 0) {
+      return res.status(200).json({ 
+        message: 'All keywords already exist for this client', 
+        keywords: existingKeywords 
+      });
+    }
+
+    const keywordData = newKeywords.map(kw => ({
+      clientId,
+      keyword: kw.keyword,
+      targetRegions: kw.targetRegions || [],
+      priority: kw.priority || 'medium',
+      notes: kw.notes,
+    }));
+
+    const createdKeywords = await Keyword.insertMany(keywordData);
+    res.status(201).json({ 
+      message: `${createdKeywords.length} new keywords created successfully`, 
+      keywords: createdKeywords,
+      existing: existingKeywords.length
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 // Update keyword status
 router.patch('/:id/status', adminAuth, async (req, res) => {
   try {

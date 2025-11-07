@@ -93,67 +93,110 @@ class RankComparisonService {
   compareKeywordLinks(currentLinks, previousLinks, keyword) {
     const linkComparisons = [];
     
+    console.log(`🔗 Comparing links for keyword "${keyword}":`);
+    console.log(`   - Current links: ${currentLinks.length}`);
+    console.log(`   - Previous links: ${previousLinks.length}`);
+    
+    // Normalize URLs for comparison (handle www, http/https, trailing slashes)
+    const normalizeUrl = (url) => {
+      if (!url) return '';
+      try {
+        let normalized = url.toLowerCase().trim();
+        // Remove protocol
+        normalized = normalized.replace(/^https?:\/\//, '');
+        // Remove www.
+        normalized = normalized.replace(/^www\./, '');
+        // Remove trailing slash
+        normalized = normalized.replace(/\/$/, '');
+        return normalized;
+      } catch (e) {
+        return url.toLowerCase().trim();
+      }
+    };
+    
     // Find links that are new, improved, dropped, or stable
     for (const currentLink of currentLinks) {
-      const previousLink = previousLinks.find(
-        pl => pl.link === currentLink.link
-      );
+      const currentUrl = currentLink.link || currentLink.url || '';
+      const currentNormalized = normalizeUrl(currentUrl);
+      
+      // Try to find matching link in previous (by exact URL first, then normalized)
+      const previousLink = previousLinks.find(pl => {
+        const prevUrl = pl.link || pl.url || '';
+        return prevUrl === currentUrl || normalizeUrl(prevUrl) === currentNormalized;
+      });
       
       if (!previousLink) {
-        // New link
+        // New link - not in parent scan
         linkComparisons.push({
-          link: currentLink.link,
+          link: currentLink.link || currentLink.url,
           title: currentLink.title,
           type: this.comparisonTypes.NEW,
-          currentPosition: currentLink.position,
+          currentPosition: currentLink.position || currentLink.rank,
           previousPosition: null,
           change: null,
           sentiment: currentLink.sentiment,
           domain: currentLink.domain
         });
+        
+        console.log(`   🆕 NEW: "${currentLink.title}" at position ${currentLink.position || currentLink.rank}`);
       } else {
         // Existing link - check position change
-        const positionChange = currentLink.position - previousLink.position;
+        const currentPos = currentLink.position || currentLink.rank;
+        const previousPos = previousLink.position || previousLink.rank;
+        const positionChange = currentPos - previousPos;
         let type = this.comparisonTypes.STABLE;
         
         if (positionChange < 0) {
-          type = this.comparisonTypes.IMPROVED;
+          type = this.comparisonTypes.IMPROVED; // Position decreased = improved
         } else if (positionChange > 0) {
-          type = this.comparisonTypes.DROPPED;
+          type = this.comparisonTypes.DROPPED; // Position increased = dropped
         }
         
         linkComparisons.push({
-          link: currentLink.link,
+          link: currentLink.link || currentLink.url,
           title: currentLink.title,
           type: type,
-          currentPosition: currentLink.position,
-          previousPosition: previousLink.position,
+          currentPosition: currentPos,
+          previousPosition: previousPos,
           change: positionChange,
           sentiment: currentLink.sentiment,
           domain: currentLink.domain
         });
+        
+        const movementEmoji = positionChange < 0 ? '⬆️' : positionChange > 0 ? '⬇️' : '➡️';
+        const movementText = positionChange < 0 ? 'IMPROVED' : positionChange > 0 ? 'DROPPED' : 'STABLE';
+        console.log(`   ${movementEmoji} ${movementText}: "${currentLink.title}" - Position ${previousPos} → ${currentPos} (change: ${positionChange})`);
       }
     }
     
-    // Find links that disappeared
+    // Find links that disappeared (were in parent but not in current)
     for (const previousLink of previousLinks) {
-      const currentLink = currentLinks.find(
-        cl => cl.link === previousLink.link
-      );
+      const prevUrl = previousLink.link || previousLink.url || '';
+      const prevNormalized = normalizeUrl(prevUrl);
+      
+      const currentLink = currentLinks.find(cl => {
+        const curUrl = cl.link || cl.url || '';
+        return curUrl === prevUrl || normalizeUrl(curUrl) === prevNormalized;
+      });
       
       if (!currentLink) {
+        // Link disappeared - was in parent but not in current
         linkComparisons.push({
-          link: previousLink.link,
+          link: previousLink.link || previousLink.url,
           title: previousLink.title,
           type: this.comparisonTypes.DISAPPEARED,
           currentPosition: null,
-          previousPosition: previousLink.position,
+          previousPosition: previousLink.position || previousLink.rank,
           change: null,
           sentiment: previousLink.sentiment,
           domain: previousLink.domain
         });
+        
+        console.log(`   ❌ DISAPPEARED: "${previousLink.title}" was at position ${previousLink.position || previousLink.rank}`);
       }
     }
+    
+    console.log(`   ✅ Comparison complete: ${linkComparisons.length} links analyzed`);
     
     return linkComparisons;
   }

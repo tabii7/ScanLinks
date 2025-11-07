@@ -2,7 +2,7 @@ const axios = require('axios');
 
 class SentimentAnalysisService {
   constructor() {
-    this.openaiApiKey = process.env.OPENAI_API_KEY || 'sk-proj-1234567890abcdef';
+    this.openaiApiKey = process.env.OPENAI_API_KEY;
     this.openaiBaseUrl = 'https://api.openai.com/v1/chat/completions';
     this.maxRetries = 3;
     this.retryDelay = 1000;
@@ -12,10 +12,12 @@ class SentimentAnalysisService {
     try {
       console.log('🔍 Starting OpenAI sentiment analysis for', links.length, 'results');
       
-      // Check if we have OpenAI API key
-      if (!this.openaiApiKey || this.openaiApiKey === 'sk-proj-1234567890abcdef') {
-        console.log('⚠️ OpenAI API key not configured - using fallback analysis');
-        return this.getFallbackResults(links);
+      // Check if we have OpenAI API key - throw error if not configured
+      if (!this.openaiApiKey || this.openaiApiKey === 'sk-proj-1234567890abcdef' || this.openaiApiKey.trim() === '') {
+        const error = new Error('OpenAI API key is not configured. Please set OPENAI_API_KEY environment variable.');
+        error.code = 'API_NOT_CONFIGURED';
+        console.error('❌ OpenAI API key not configured:', error.message);
+        throw error;
       }
 
       // Prepare the prompt with user context and search results
@@ -42,10 +44,9 @@ class SentimentAnalysisService {
           'Authorization': `Bearer ${this.openaiApiKey}`,
           'Content-Type': 'application/json'
         },
-        timeout: 30000 // 30 second timeout
+        timeout: 60000 // 60 second timeout
       });
 
-      console.log('✅ OpenAI response received');
       
       // Parse the response
       const analysisResults = this.parseOpenAIResponse(response.data.choices[0].message.content, links);
@@ -54,8 +55,14 @@ class SentimentAnalysisService {
       
     } catch (error) {
       console.error('❌ OpenAI sentiment analysis failed:', error.message);
-      console.log('🔄 Using fallback analysis');
-      return this.getFallbackResults(links);
+      // Re-throw the error instead of using fallback
+      if (error.code === 'API_NOT_CONFIGURED') {
+        throw error; // Re-throw configuration errors
+      }
+      // For other errors, still throw but with more context
+      const analysisError = new Error(`OpenAI sentiment analysis failed: ${error.message}`);
+      analysisError.code = error.code || 'ANALYSIS_FAILED';
+      throw analysisError;
     }
   }
 
@@ -67,37 +74,31 @@ class SentimentAnalysisService {
     const userContext = this.buildUserContext(clientData);
     const searchResults = this.formatSearchResults(links);
 
-    return `
-ANALYZE THESE SEARCH RESULTS FOR SENTIMENT AND RELEVANCE:
+    return `Analyze these search results for sentiment:
 
 ${userContext}
 
-SEARCH RESULTS TO ANALYZE:
+SEARCH RESULTS:
 ${searchResults}
 
-For each result, provide analysis in this EXACT JSON format:
+For each result, determine sentiment (positive/negative/neutral), confidence (0.0-1.0), and relevance (high/medium/low).
+
+Return JSON format:
 {
   "results": [
-  {
-    "index": 1,
+    {
+      "index": 1,
       "sentiment": "positive|negative|neutral",
       "confidence": 0.0-1.0,
-      "reasoning": "Brief explanation of why this sentiment for this specific user",
-      "category": "reviews|news|social|competitor|industry|other",
-      "keywords": ["keyword1", "keyword2"],
+      "reasoning": "Brief explanation",
+      "category": "reviews|news|social|other",
+      "keywords": ["keyword1"],
       "relevance": "high|medium|low"
     }
   ]
 }
 
-Focus on:
-- How relevant is this result to the user's business?
-- Does it mention the user's company positively/negatively?
-- Is it from a credible source?
-- Would this help or hurt the user's online reputation?
-- Is it about competitors or industry trends?
-
-Return ONLY the JSON response, no other text.`;
+Return ONLY the JSON response.`;
   }
 
   buildUserContext(clientData) {
@@ -127,16 +128,14 @@ ${index + 1}. ${link.title}
       // Extract JSON from response
       const jsonMatch = responseText.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
-        console.log('⚠️ No JSON found in OpenAI response, using fallback');
-        return this.getFallbackResults(originalLinks);
+        throw new Error('No JSON found in OpenAI response');
       }
       
       const analysis = JSON.parse(jsonMatch[0]);
       
       // Ensure we have results array
       if (!analysis.results || !Array.isArray(analysis.results)) {
-        console.log('⚠️ Invalid analysis results format, using fallback');
-        return this.getFallbackResults(originalLinks);
+        throw new Error('Invalid analysis results format from OpenAI');
       }
       
       // Map analysis back to original links
@@ -163,41 +162,98 @@ ${index + 1}. ${link.title}
       
     } catch (error) {
       console.error('❌ Error parsing OpenAI response:', error);
-      console.log('🔄 Using fallback analysis for all results');
-      return this.getFallbackResults(originalLinks);
+      throw new Error(`Failed to parse OpenAI response: ${error.message}`);
     }
   }
 
-  getFallbackResults(links) {
-      return links.map(link => ({
-        ...link,
-        sentiment: 'neutral',
-        confidence: 0.5,
-      reasoning: 'Neutral content - no specific sentiment detected',
-        keywords: [],
-        category: 'other',
-      relevance: 'medium',
-      analyzedAt: new Date().toISOString(),
-      originalUrl: link.metadata?.originalUrl || link.link || link.url,
-      originalLink: link.metadata?.originalUrl || link.link || link.url
-    }));
+  // Generate report summary from sentiment analysis results
+  async generateReportSummary(sentimentResults, clientData) {
+    try {
+      const totalResults = sentimentResults.length;
+      const positiveResults = sentimentResults.filter(r => r.sentiment === 'positive').length;
+      const negativeResults = sentimentResults.filter(r => r.sentiment === 'negative').length;
+      const neutralResults = sentimentResults.filter(r => r.sentiment === 'neutral').length;
+      
+      const summary = {
+        totalResults,
+        positiveCount: positiveResults,
+        negativeCount: negativeResults,
+        neutralCount: neutralResults,
+        positivePercentage: totalResults > 0 ? Math.round((positiveResults / totalResults) * 100) : 0,
+        negativePercentage: totalResults > 0 ? Math.round((negativeResults / totalResults) * 100) : 0,
+        neutralPercentage: totalResults > 0 ? Math.round((neutralResults / totalResults) * 100) : 0,
+        overallSentiment: this.calculateOverallSentiment(positiveResults, negativeResults, neutralResults),
+        keyFindings: this.extractKeyFindings(sentimentResults),
+        recommendations: this.generateRecommendations(positiveResults, negativeResults, totalResults),
+        generatedAt: new Date().toISOString()
+      };
+      
+      return summary;
+    } catch (error) {
+      console.error('Error generating report summary:', error);
+      return {
+        totalResults: 0,
+        positiveCount: 0,
+        negativeCount: 0,
+        neutralCount: 0,
+        positivePercentage: 0,
+        negativePercentage: 0,
+        neutralPercentage: 0,
+        overallSentiment: 'neutral',
+        keyFindings: [],
+        recommendations: ['Unable to generate recommendations due to analysis error'],
+        generatedAt: new Date().toISOString()
+      };
+    }
   }
 
-  // REMOVED: Mock sentiment analysis method - no longer needed
-  getMockSentimentResults(links, clientData) {
-    // This method has been removed - no mock data generation
-    return links.map(link => ({
-        ...link,
-      sentiment: '-',
-      confidence: '-',
-      reasoning: '-',
-      keywords: [],
-      category: '-',
-      analyzedAt: new Date().toISOString(),
-      originalUrl: link.metadata?.originalUrl || link.link || link.url,
-      originalLink: link.metadata?.originalUrl || link.link || link.url
-    }));
+  calculateOverallSentiment(positive, negative, neutral) {
+    if (positive > negative && positive > neutral) return 'positive';
+    if (negative > positive && negative > neutral) return 'negative';
+    return 'neutral';
   }
+
+  extractKeyFindings(sentimentResults) {
+    const findings = [];
+    
+    // Get top negative results
+    const negativeResults = sentimentResults
+      .filter(r => r.sentiment === 'negative')
+      .sort((a, b) => (b.confidence || 0) - (a.confidence || 0))
+      .slice(0, 3);
+    
+    negativeResults.forEach(result => {
+      findings.push({
+        type: 'negative',
+        title: result.title || 'Negative mention found',
+        url: result.link || result.url,
+        confidence: result.confidence || 0,
+        reasoning: result.reasoning || 'Negative sentiment detected'
+      });
+    });
+    
+    return findings;
+  }
+
+  generateRecommendations(positive, negative, total) {
+    const recommendations = [];
+    
+    if (negative > 0) {
+      recommendations.push('Address negative mentions promptly');
+      recommendations.push('Monitor reputation more frequently');
+    }
+    
+    if (positive > 0) {
+      recommendations.push('Leverage positive mentions for marketing');
+    }
+    
+    if (total === 0) {
+      recommendations.push('No mentions found - consider expanding search terms');
+    }
+    
+    return recommendations;
+  }
+
 }
 
 module.exports = new SentimentAnalysisService();

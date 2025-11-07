@@ -8,9 +8,10 @@ import ModernClientDashboard from './pages/client/ModernClientDashboard';
 import RankTrackingPage from './pages/client/RankTrackingPage';
 import ModernClientManagement from './pages/admin/ModernClientManagement';
 import ClientCreationWizard from './pages/admin/ClientCreationWizard';
-import ModernScanManagement from './pages/admin/ModernScanManagement';
-import ScanWizard from './pages/admin/ScanWizard';
+import ScanManagement from './pages/admin/ScanManagement';
+import ScanConfiguration from './pages/admin/ScanConfiguration';
 import ScanResultsPage from './pages/admin/ScanResultsPage';
+import ComprehensiveScanResults from './pages/admin/ComprehensiveScanResults';
 import ModernReportManagement from './pages/admin/ModernReportManagement';
 import ClientReports from './pages/client/ClientReports';
 import ClientScansIndex from './pages/client/ClientScansIndex';
@@ -74,19 +75,18 @@ const AppContent = () => {
             </ProtectedRoute>
           } />
       
-      
       <Route path="/admin/scans" element={
         <ProtectedRoute requiredRole="admin">
           <ModernLayout isAdmin={true}>
-            <ModernScanManagement />
+            <ScanManagement />
           </ModernLayout>
         </ProtectedRoute>
       } />
       
-      <Route path="/admin/scan-wizard" element={
+      <Route path="/admin/scan-configuration" element={
         <ProtectedRoute requiredRole="admin">
           <ModernLayout isAdmin={true}>
-            <ScanWizard />
+            <ScanConfiguration />
           </ModernLayout>
         </ProtectedRoute>
       } />
@@ -104,6 +104,15 @@ const AppContent = () => {
           </ModernLayout>
         </ProtectedRoute>
       } />
+      
+      
+      
+      <Route path="/admin/reports/:clientId" element={
+        <ProtectedRoute requiredRole="admin">
+          <ComprehensiveScanResults />
+        </ProtectedRoute>
+      } />
+      
 
       {/* Client Routes */}
       <Route path="/" element={
@@ -134,13 +143,17 @@ const AppContent = () => {
       
       <Route path="/scans" element={
         <ProtectedRoute requiredRole="client">
-          <ClientScansIndex />
+          <ModernLayout isAdmin={false}>
+            <ClientScansIndex />
+          </ModernLayout>
         </ProtectedRoute>
       } />
       
       <Route path="/scans/:scanId" element={
         <ProtectedRoute requiredRole="client">
-          <ClientScanResults />
+          <ModernLayout isAdmin={false}>
+            <ClientScanResults />
+          </ModernLayout>
         </ProtectedRoute>
       } />
 

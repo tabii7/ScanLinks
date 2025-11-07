@@ -28,6 +28,8 @@ import {
   Building,
   MapPin,
   Star,
+  CheckSquare,
+  Square,
 } from 'lucide-react';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
@@ -41,6 +43,9 @@ const ModernClientManagement = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
+  const [selectedClients, setSelectedClients] = useState([]);
+  const [isSelectAll, setIsSelectAll] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     console.log('🔄 Component mounted, fetching clients...');
@@ -130,6 +135,57 @@ const ModernClientManagement = () => {
     }
   };
 
+  const handleSelectClient = (clientId) => {
+    setSelectedClients(prev => 
+      prev.includes(clientId) 
+        ? prev.filter(id => id !== clientId)
+        : [...prev, clientId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (isSelectAll) {
+      setSelectedClients([]);
+      setIsSelectAll(false);
+    } else {
+      setSelectedClients(filteredClients.map(client => client._id));
+      setIsSelectAll(true);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedClients.length === 0) {
+      toast.error('Please select clients to delete');
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to delete ${selectedClients.length} client(s)? This action cannot be undone.`)) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      // Delete each selected client
+      await Promise.all(selectedClients.map(async (clientId) => {
+        try {
+          await api.delete(`/clients/${clientId}`);
+        } catch (error) {
+          console.error(`Failed to delete client ${clientId}:`, error);
+        }
+      }));
+
+      toast.success(`Successfully deleted ${selectedClients.length} client(s)`);
+      setSelectedClients([]);
+      setIsSelectAll(false);
+      await fetchClients();
+    } catch (error) {
+      console.error('Bulk delete error:', error);
+      toast.error('Failed to delete some clients');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const filteredClients = clients.filter(client => {
     const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -152,10 +208,24 @@ const ModernClientManagement = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Client Management</h1>
-          <p className="text-gray-600 mt-2">Manage your clients and their ORM campaigns</p>
+          <h1 className="text-3xl font-bold text-white">Client Management</h1>
+          <p className="text-gray-400 mt-2">Manage your clients and their ORM campaigns</p>
         </div>
-        <div className="flex space-x-3 mt-4 sm:mt-0">
+        <div className="flex flex-wrap gap-3 mt-4 sm:mt-0">
+          {selectedClients.length > 0 && (
+            <button
+              onClick={handleBulkDelete}
+              disabled={deleting}
+              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 transition-all duration-200 shadow-lg hover:shadow-xl"
+            >
+              {deleting ? (
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4 mr-2" />
+              )}
+              {deleting ? 'Deleting...' : `Delete ${selectedClients.length} Selected`}
+            </button>
+          )}
           <button
             onClick={() => navigate('/admin/clients/create')}
             className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl"
@@ -165,7 +235,7 @@ const ModernClientManagement = () => {
           </button>
           <button
             onClick={fetchClients}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 bg-white rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl"
+            className="inline-flex items-center px-4 py-2 border border-gray-600 text-gray-300 bg-gray-800 rounded-xl hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
@@ -174,7 +244,29 @@ const ModernClientManagement = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+      <div className="rounded-2xl shadow-sm border border-gray-700 p-6" style={{backgroundColor: '#04041B'}}>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={handleSelectAll}
+              className="flex items-center space-x-2 px-3 py-2 border border-gray-600 rounded-xl hover:bg-gray-700 transition-colors"
+            >
+              {isSelectAll ? (
+                <CheckSquare className="h-4 w-4 text-blue-400" />
+              ) : (
+                <Square className="h-4 w-4 text-gray-400" />
+              )}
+              <span className="text-sm text-gray-300">
+                {isSelectAll ? 'Deselect All' : 'Select All'}
+              </span>
+            </button>
+            {selectedClients.length > 0 && (
+              <span className="text-sm text-blue-400">
+                {selectedClients.length} selected
+              </span>
+            )}
+          </div>
+        </div>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
           <div className="flex-1 max-w-md">
             <div className="relative">
@@ -184,7 +276,7 @@ const ModernClientManagement = () => {
                 placeholder="Search clients..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-3 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white placeholder-gray-400"
               />
             </div>
           </div>
@@ -195,7 +287,7 @@ const ModernClientManagement = () => {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="px-4 py-3 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white"
               >
                 <option value="all">All Clients</option>
                 <option value="active">Active</option>
@@ -209,26 +301,26 @@ const ModernClientManagement = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+        <div className="rounded-2xl shadow-sm border border-gray-700 p-6" style={{backgroundColor: '#04041B'}}>
           <div className="flex items-center">
             <div className="p-3 bg-blue-100 rounded-xl">
               <Users className="h-6 w-6 text-blue-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Clients</p>
-              <p className="text-2xl font-bold text-gray-900">{clients.length}</p>
+              <p className="text-sm font-medium text-gray-400">Total Clients</p>
+              <p className="text-2xl font-bold text-white">{clients.length}</p>
             </div>
           </div>
         </div>
         
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+        <div className="rounded-2xl shadow-sm border border-gray-700 p-6" style={{backgroundColor: '#04041B'}}>
           <div className="flex items-center">
             <div className="p-3 bg-green-100 rounded-xl">
               <CheckCircle className="h-6 w-6 text-green-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Active</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm font-medium text-gray-400">Active</p>
+              <p className="text-2xl font-bold text-white">
                 {clients.filter(c => c.subscription?.status === 'active').length}
               </p>
             </div>
@@ -236,14 +328,14 @@ const ModernClientManagement = () => {
         </div>
         
         
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+        <div className="rounded-2xl shadow-sm border border-gray-700 p-6" style={{backgroundColor: '#04041B'}}>
           <div className="flex items-center">
             <div className="p-3 bg-red-100 rounded-xl">
               <AlertCircle className="h-6 w-6 text-red-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Inactive</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm font-medium text-gray-400">Inactive</p>
+              <p className="text-2xl font-bold text-white">
                 {clients.filter(c => c.subscription?.status === 'inactive').length}
               </p>
             </div>
@@ -252,40 +344,64 @@ const ModernClientManagement = () => {
       </div>
 
       {/* Clients List */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-          <h3 className="text-lg font-semibold text-gray-900">Clients ({filteredClients.length})</h3>
+      <div className="rounded-2xl shadow-sm border border-gray-700 overflow-hidden" style={{backgroundColor: '#04041B'}}>
+        <div className="px-6 py-4 border-b border-gray-700" style={{backgroundColor: '#04041B'}}>
+          <h3 className="text-lg font-semibold text-white">Clients ({filteredClients.length})</h3>
         </div>
         
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead style={{backgroundColor: '#04041B'}}>
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">
+                  <button
+                    onClick={handleSelectAll}
+                    className="flex items-center justify-center"
+                  >
+                    {isSelectAll ? (
+                      <CheckSquare className="h-4 w-4 text-blue-400" />
+                    ) : (
+                      <Square className="h-4 w-4 text-gray-400" />
+                    )}
+                  </button>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                   Client
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                   Contact
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                   Company
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-200" style={{backgroundColor: '#04041B'}}>
               {filteredClients.map((client) => (
                 <motion.tr
                   key={client._id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="hover:bg-gray-50 transition-colors"
+                  className="hover:bg-gray-700 transition-colors"
                 >
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <button
+                      onClick={() => handleSelectClient(client._id)}
+                      className="flex items-center justify-center"
+                    >
+                      {selectedClients.includes(client._id) ? (
+                        <CheckSquare className="h-4 w-4 text-blue-400" />
+                      ) : (
+                        <Square className="h-4 w-4 text-gray-400 hover:text-blue-400" />
+                      )}
+                    </button>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10">
@@ -296,8 +412,8 @@ const ModernClientManagement = () => {
                         </div>
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{client.name}</div>
-                        <div className="text-sm text-gray-500">{client.contact?.email || 'No email'}</div>
+                        <div className="text-sm font-medium text-white">{client.name}</div>
+                        <div className="text-sm text-blue-400">{client.contact?.email || 'No email'}</div>
                       </div>
                     </div>
                   </td>
@@ -305,19 +421,19 @@ const ModernClientManagement = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center space-x-2">
                       <Mail className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm text-gray-900">{client.contact?.email || 'No email'}</span>
+                      <span className="text-sm text-white">{client.contact?.email || 'No email'}</span>
                     </div>
                     {client.contact?.phone && (
                       <div className="flex items-center space-x-2 mt-1">
                         <Phone className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm text-gray-500">{client.contact.phone}</span>
+                        <span className="text-sm text-gray-400">{client.contact.phone}</span>
                       </div>
                     )}
                   </td>
                   
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{client.contact?.company || 'No company'}</div>
-                    <div className="text-sm text-gray-500">{client.settings?.industry || 'No industry'}</div>
+                    <div className="text-sm text-white">{client.contact?.company || 'No company'}</div>
+                    <div className="text-sm text-gray-400">{client.settings?.industry || 'No industry'}</div>
                   </td>
                   
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -340,17 +456,17 @@ const ModernClientManagement = () => {
                           setSelectedClient(client);
                           setShowEditModal(true);
                         }}
-                        className="text-blue-600 hover:text-blue-900 p-2 rounded-lg hover:bg-blue-50 transition-colors"
+                        className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
                         title="Edit client"
                       >
-                        <Edit className="h-4 w-4" />
+                        Edit
                       </button>
                       <button
                         onClick={() => handleDeleteClient(client._id)}
-                        className="text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
                         title="Delete client"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        Delete
                       </button>
                     </div>
                   </td>
@@ -377,14 +493,14 @@ const ModernClientManagement = () => {
                 <h4 className="text-md font-semibold text-gray-900 mb-3">Basic Information</h4>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       Name
                     </label>
                     <input
                       type="text"
                       value={selectedClient.name || ''}
                       onChange={(e) => setSelectedClient({ ...selectedClient, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white placeholder-gray-400"
                     />
                   </div>
                 </div>
@@ -392,10 +508,10 @@ const ModernClientManagement = () => {
 
               {/* Contact Information */}
               <div>
-                <h4 className="text-md font-semibold text-gray-900 mb-3">Contact Information</h4>
+                <h4 className="text-md font-semibold text-white mb-3">Contact Information</h4>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       Email
                     </label>
                     <input
@@ -405,12 +521,12 @@ const ModernClientManagement = () => {
                         ...selectedClient, 
                         contact: { ...selectedClient.contact, email: e.target.value }
                       })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white placeholder-gray-400"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       Phone
                     </label>
                     <input
@@ -420,12 +536,12 @@ const ModernClientManagement = () => {
                         ...selectedClient, 
                         contact: { ...selectedClient.contact, phone: e.target.value }
                       })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white placeholder-gray-400"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       Company
                     </label>
                     <input
@@ -435,7 +551,7 @@ const ModernClientManagement = () => {
                         ...selectedClient, 
                         contact: { ...selectedClient.contact, company: e.target.value }
                       })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white placeholder-gray-400"
                     />
                   </div>
                 </div>
@@ -443,10 +559,10 @@ const ModernClientManagement = () => {
 
               {/* Settings Information */}
               <div>
-                <h4 className="text-md font-semibold text-gray-900 mb-3">Settings</h4>
+                <h4 className="text-md font-semibold text-white mb-3">Settings</h4>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       Industry
                     </label>
                     <input
@@ -456,12 +572,12 @@ const ModernClientManagement = () => {
                         ...selectedClient, 
                         settings: { ...selectedClient.settings, industry: e.target.value }
                       })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white placeholder-gray-400"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       Target Audience
                     </label>
                     <input
@@ -471,12 +587,12 @@ const ModernClientManagement = () => {
                         ...selectedClient, 
                         settings: { ...selectedClient.settings, targetAudience: e.target.value }
                       })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white placeholder-gray-400"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       Website
                     </label>
                     <input
@@ -486,7 +602,7 @@ const ModernClientManagement = () => {
                         ...selectedClient, 
                         settings: { ...selectedClient.settings, website: e.target.value }
                       })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white placeholder-gray-400"
                     />
                   </div>
                 </div>
@@ -497,7 +613,7 @@ const ModernClientManagement = () => {
                 <h4 className="text-md font-semibold text-gray-900 mb-3">Status</h4>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       Status
                     </label>
                     <select
@@ -506,7 +622,7 @@ const ModernClientManagement = () => {
                         ...selectedClient, 
                         subscription: { ...selectedClient.subscription, status: e.target.value }
                       })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white placeholder-gray-400"
                     >
                       <option value="active">Active</option>
                       <option value="trial">Trial</option>
@@ -520,7 +636,7 @@ const ModernClientManagement = () => {
             <div className="flex space-x-3 mt-6">
               <button
                 onClick={() => setShowEditModal(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
+                className="flex-1 px-4 py-2 border border-gray-600 text-gray-300 bg-gray-800 rounded-xl hover:bg-gray-700 transition-colors"
               >
                 Cancel
               </button>

@@ -31,7 +31,7 @@ const scanSchema = new mongoose.Schema({
   },
   scanType: {
     type: String,
-    enum: ['manual', 'scheduled', 'automated', 'creator_scan'],
+    enum: ['manual', 'scheduled', 'automated', 'creator_scan', 'auto'],
     default: 'automated',
   },
   startedAt: {
@@ -54,9 +54,33 @@ const scanSchema = new mongoose.Schema({
   nextAutoScanDate: {
     type: Date,
   },
-  parentScanId: {
+  // Self-relation: Parent-Child relationship
+  parentId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Scan',
+    default: null, // null = parent scan, ObjectId = child scan
+  },
+  // Store the actual search query used
+  searchQuery: {
+    type: String,
+    required: true,
+  },
+  // CRITICAL: Store exact Google query and dateRestrict for child scan inheritance
+  exactGoogleQuery: {
+    type: String,
+    required: false,
+  },
+  exactDateRestrict: {
+    type: String,
+    required: false,
+  },
+  timeFrame: {
+    type: String,
+    required: false,
+  },
+  contentType: {
+    type: String,
+    required: false,
   },
   totalKeywords: {
     type: Number,
@@ -83,6 +107,18 @@ const scanSchema = new mongoose.Schema({
     ipAddress: String,
     version: String,
   },
+});
+
+// Safety: hard-block non-manual scans when DISABLE_AUTO_SCANS=true
+scanSchema.pre('save', function(next) {
+  try {
+    if (process.env.DISABLE_AUTO_SCANS === 'true' && this.scanType && this.scanType !== 'manual') {
+      return next(new Error('Auto scans are disabled by configuration'));
+    }
+    return next();
+  } catch (e) {
+    return next(e);
+  }
 });
 
 // Calculate duration

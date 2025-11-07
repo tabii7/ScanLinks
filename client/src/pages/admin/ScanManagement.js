@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Layout from '../../components/Layout';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Play,
@@ -13,11 +13,14 @@ import {
   AlertCircle,
   Globe,
   Target,
+  Trash2,
+  Send,
 } from 'lucide-react';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 
 const ScanManagement = () => {
+  const navigate = useNavigate();
   const [scans, setScans] = useState([]);
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -47,6 +50,22 @@ const ScanManagement = () => {
     }
   };
 
+  const handleView = (scanId) => {
+    navigate(`/admin/scans/${scanId}`);
+  };
+
+  const handleDelete = async (scanId) => {
+    const confirmed = window.confirm('Delete this scan and all related data (results, child scans, reports)?');
+    if (!confirmed) return;
+    try {
+      await api.delete(`/scans/${scanId}`);
+      toast.success('Scan deleted successfully');
+      fetchScans();
+    } catch (error) {
+      toast.error('Failed to delete scan');
+    }
+  };
+
   const fetchClients = async () => {
     try {
       const response = await api.get('/clients');
@@ -66,6 +85,21 @@ const ScanManagement = () => {
       fetchScans();
     } catch (error) {
       toast.error('Failed to trigger scan');
+    }
+  };
+
+  const handleSendToClient = async (scan) => {
+    if (scan.clientStatus === 'sent') {
+      toast.success('Already sent to client');
+      return;
+    }
+    try {
+      // Always send parent scan ID (this scan should already be a parent based on the !scan.parentId condition in the UI)
+      await api.post('/scans/send-to-client', { scanId: scan._id });
+      toast.success('Report sent to client (includes all weeks)');
+      fetchScans(); // Refresh after sending
+    } catch (error) {
+      toast.error('Failed to send to client');
     }
   };
 
@@ -113,54 +147,53 @@ const ScanManagement = () => {
 
   if (loading) {
     return (
-      <Layout isAdmin={true}>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ace-600"></div>
-        </div>
-      </Layout>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
     );
   }
 
   return (
-    <Layout isAdmin={true}>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Scan Management</h1>
-            <p className="text-gray-600">Monitor and manage ORM scanning activities</p>
-          </div>
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-white">Scan Management</h1>
+          <p className="text-gray-400 mt-2">Monitor and manage ORM scanning activities</p>
+        </div>
+        <div className="mt-4 lg:mt-0">
           <button
             onClick={() => setShowTriggerModal(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-ace-600 hover:bg-ace-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ace-500"
+            className="inline-flex items-center px-4 py-2 ar-btn-primary"
           >
             <Play className="h-4 w-4 mr-2" />
             Trigger Scan
           </button>
         </div>
+      </div>
 
-        {/* Filters */}
-        <div className="bg-white shadow-ace rounded-lg p-4">
+      {/* Filters */}
+      <div className="rounded-2xl p-6 shadow-lg border border-gray-700 ar-card">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Search Scans</label>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Search Scans</label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input
                   type="text"
                   placeholder="Search by client..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-ace-500 focus:border-ace-500 sm:text-sm"
+                  className="w-full pl-10 pr-3 py-2 border border-gray-600 bg-gray-800 text-white rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Filter by Client</label>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Filter by Client</label>
               <select
                 value={filterClient}
                 onChange={(e) => setFilterClient(e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-ace-500 focus:border-ace-500 sm:text-sm"
+                className="px-4 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white"
               >
                 <option value="all">All Clients</option>
                 {clients.map((client) => (
@@ -171,11 +204,11 @@ const ScanManagement = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Filter by Status</label>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Filter by Status</label>
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-ace-500 focus:border-ace-500 sm:text-sm"
+                className="px-4 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white"
               >
                 <option value="all">All Status</option>
                 <option value="pending">Pending</option>
@@ -187,61 +220,61 @@ const ScanManagement = () => {
           </div>
         </div>
 
-        {/* Scans Table */}
-        <div className="bg-white shadow-ace rounded-lg overflow-hidden">
+      {/* Scans Table */}
+      <div className="rounded-2xl shadow-lg border border-gray-700 overflow-hidden ar-card">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-gray-700">
+              <thead className="bg-gray-800">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                     Client
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                     Week
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                     Region
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                     Type
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                     Results
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                     Duration
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                     Started
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-700 bg-gray-900">
                 {filteredScans.map((scan) => (
                   <motion.tr
                     key={scan._id}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="hover:bg-gray-50"
+                    className="hover:bg-gray-800"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
+                      <div className="text-sm font-medium text-white">
                         {scan.clientId?.name || 'Unknown Client'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">Week {scan.weekNumber}</div>
+                      <div className="text-sm text-white">Week {scan.weekNumber}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <Globe className="h-4 w-4 text-gray-400 mr-1" />
-                        <span className="text-sm text-gray-900">{scan.region}</span>
+                        <span className="text-sm text-white">{scan.region}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -251,7 +284,7 @@ const ScanManagement = () => {
                       {getStatusBadge(scan.status)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
+                      <div className="text-sm text-white">
                         {scan.resultsCount || 0} results
                       </div>
                       <div className="text-xs text-gray-500">
@@ -259,18 +292,39 @@ const ScanManagement = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
+                      <div className="text-sm text-white">
                         {scan.duration ? `${Math.round(scan.duration / 1000)}s` : '-'}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                       {new Date(scan.startedAt).toLocaleString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end space-x-2">
-                        <button className="text-ace-600 hover:text-ace-900">
+                        <button
+                          onClick={() => handleView(scan._id)}
+                          className="p-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-all duration-150 shadow focus:outline-none"
+                          title="View Results"
+                        >
                           <Eye className="h-4 w-4" />
                         </button>
+                        <button
+                          onClick={() => handleDelete(scan._id)}
+                          className="p-2 rounded-full bg-red-600 hover:bg-red-700 text-white transition-all duration-150 shadow focus:outline-none"
+                          title="Delete Scan"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                        {(!scan.parentId) && (
+                          <button
+                            onClick={() => handleSendToClient(scan)}
+                            className={`p-2 rounded-full transition-all duration-150 shadow focus:outline-none ${scan.clientStatus === 'sent' ? 'bg-gray-400 text-gray-100 cursor-default opacity-60' : 'bg-green-600 hover:bg-green-700 text-white'}`}
+                            title={scan.clientStatus === 'sent' ? 'Already sent' : 'Send to Client'}
+                            disabled={scan.clientStatus === 'sent'}
+                          >
+                            <Send className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </motion.tr>
@@ -283,10 +337,10 @@ const ScanManagement = () => {
         {/* Trigger Scan Modal */}
         {showTriggerModal && (
           <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-gray-800 border-gray-600">
               <div className="mt-3">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">Trigger Manual Scan</h3>
+                  <h3 className="text-lg font-medium text-white">Trigger Manual Scan</h3>
                   <button
                     onClick={() => {
                       setShowTriggerModal(false);
@@ -354,8 +408,7 @@ const ScanManagement = () => {
             </div>
           </div>
         )}
-      </div>
-    </Layout>
+    </div>
   );
 };
 

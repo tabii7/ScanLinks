@@ -362,7 +362,7 @@ const RankTrackingPage = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200" style={{backgroundColor: '#04041B'}}>
                 {rankHistory?.map((item, index) => (
                   <motion.tr
                     key={index}

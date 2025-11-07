@@ -4,11 +4,29 @@ const Keyword = require('../models/Keyword');
 const Client = require('../models/Client');
 const Report = require('../models/Report');
 const googleSearchService = require('./googleSearchService');
-const sentimentService = require('./sentimentService');
 const reportService = require('./reportService');
 
+function normalizeUrl(raw) {
+  try {
+    if (!raw) return '';
+    const ensure = raw.startsWith('http') ? raw : `https://${raw}`;
+    const u = new URL(ensure);
+    let host = u.hostname.toLowerCase();
+    if (host.startsWith('www.')) host = host.slice(4);
+    const params = new URLSearchParams(u.search);
+    const stripKeys = ['utm_source','utm_medium','utm_campaign','utm_term','utm_content','gclid','fbclid','igshid'];
+    stripKeys.forEach(k => params.delete(k));
+    let pathname = u.pathname || '/';
+    if (pathname.length > 1 && pathname.endsWith('/')) pathname = pathname.slice(0, -1);
+    const search = params.toString();
+    return `${host}${pathname}${search ? `?${search}` : ''}`;
+  } catch {
+    return (raw || '').toLowerCase();
+  }
+}
+
 class ScanService {
-  async runScan(clientId, region, scanType = 'manual') {
+  async runScan(clientId, region, scanType = 'manual', options = {}) {
     try {
       // Get client and keywords
       const client = await Client.findById(clientId);
@@ -16,68 +34,147 @@ class ScanService {
         throw new Error('Client not found');
       }
 
-      let keywords = await Keyword.find({ 
-        clientId, 
-        status: 'active',
-        targetRegions: region 
-      });
-
-      if (keywords.length === 0) {
-        // Create default keywords for demo purposes
-        console.log('No keywords found, creating default keywords for demo');
-        const defaultKeywords = [
-          { keyword: client.name, status: 'active', targetRegions: [region], clientId },
-          { keyword: `${client.name} reviews`, status: 'active', targetRegions: [region], clientId },
-          { keyword: `${client.name} company`, status: 'active', targetRegions: [region], clientId }
-        ];
-        
-        for (const kw of defaultKeywords) {
-          const keyword = new Keyword(kw);
-          await keyword.save();
-        }
-        
-        // Fetch the newly created keywords
+      let keywords;
+      if (options.parentId && options.searchQuery) {
+        // Child scan - use parent's exact search query
+        console.log('🔄 Child scan detected - using parent search query:', options.searchQuery);
+        keywords = [{ keyword: options.searchQuery }];
+      } else {
+        // Parent scan - fetch from database
         keywords = await Keyword.find({ 
           clientId, 
           status: 'active',
           targetRegions: region 
         });
+
+        if (keywords.length === 0) {
+          if (process.env.NODE_ENV !== 'development') {
+            throw new Error('No active keywords found for this client and region. Please add keywords first.');
+          }
+          // Create default keywords for demo purposes (DEV ONLY)
+          console.log('⚠️ No keywords found, creating default keywords for demo (DEV ONLY)');
+          const defaultKeywords = [
+            { keyword: client.name, status: 'active', targetRegions: [region], clientId },
+            { keyword: `${client.name} reviews`, status: 'active', targetRegions: [region], clientId },
+            { keyword: `${client.name} company`, status: 'active', targetRegions: [region], clientId }
+          ];
+          for (const kw of defaultKeywords) {
+            const keyword = new Keyword(kw);
+            await keyword.save();
+          }
+          keywords = await Keyword.find({ 
+            clientId, 
+            status: 'active',
+            targetRegions: region 
+          });
+        }
       }
 
-      // Create scan record
-      const weekNumber = await this.getCurrentWeekNumber();
+      // Determine sequential week number per parent baseline
+      const searchQuery = options.searchQuery || keywords.map(k => k.keyword).join(' ');
+      let weekNumber = 1;
+      let parentId = null;
+
+      if (options.parentId) {
+        // This is a child scan - use provided parentId and weekNumber
+        parentId = options.parentId;
+        weekNumber = options.weekNumber || await this.getNextWeekNumber(options.parentId);
+        console.log(`📊 Child scan - Parent: ${parentId}, Week: ${weekNumber}`);
+      } else {
+        // This is a parent scan - check if baseline exists
+        const existingParent = await Scan.findOne({ 
+          clientId, 
+          region, 
+          parentId: null 
+        }).sort({ startedAt: 1 });
+        
+        if (existingParent) {
+          // Baseline exists - make this scan a child of it
+          parentId = existingParent._id;
+          weekNumber = await this.getNextWeekNumber(existingParent._id);
+          console.log(`📊 Creating child of existing baseline - Parent: ${parentId}, Week: ${weekNumber}`);
+        } else {
+          // This is the first scan - becomes baseline
+          weekNumber = 1;
+          parentId = null;
+          console.log(`📊 Creating new baseline scan - Week: 1`);
+        }
+      }
+      
       const scan = new Scan({
         clientId,
+        clientName: client.name,
         weekNumber,
         region,
         scanType,
         status: 'running',
         totalKeywords: keywords.length,
+        searchQuery: searchQuery,
+        parentId: parentId,
+        timeFrame: options.timeFrame || 'past_week',
+        contentType: options.contentType || 'all',
+        autoScanEnabled: options.autoScanEnabled || false
       });
       await scan.save();
 
       console.log(`Starting scan for client ${clientId} in region ${region}`);
 
+      // Prepare search options with exact parameters
+      const searchOptions = {
+        timeFrame: options.timeFrame || scan.timeFrame || 'past_week',
+        contentType: options.contentType || scan.contentType || 'all',
+        resultsCount: options.resultsCount || 10
+      };
+
+      console.log('🔍 Search options:', searchOptions);
+
       // Search keywords
-      const searchResults = await googleSearchService.searchKeywords(keywords, region);
-      
+      const searchResponse = await googleSearchService.searchKeywords(
+        keywords, 
+        region,
+        searchOptions.resultsCount,
+        searchOptions,
+        client.name
+      );
+      const searchResults = searchResponse.results || [];
+
       // Analyze sentiment for all results
-      const allResults = [];
-      
-      // Process each result from the flat array
+      const allResultsRaw = [];
       for (const result of searchResults) {
-        // Add scan and client information to each result
-        allResults.push({
+        const link = result.link || result.url || 'https://example.com';
+        const norm = normalizeUrl(link);
+        allResultsRaw.push({
           scanId: scan._id,
           clientId,
           keywordId: result.keywordId || null,
           keyword: result.keyword || 'unknown',
+          title: result.title || 'No Title',
+          url: link,
+          originalUrl: link, // Store original URL
+          normalizedUrl: norm,
+          description: result.snippet || '',
+          rank: result.position || 1,
+          sentiment: 'neutral',
+          sentimentScore: 0.5,
+          site: result.domain || 'example.com',
+          region: region,
+          dateFetched: new Date(),
           ...result,
         });
       }
+      
+      // Deduplicate by normalizedUrl + keywordId
+      const seenKey = new Set();
+      const allResults = [];
+      for (const r of allResultsRaw) {
+        const key = `${r.normalizedUrl}-${r.keywordId || ''}`;
+        if (seenKey.has(key)) continue;
+        seenKey.add(key);
+        allResults.push(r);
+      }
 
       // Compare with previous scan to determine movements
-      const resultsWithMovement = await this.compareWithPreviousScan(allResults, clientId, region);
+      const resultsWithMovement = await this.compareWithPreviousScan(allResults, clientId, region, parentId);
 
       // Save results
       const scanResults = await ScanResult.insertMany(resultsWithMovement);
@@ -89,10 +186,7 @@ class ScanService {
       scan.resultsCount = scanResults.length;
       await scan.save();
 
-      // Generate report
-      await reportService.generateReport(scan._id, clientId, region, weekNumber);
-
-      console.log(`Scan completed for client ${clientId} in region ${region}. Results: ${scanResults.length}`);
+      console.log(`✅ Scan completed for client ${clientId} in region ${region}. Results: ${scanResults.length}`);
       
       return {
         scanId: scan._id,
@@ -100,25 +194,133 @@ class ScanService {
         status: 'completed',
       };
     } catch (error) {
-      console.error('Scan failed:', error);
+      console.error('❌ Scan failed:', error);
       throw error;
     }
   }
 
-  async compareWithPreviousScan(currentResults, clientId, region) {
+  async runChildScan(parentScanId, options = {}) {
     try {
-      // Get previous scan results
-      const previousScan = await Scan.findOne({
-        clientId,
-        region,
-        status: 'completed',
-      }).sort({ completedAt: -1 });
+      console.log('🔄 Starting child scan for parent:', parentScanId);
+      
+      // Get parent scan
+      const mongoose = require('mongoose');
+      const parentId = typeof parentScanId === 'string' ? new mongoose.Types.ObjectId(parentScanId) : parentScanId;
+      const parentScan = await Scan.findById(parentId);
+      
+      if (!parentScan) {
+        throw new Error('Parent scan not found');
+      }
+      
+      console.log('📋 Parent scan details:', {
+        id: parentScan._id,
+        clientId: parentScan.clientId,
+        region: parentScan.region,
+        searchQuery: parentScan.searchQuery,
+        timeFrame: parentScan.timeFrame,
+        contentType: parentScan.contentType,
+        weekNumber: parentScan.weekNumber
+      });
+      
+      // Get next week number
+      const nextWeekNumber = await this.getNextWeekNumber(parentScan._id);
+      
+      // Copy ALL parameters from parent
+      const childOptions = {
+        scanType: options.scanType || 'auto',
+        parentId: parentScan._id,
+        weekNumber: nextWeekNumber,
+        searchQuery: parentScan.searchQuery, // Use parent's EXACT search query
+        timeFrame: parentScan.timeFrame || 'past_week',
+        contentType: parentScan.contentType || 'all',
+        resultsCount: options.resultsCount || 10, // Allow override or use default
+        autoScanEnabled: false,
+        ...options // Allow additional overrides
+      };
+      
+      console.log('🔧 Child scan options:', childOptions);
+      
+      // Run scan with parent's exact parameters
+      const result = await this.runScan(
+        parentScan.clientId,
+        parentScan.region,
+        childOptions.scanType,
+        childOptions
+      );
+      
+      console.log('✅ Child scan completed:', result);
+      
+      return result;
+    } catch (error) {
+      console.error('❌ Child scan failed:', error);
+      throw error;
+    }
+  }
+
+  async getNextWeekNumber(parentScanId) {
+    try {
+      const mongoose = require('mongoose');
+      const parentId = typeof parentScanId === 'string' ? new mongoose.Types.ObjectId(parentScanId) : parentScanId;
+      
+      // Find highest week number among parent and ALL its children
+      const scans = await Scan.find({
+        $or: [
+          { _id: parentId },           // Include the parent scan
+          { parentId: parentId }      // Include all child scans
+        ]
+      }).sort({ weekNumber: -1 }).limit(1);
+      
+      const highestWeek = scans[0]?.weekNumber || 0;
+      const nextWeek = highestWeek + 1;
+      
+      // Log all scans for debugging
+      const allScans = await Scan.find({
+        $or: [
+          { _id: parentId },
+          { parentId: parentId }
+        ]
+      }).sort({ weekNumber: 1 });
+      
+      console.log(`📊 Week number calculation for parent ${parentId}:`);
+      console.log(`   - All scans found: ${allScans.length}`);
+      allScans.forEach(scan => {
+        console.log(`     • Scan ${scan._id}: Week ${scan.weekNumber} (${scan.parentId ? 'child' : 'parent'})`);
+      });
+      console.log(`   - Highest week number: ${highestWeek}`);
+      console.log(`   - Next week number: ${nextWeek}`);
+      
+      return nextWeek;
+    } catch (error) {
+      console.error('Error getting next week number:', error);
+      return 1;
+    }
+  }
+
+  async compareWithPreviousScan(currentResults, clientId, region, parentId = null) {
+    try {
+      // Get previous scan results - if parentId is provided, compare with parent
+      let previousScan;
+      
+      if (parentId) {
+        // This is a child scan - compare with parent (baseline)
+        previousScan = await Scan.findById(parentId);
+        console.log('📊 Comparing child scan with parent baseline');
+      } else {
+        // This is a parent scan - compare with most recent completed scan
+        previousScan = await Scan.findOne({
+          clientId,
+          region,
+          status: 'completed',
+        }).sort({ completedAt: -1 });
+        console.log('📊 Comparing with previous completed scan');
+      }
 
       if (!previousScan) {
-        // First scan - all results are new
+        // First scan - mark as baseline
+        console.log('📊 First scan - marking all as baseline');
         return currentResults.map(result => ({
           ...result,
-          movement: 'new',
+          movement: 'baseline',
         }));
       }
 
@@ -128,14 +330,18 @@ class ScanService {
         region,
       });
 
+      console.log(`📊 Comparing ${currentResults.length} current results with ${previousResults.length} previous results`);
+
       const resultsWithMovement = [];
 
       for (const currentResult of currentResults) {
-        const previousResult = previousResults.find(prev => 
-          prev.url === currentResult.url && prev.keywordId.toString() === currentResult.keywordId.toString()
-        );
+        const prevMatch = previousResults.find(prev => {
+          const prevNorm = normalizeUrl(prev.originalUrl || prev.link || prev.url);
+          const curNorm = currentResult.normalizedUrl || normalizeUrl(currentResult.url);
+          return prevNorm === curNorm && String(prev.keywordId || '') === String(currentResult.keywordId || '');
+        });
 
-        if (!previousResult) {
+        if (!prevMatch) {
           // New result
           resultsWithMovement.push({
             ...currentResult,
@@ -145,26 +351,28 @@ class ScanService {
           // Existing result - check for changes
           let movement = 'unchanged';
           
-          if (currentResult.rank < previousResult.rank) {
+          if (currentResult.rank < prevMatch.rank) {
             movement = 'improved';
-          } else if (currentResult.rank > previousResult.rank) {
+          } else if (currentResult.rank > prevMatch.rank) {
             movement = 'dropped';
           }
 
           resultsWithMovement.push({
             ...currentResult,
             movement,
-            previousRank: previousResult.rank,
-            previousSentiment: previousResult.sentiment,
+            previousRank: prevMatch.rank,
+            previousSentiment: prevMatch.sentiment,
           });
         }
       }
 
       // Check for disappeared results
       for (const previousResult of previousResults) {
-        const stillExists = currentResults.find(current => 
-          current.url === previousResult.url && current.keywordId.toString() === previousResult.keywordId.toString()
-        );
+        const prevNorm = normalizeUrl(previousResult.originalUrl || previousResult.link || previousResult.url);
+        const stillExists = currentResults.find(current => {
+          const curNorm = current.normalizedUrl || normalizeUrl(current.url);
+          return curNorm === prevNorm && String(current.keywordId || '') === String(previousResult.keywordId || '');
+        });
 
         if (!stillExists) {
           // This result disappeared
@@ -174,6 +382,7 @@ class ScanService {
             keywordId: previousResult.keywordId,
             keyword: previousResult.keyword,
             url: previousResult.url,
+            originalUrl: previousResult.originalUrl || previousResult.url,
             title: previousResult.title,
             description: previousResult.description,
             rank: previousResult.rank,
@@ -187,6 +396,14 @@ class ScanService {
           });
         }
       }
+
+      console.log(`📊 Movement summary:`, {
+        new: resultsWithMovement.filter(r => r.movement === 'new').length,
+        improved: resultsWithMovement.filter(r => r.movement === 'improved').length,
+        dropped: resultsWithMovement.filter(r => r.movement === 'dropped').length,
+        unchanged: resultsWithMovement.filter(r => r.movement === 'unchanged').length,
+        disappeared: resultsWithMovement.filter(r => r.movement === 'disappeared').length,
+      });
 
       return resultsWithMovement;
     } catch (error) {
@@ -207,7 +424,7 @@ class ScanService {
 
   async runWeeklyScan() {
     try {
-      console.log('Starting weekly automated scan...');
+      console.log('⏰ Starting weekly automated scan...');
       
       const activeClients = await Client.find({ 
         status: 'active',
@@ -229,19 +446,19 @@ class ScanService {
           for (const region of regions) {
             try {
               await this.runScan(client._id, region, 'automated');
-              console.log(`Weekly scan completed for client ${client.name} in region ${region}`);
+              console.log(`✅ Weekly scan completed for client ${client.name} in region ${region}`);
             } catch (error) {
-              console.error(`Weekly scan failed for client ${client.name} in region ${region}:`, error.message);
+              console.error(`❌ Weekly scan failed for client ${client.name} in region ${region}:`, error.message);
             }
           }
         } catch (error) {
-          console.error(`Error processing client ${client.name}:`, error.message);
+          console.error(`❌ Error processing client ${client.name}:`, error.message);
         }
       }
 
-      console.log('Weekly automated scan completed');
+      console.log('✅ Weekly automated scan completed');
     } catch (error) {
-      console.error('Weekly scan failed:', error);
+      console.error('❌ Weekly scan failed:', error);
     }
   }
 
@@ -265,59 +482,45 @@ class ScanService {
 
   async getScanResults(scanId, filters = {}) {
     try {
-      // Get real scan results from database - handle both ObjectId and string scanIds
+      // Get real scan results from database
       let query = {};
       
-      // Try to match as ObjectId first, then as string
       try {
         const mongoose = require('mongoose');
         const objectId = new mongoose.Types.ObjectId(scanId);
         query = { scanId: objectId };
       } catch (error) {
-        // If not a valid ObjectId, search as string
         query = { scanId: scanId };
       }
       
       const results = await ScanResult.find(query).sort({ position: 1 });
       
-      console.log(`🔍 Found ${results.length} results for scanId: ${scanId}`);
-      console.log(`🔍 Query used:`, query);
-      
-      // If no results found, return empty array (no mock data)
       if (results.length === 0) {
-        console.log('⚠️ No scan results found in database');
         return [];
       }
       
-      // Check for duplicates by title and URL
+      // Check for duplicates by normalized URL and keywordId
       const uniqueResults = [];
       const seen = new Set();
-      
       for (const result of results) {
-        const key = `${result.title}-${result.link || result.url}`;
-        if (!seen.has(key)) {
-          seen.add(key);
-          uniqueResults.push(result);
-        } else {
-          console.log(`⚠️ Duplicate result found: ${result.title} -> ${result.link || result.url}`);
-        }
+        const norm = normalizeUrl(result.originalUrl || result.link || result.url);
+        const key = `${norm}-${result.keywordId || ''}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        uniqueResults.push(result);
       }
-      
-      console.log(`🔍 After deduplication: ${uniqueResults.length} unique results`);
       
       // Ensure originalUrl is populated for all results
       const processedResults = uniqueResults.map(result => {
-        // Extract originalUrl from metadata or use link/url as fallback
-        const originalUrl = result.metadata?.originalUrl || result.link || result.url;
-        
-        console.log(`🔗 Processing result: ${result.title} -> ${originalUrl}`);
+        const originalUrl = result.metadata?.originalUrl || result.originalUrl || result.link || result.url;
+        const normalizedUrl = normalizeUrl(originalUrl);
         
         return {
           ...result.toObject(),
           originalUrl: originalUrl,
           originalLink: originalUrl,
-          // Ensure link field has the original URL
-          link: originalUrl || result.link || result.url
+          link: originalUrl || result.link || result.url,
+          normalizedUrl: normalizedUrl
         };
       });
 
@@ -345,38 +548,18 @@ class ScanService {
     }
   }
 
-
   async getAllScans(filters = {}, limit = 20) {
     try {
-      const query = { ...filters };
-      console.log('🔍 getAllScans query:', query);
-      
-      const scans = await Scan.find(query)
+      const scans = await Scan.find(filters)
         .populate('clientId', 'name email contact settings')
         .sort({ createdAt: -1 })
         .limit(limit);
 
-      console.log('🔍 Found scans in database:', scans.length);
-      if (scans.length > 0) {
-        console.log('🔍 Sample scan data:', {
-          _id: scans[0]._id,
-          status: scans[0].status,
-          resultsCount: scans[0].resultsCount,
-          createdAt: scans[0].createdAt,
-          clientId: scans[0].clientId,
-          clientName: scans[0].clientId?.name,
-          clientEmail: scans[0].clientId?.email
-        });
-      }
-
-      // Ensure client details are properly populated
-      const scansWithClientDetails = scans.map(scan => ({
+      return scans.map(scan => ({
         ...scan.toObject(),
         clientName: scan.clientId?.name || scan.clientName || 'Unknown Client',
         clientEmail: scan.clientId?.email || scan.clientId?.contact?.email || 'No email'
       }));
-
-      return scansWithClientDetails;
     } catch (error) {
       console.error('Error fetching all scans:', error);
       throw error;
@@ -385,5 +568,3 @@ class ScanService {
 }
 
 module.exports = new ScanService();
-
-

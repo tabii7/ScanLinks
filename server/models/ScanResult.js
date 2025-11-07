@@ -54,7 +54,7 @@ const scanResultSchema = new mongoose.Schema({
   },
   movement: {
     type: String,
-    enum: ['new', 'improved', 'dropped', 'disappeared', 'unchanged'],
+    enum: ['new', 'improved', 'dropped', 'disappeared', 'unchanged', 'baseline'],
     default: 'new',
   },
   previousRank: {

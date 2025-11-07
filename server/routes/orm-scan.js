@@ -27,7 +27,8 @@ router.post('/trigger', async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('Scan trigger error:', error);
-    res.status(500).json({
+    const statusCode = error.message.includes('not configured') || error.message.includes('API_NOT_CONFIGURED') ? 400 : 500;
+    res.status(statusCode).json({
       success: false,
       message: 'Failed to trigger scan',
       error: error.message
@@ -158,7 +159,42 @@ router.delete('/:scanId', async (req, res) => {
 // Test Google Search API
 router.post('/test/google-search', async (req, res) => {
   try {
-    const { query, region, resultsCount } = req.body;
+    const { 
+      query, 
+      region, 
+      language,
+      resultsCount,
+      contentType,
+      searchDepth,
+      includeSocialMedia,
+      includeNews,
+      includeForums,
+      includeBlogs,
+      sentimentFilter,
+      timeframe,
+      timeframeValue,
+      
+      // Advanced parameters
+      searchEngines,
+      contentAge,
+      contentQuality,
+      includeVideoPlatforms,
+      includeImagePlatforms,
+      includeAudioPlatforms,
+      includeDocumentPlatforms,
+      searchRadius,
+      searchRadiusValue,
+      excludeDomains,
+      includeDomains,
+      searchOperators,
+      duplicateDetection,
+      contentModeration,
+      privacyLevel,
+      scanFrequency,
+      alertThreshold,
+      autoActions,
+      reportFormat
+    } = req.body;
     
     if (!query) {
       return res.status(400).json({
@@ -167,14 +203,91 @@ router.post('/test/google-search', async (req, res) => {
       });
     }
     
+    console.log('🔍 Enhanced search parameters:', {
+      query,
+      region: region || 'US',
+      language: language || 'en',
+      contentType,
+      searchDepth,
+      sentimentFilter,
+      timeframe,
+      timeframeValue,
+      sources: {
+        socialMedia: includeSocialMedia,
+        news: includeNews,
+        forums: includeForums,
+        blogs: includeBlogs
+      },
+      advanced: {
+        searchEngines,
+        contentAge,
+        contentQuality,
+        platforms: {
+          video: includeVideoPlatforms,
+          image: includeImagePlatforms,
+          audio: includeAudioPlatforms,
+          document: includeDocumentPlatforms
+        },
+        searchRadius,
+        searchRadiusValue,
+        excludeDomains,
+        includeDomains,
+        searchOperators,
+        duplicateDetection,
+        contentModeration,
+        privacyLevel,
+        scanFrequency,
+        alertThreshold,
+        autoActions,
+        reportFormat
+      }
+    });
+    
     // Convert single query to keywords array
     const keywords = [query];
     const maxResults = resultsCount || 5; // Default to 5 results for testing
     
+    // Enhanced search with additional parameters
+    const searchOptions = {
+      region: region || 'US',
+      language: language || 'en',
+      contentType,
+      searchDepth,
+      includeSocialMedia,
+      includeNews,
+      includeForums,
+      includeBlogs,
+      sentimentFilter,
+      timeframe,
+      timeframeValue,
+      
+      // Advanced parameters
+      searchEngines,
+      contentAge,
+      contentQuality,
+      includeVideoPlatforms,
+      includeImagePlatforms,
+      includeAudioPlatforms,
+      includeDocumentPlatforms,
+      searchRadius,
+      searchRadiusValue,
+      excludeDomains,
+      includeDomains,
+      searchOperators,
+      duplicateDetection,
+      contentModeration,
+      privacyLevel,
+      scanFrequency,
+      alertThreshold,
+      autoActions,
+      reportFormat
+    };
+    
     const results = await googleSearchService.searchKeywords(
       keywords, 
-      region || 'US', 
-      maxResults
+      searchOptions.region, 
+      maxResults,
+      searchOptions
     );
     
     res.json({
@@ -182,7 +295,9 @@ router.post('/test/google-search', async (req, res) => {
       results: results,
       count: results.length,
       query: query,
-      region: region || 'US'
+      region: searchOptions.region,
+      language: searchOptions.language,
+      searchOptions: searchOptions
     });
   } catch (error) {
     console.error('Google Search test error:', error);

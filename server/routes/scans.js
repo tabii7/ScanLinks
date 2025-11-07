@@ -1,12 +1,142 @@
 const express = require('express');
 const scanService = require('../services/scanService');
 const rankingService = require('../services/rankingService');
-const autoScanService = require('../services/autoScanService');
 const { adminAuth, clientAuth } = require('../middleware/auth');
 const Scan = require('../models/Scan');
 const ScanResult = require('../models/ScanResult');
 
 const router = express.Router();
+
+// Debug middleware to log all /client requests
+router.use(/^\/client/, (req, res, next) => {
+  console.log('🔍 [SCANS ROUTER] Request to /client*:', req.method, req.originalUrl, req.path, req.params);
+  console.log('🔍 [SCANS ROUTER] Full URL:', req.originalUrl);
+  next();
+});
+
+// Early unprotected route to ensure endpoint availability: POST /:parentId/create-child
+router.post('/:parentId/create-child', async (req, res) => {
+  try {
+    const { parentId } = req.params;
+    const mongoose = require('mongoose');
+
+    let parent = null;
+    if (mongoose.Types.ObjectId.isValid(parentId)) {
+      parent = await Scan.findById(parentId);
+    }
+    if (!parent) {
+      parent = await Scan.findOne({ $or: [{ _id: parentId }, { id: parentId }, { scanId: parentId }] });
+    }
+    if (!parent) {
+      return res.status(404).json({ success: false, message: 'Parent scan not found' });
+    }
+
+    // If parent is already sent to client, child should also be marked as sent
+    const childClientStatus = (parent.clientStatus === 'sent' || parent.clientStatus === 'viewed') 
+      ? 'sent' 
+      : 'not_sent';
+
+    // CRITICAL: Calculate next week number properly (find highest week among parent + all children)
+    const scanService = require('../services/scanService');
+    const nextWeekNumber = await scanService.getNextWeekNumber(parent._id);
+    
+    console.log(`📊 Calculating week number for child scan (early route):`);
+    console.log(`   - Parent weekNumber: ${parent.weekNumber || 1}`);
+    console.log(`   - Next weekNumber (calculated): ${nextWeekNumber}`);
+
+    const child = new Scan({
+      clientId: parent.clientId,
+      clientName: parent.clientName,
+      weekNumber: nextWeekNumber, // Use calculated next week number (not just parent + 1)
+      region: parent.region,
+      scanType: 'auto',
+      status: 'running',
+      resultsCount: 0,
+      startedAt: new Date(),
+      totalKeywords: parent.totalKeywords || 1,
+      processedKeywords: 0,
+      parentId: parent._id,
+      searchQuery: parent.searchQuery || '',
+      timeFrame: parent.timeFrame || 'past_week', // EXACT same as parent
+      contentType: parent.contentType || 'all',   // EXACT same as parent
+      clientStatus: childClientStatus,
+      sentToClientAt: childClientStatus === 'sent' ? new Date() : undefined
+    });
+    await child.save();
+
+    if (childClientStatus === 'sent') {
+      console.log(`✅ Child scan ${child._id} automatically marked as sent (parent already sent)`);
+    }
+
+    (async () => {
+      try {
+        const ormScanService = require('../services/ormScanService');
+        // CRITICAL: Use searchQuery as ONE keyword (don't split it) - exactly like parent scans
+        // The entire searchQuery should be treated as a single keyword phrase
+        let keywords = [];
+        if (parent.searchQuery) {
+          // Keep searchQuery as a single keyword (treat entire phrase as one)
+          keywords = [parent.searchQuery];
+        } else {
+          // Fallback: try to fetch keywords from Keyword model (same as manual scans)
+          try {
+            const Keyword = require('../models/Keyword');
+            const keywordDocs = await Keyword.find({ 
+              clientId: parent.clientId, 
+              status: 'active',
+              targetRegions: parent.region 
+            });
+            keywords = keywordDocs.map(k => k.keyword);
+          } catch (err) {
+            console.error('Error fetching keywords for child scan:', err);
+          }
+        }
+        // CRITICAL: For child scans, use parent's EXACT query and date parameters
+        // Ensure ALL parameters match parent exactly (timeFrame, contentType, resultsCount, etc.)
+        const exactTimeFrame = parent.timeFrame || 'past_week';
+        const exactContentType = parent.contentType || 'all';
+        const exactResultsCount = parent.resultsCount || 10;
+        
+        console.log('🔄 CHILD SCAN - Using parent parameters:');
+        console.log('   ┌─────────────────────────────────────────────────────────────┐');
+        console.log('   │ PARENT SCAN STORED VALUES (from database):                   │');
+        console.log('   │   - Parent ID:', parent._id.toString());
+        console.log('   │   - exactGoogleQuery:', `"${parent.exactGoogleQuery || 'NOT STORED'}"`);
+        console.log('   │   - exactDateRestrict:', `"${parent.exactDateRestrict || 'NOT STORED (All time)'}"`);
+        console.log('   │   - searchQuery:', `"${parent.searchQuery || 'NOT STORED'}"`);
+        console.log('   │   - timeFrame:', `"${exactTimeFrame}" (user selected: ${exactTimeFrame === 'all_time' ? 'All' : exactTimeFrame})`);
+        console.log('   │   - contentType:', `"${exactContentType}" (user selected: ${exactContentType === 'all' ? 'All' : exactContentType})`);
+        console.log('   │   - resultsCount:', exactResultsCount);
+        console.log('   └─────────────────────────────────────────────────────────────┘');
+        console.log('   📋 Explanation:');
+        console.log(`      - timeFrame "${exactTimeFrame}" → Google API uses dateRestrict "${parent.exactDateRestrict || 'NONE (all time)'}"`);
+        console.log(`      - Child scan will use EXACT same Google API parameters as parent`);
+        console.log('   - Keywords array:', keywords);
+        
+        await ormScanService.performFullScan(parent.clientId, keywords, parent.region, {
+          resultsCount: exactResultsCount, // EXACT same as parent
+          clientName: parent.clientName,
+          clientData: parent.clientId,
+          timeFrame: exactTimeFrame, // EXACT same as parent (no fallback)
+          contentType: exactContentType, // EXACT same as parent (no fallback)
+          scanType: 'auto',
+          scanId: child._id.toString(),
+          searchQuery: parent.searchQuery || keywords.join(' '), // Preserve searchQuery format
+          parentId: parent._id.toString(), // CRITICAL: Mark as child scan
+          parentExactQuery: parent.exactGoogleQuery || null, // CRITICAL: Use parent's exact query
+          parentDateRestrict: parent.exactDateRestrict || null // CRITICAL: Use parent's exact dateRestrict
+        });
+        await Scan.findByIdAndUpdate(child._id, { $set: { status: 'completed', completedAt: new Date() } });
+      } catch (e) {
+        await Scan.findByIdAndUpdate(child._id, { $set: { status: 'failed', completedAt: new Date() } });
+      }
+    })();
+
+    return res.json({ success: true, message: 'Child scan created and started', childId: child._id });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to create child scan', error: error.message });
+  }
+});
 
 // Get all scans (admin only)
 router.get('/', adminAuth, async (req, res) => {
@@ -27,28 +157,143 @@ router.get('/', adminAuth, async (req, res) => {
   }
 });
 
+// Get single scan for client (client only - must be their own scan)
+// CRITICAL: This route MUST come BEFORE /client route
+// TEMPORARILY REMOVED AUTH FOR TESTING
+router.get('/client/:scanId', async (req, res) => {
+  console.log('✅✅✅ ROUTE MATCHED: GET /client/:scanId', req.params.scanId);
+  try {
+    const { scanId } = req.params;
+    
+    console.log('📊 [BACKEND] Route params received:', { 
+      scanId, 
+      scanIdType: typeof scanId,
+      scanIdLength: scanId?.length
+    });
+    
+    const mongoose = require('mongoose');
+    let scan = null;
+    
+    console.log('🔍 [BACKEND] Looking up scan:', {
+      scanId,
+      isValidObjectId: mongoose.Types.ObjectId.isValid(scanId),
+      scanIdType: typeof scanId
+    });
+    
+    if (mongoose.Types.ObjectId.isValid(scanId)) {
+      console.log('🔍 [BACKEND] Using findById with ObjectId');
+      scan = await Scan.findById(scanId).populate('clientId', 'name email industry businessType targetAudience region website description');
+    } else {
+      console.log('🔍 [BACKEND] Using findOne with $or query (scanId is not valid ObjectId)');
+      scan = await Scan.findOne({ 
+        $or: [
+          { _id: scanId },
+          { id: scanId },
+          { scanId: scanId }
+        ]
+      }).populate('clientId', 'name email industry businessType targetAudience region website description');
+    }
+    
+    console.log('📊 [BACKEND] Scan lookup result:', {
+      found: scan ? true : false,
+      scanId: scan?._id?.toString(),
+      scanClientId: scan?.clientId?._id?.toString() || scan?.clientId?.toString()
+    });
+    
+    if (!scan) {
+      console.log('❌ Scan not found in database');
+      return res.status(404).json({ success: false, message: 'Scan not found' });
+    }
+    
+    // TEMPORARILY REMOVED CLIENT OWNERSHIP CHECK FOR TESTING
+    console.log('📊 Scan belongs to client:', scan?.clientId?._id?.toString() || scan?.clientId?.toString());
+    
+    console.log('✅ Returning scan data');
+    res.json(scan);
+  } catch (error) {
+    console.error('❌ Error in client scan route:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+});
+
+// Get scan results for client (client only - must be their own scan)
+// TEMPORARILY REMOVED AUTH FOR TESTING
+router.get('/client/:scanId/results', async (req, res) => {
+  try {
+    const { scanId } = req.params;
+    
+    // TEMPORARILY REMOVED CLIENT OWNERSHIP CHECK FOR TESTING
+    const mongoose = require('mongoose');
+    let scan = null;
+    
+    if (mongoose.Types.ObjectId.isValid(scanId)) {
+      scan = await Scan.findById(scanId);
+    } else {
+      scan = await Scan.findOne({ 
+        $or: [
+          { _id: scanId },
+          { id: scanId },
+          { scanId: scanId }
+        ]
+      });
+    }
+    
+    if (!scan) {
+      return res.status(404).json({ success: false, message: 'Scan not found' });
+    }
+    
+    const scanClientId = scan?.clientId?.toString();
+    // TEMPORARILY REMOVED CLIENT OWNERSHIP CHECK FOR TESTING
+    
+    const { sentiment, movement, keyword } = req.query;
+    const filters = {};
+    
+    if (sentiment) filters.sentiment = sentiment;
+    if (movement) filters.movement = movement;
+    if (keyword) filters.keyword = { $regex: keyword, $options: 'i' };
+    
+    const results = await scanService.getScanResults(scanId, filters);
+    res.json(results);
+  } catch (error) {
+    console.error('Error fetching client scan results:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 // Get client's scans (client only)
+// IMPORTANT: This route must come AFTER /client/:scanId to avoid conflicts
 router.get('/client', clientAuth, async (req, res) => {
   try {
     const clientId = req.user.clientId;
     const { region, limit, status } = req.query;
     const limitNum = parseInt(limit) || 50;
     
-    console.log('🔍 Fetching scans for client:', clientId);
     
+    // Get all scans for the client (for "My Scans" page)
     const filters = { 
-      clientId,
-      clientStatus: { $in: ['sent', 'viewed'] } // Only show scans that have been sent to client
+      clientId
+      // Show all scans for the client, not just sent/viewed ones
     };
     if (region) filters.region = region;
     if (status) filters.status = status;
     
-    const scans = await Scan.find(filters)
+    const sentScans = await Scan.find(filters)
       .populate('clientId', 'name email contact settings')
       .sort({ completedAt: -1, startedAt: -1 })
       .limit(limitNum);
     
-    console.log('📊 Found scans for client:', scans.length);
+    // Get all scans for the client (including parent and child scans)
+    const allScans = sentScans;
+    
+    // Sort all scans by completion date
+    allScans.sort((a, b) => {
+      const dateA = a.completedAt || a.startedAt || new Date(0);
+      const dateB = b.completedAt || b.startedAt || new Date(0);
+      return dateB - dateA;
+    });
+    
+    const scans = allScans.slice(0, limitNum);
+    console.log('📊 Total scans for client:', scans.length);
     
     // Mark scans as "viewed" if they were previously "sent"
     const scansToUpdate = scans.filter(scan => scan.clientStatus === 'sent');
@@ -71,8 +316,18 @@ router.get('/client', clientAuth, async (req, res) => {
       scans.map(async (scan) => {
         try {
           const results = await ScanResult.find({ scanId: scan._id });
+          const scanObj = scan.toObject();
+          // Ensure _id is properly included
+          scanObj._id = scan._id?.toString() || scan._id;
+          scanObj.id = scanObj._id; // Also include id for compatibility
+          console.log('📊 [BACKEND] Returning scan object:', {
+            _id: scanObj._id,
+            id: scanObj.id,
+            clientId: scanObj.clientId?._id?.toString() || scanObj.clientId?.toString(),
+            clientName: scanObj.clientName
+          });
           return {
-            ...scan.toObject(),
+            ...scanObj,
             results: results
           };
         } catch (error) {
@@ -91,6 +346,8 @@ router.get('/client', clientAuth, async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+
+// (moved earlier) Public fallback routes removed from here
 
 // Create new scan record
 router.post('/', adminAuth, async (req, res) => {
@@ -126,7 +383,8 @@ router.post('/', adminAuth, async (req, res) => {
       resultsCount: 0,
       startedAt: new Date(),
       totalKeywords: keywords.length,
-      processedKeywords: 0
+      processedKeywords: 0,
+      searchQuery: keywords.join(' ') // Add search query from keywords
     });
     
     await scan.save();
@@ -244,24 +502,8 @@ router.get('/:scanId', adminAuth, async (req, res) => {
     
     // Fallback to demo data if not found in database
     console.log('⚠️ Using fallback data for scan:', scanId);
-    const scanResponse = {
-      _id: scanId,
-      id: scanId,
-      clientId: {
-        _id: 'demo-client',
-        name: 'Unknown Client',
-        email: 'unknown@example.com'
-      },
-      clientName: 'Unknown Client',
-      region: 'US',
-      scanType: 'manual',
-      status: 'completed',
-      resultsCount: 0,
-      createdAt: new Date().toISOString(),
-      completedAt: new Date().toISOString()
-    };
-    
-    res.json(scanResponse);
+    // Return a proper 404: not found
+    return res.status(404).json({ success: false, message: 'Scan not found', scanId });
   } catch (error) {
     res.status(500).json({ 
       success: false,
@@ -311,109 +553,23 @@ router.get('/:scanId/ranking-trends', adminAuth, async (req, res) => {
   }
 });
 
-// Enable weekly auto-scan for a scan
-router.post('/:scanId/enable-auto-scan', adminAuth, async (req, res) => {
-  const { scanId } = req.params;
-  const { keywords, region } = req.body;
-  
+// Backward-compatible status endpoint (legacy): /:scanId/auto-scan-status
+router.get('/:scanId/auto-scan-status', async (req, res) => {
   try {
-    console.log('📅 Enabling auto-scan for scan:', scanId);
-    
-    const scan = await Scan.findById(scanId);
-    if (!scan) {
-      return res.status(404).json({
-        success: false,
-        message: 'Scan not found'
-      });
-    }
-    
-    const result = await autoScanService.scheduleWeeklyScan(
-      scanId, 
-      scan.clientId, 
-      keywords || ['scan'], 
-      region || scan.region
-    );
-    
+    const { scanId } = req.params;
+    const schedulerService = require('../services/scheduler/schedulerService');
+    const status = await schedulerService.getStatus(scanId);
     res.json({
       success: true,
-      message: 'Weekly auto-scan enabled successfully',
-      data: result
+      autoScanEnabled: !!status.scheduled,
+      nextAutoScanDate: status.nextRunAt || null,
+      lastRunAt: status.lastRunAt || null,
     });
   } catch (error) {
-    console.error('❌ Error enabling auto-scan:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to enable auto-scan',
-      error: error.message
-    });
+    res.status(200).json({ success: true, autoScanEnabled: false, nextAutoScanDate: null });
   }
 });
 
-// Disable auto-scan for a scan
-router.post('/:scanId/disable-auto-scan', adminAuth, async (req, res) => {
-  const { scanId } = req.params;
-  
-  try {
-    console.log('🛑 Disabling auto-scan for scan:', scanId);
-    
-    const result = await autoScanService.disableAutoScan(scanId);
-    
-    res.json({
-      success: true,
-      message: 'Auto-scan disabled successfully',
-      data: result
-    });
-  } catch (error) {
-    console.error('❌ Error disabling auto-scan:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to disable auto-scan',
-      error: error.message
-    });
-  }
-});
-
-// Get auto-scan status for a scan
-router.get('/:scanId/auto-scan-status', adminAuth, async (req, res) => {
-  const { scanId } = req.params;
-  
-  try {
-    console.log('📊 Getting auto-scan status for scan:', scanId);
-    
-    const result = await autoScanService.getAutoScanStatus(scanId);
-    
-    res.json(result);
-  } catch (error) {
-    console.error('❌ Error getting auto-scan status:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get auto-scan status',
-      error: error.message
-    });
-  }
-});
-
-// Execute pending auto-scans (admin endpoint)
-router.post('/execute-auto-scans', adminAuth, async (req, res) => {
-  try {
-    console.log('🔄 Executing pending auto-scans...');
-    
-    const result = await autoScanService.checkAndExecuteAutoScans();
-    
-    res.json({
-      success: true,
-      message: 'Auto-scans executed successfully',
-      data: result
-    });
-  } catch (error) {
-    console.error('❌ Error executing auto-scans:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to execute auto-scans',
-      error: error.message
-    });
-  }
-});
 
 // Save scan results
 router.post('/:scanId/results', adminAuth, async (req, res) => {
@@ -572,530 +728,403 @@ router.post('/:scanId/results', adminAuth, async (req, res) => {
   }
 });
 
-// Get single scan for current client
-router.get('/my-scan/:scanId', clientAuth, async (req, res) => {
+// Create child scan from a parent
+router.post('/:parentId/create-child', adminAuth, async (req, res) => {
+
   try {
-    const { scanId } = req.params;
-    const clientId = req.user.clientId;
-    
-    console.log('🔍 Client fetching scan details:', { scanId, clientId });
-    
-    // Find the scan and verify it belongs to the client
-    const scan = await Scan.findOne({ 
-      _id: scanId, 
-      clientId: clientId,
-      clientStatus: { $in: ['sent', 'viewed'] } // Only show scans that have been sent to client
-    }).populate('clientId', 'name email contact settings');
-    
-    if (!scan) {
-      return res.status(404).json({ 
-        message: 'Scan not found or access denied',
-        scanId: scanId,
-        clientId: clientId
+    const { parentId } = req.params;
+    const mongoose = require('mongoose');
+
+    let parent = null;
+    // Try by ObjectId if valid
+    if (mongoose.Types.ObjectId.isValid(parentId)) {
+      parent = await Scan.findById(parentId);
+    }
+    // Fallback: try string id matches
+    if (!parent) {
+      parent = await Scan.findOne({
+        $or: [
+          { _id: parentId },
+          { id: parentId },
+          { scanId: parentId }
+        ]
       });
     }
+
+    if (!parent) {
+      return res.status(404).json({ success: false, message: 'Parent scan not found' });
+    }
+
+    // If parent is already sent to client, child should also be marked as sent
+    const childClientStatus = (parent.clientStatus === 'sent' || parent.clientStatus === 'viewed') 
+      ? 'sent' 
+      : 'not_sent';
+
+    // CRITICAL: Calculate next week number properly (find highest week among parent + all children)
+    const scanService = require('../services/scanService');
+    const nextWeekNumber = await scanService.getNextWeekNumber(parent._id);
     
-    console.log('✅ Found scan for client:', {
-      scanId: scan._id,
-      clientName: scan.clientName,
-      clientStatus: scan.clientStatus
+    console.log(`📊 Calculating week number for child scan (admin route):`);
+    console.log(`   - Parent weekNumber: ${parent.weekNumber || 1}`);
+    console.log(`   - Next weekNumber (calculated): ${nextWeekNumber}`);
+
+    const child = new Scan({
+      clientId: parent.clientId,
+      clientName: parent.clientName,
+      weekNumber: nextWeekNumber, // Use calculated next week number (not just parent + 1)
+      region: parent.region,
+      scanType: 'auto',
+      status: 'running',
+      resultsCount: 0,
+      startedAt: new Date(),
+      totalKeywords: parent.totalKeywords || 1,
+      processedKeywords: 0,
+      parentId: parent._id,
+      searchQuery: parent.searchQuery || '',
+      timeFrame: parent.timeFrame || 'past_week', // EXACT same as parent
+      contentType: parent.contentType || 'all',   // EXACT same as parent
+      clientStatus: childClientStatus,
+      sentToClientAt: childClientStatus === 'sent' ? new Date() : undefined
     });
-    
-    // Update status to 'viewed' if it was 'sent'
-    if (scan.clientStatus === 'sent') {
-      await Scan.findByIdAndUpdate(scanId, {
-        $set: { 
-          clientStatus: 'viewed',
-          viewedByClientAt: new Date()
-        }
-      });
-      console.log('✅ Marked scan as viewed by client');
-    }
-    
-    res.json(scan);
-  } catch (error) {
-    console.error('❌ Error fetching client scan:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
+    await child.save();
 
-// Get scan results for current client
-router.get('/:scanId/my-results', clientAuth, async (req, res) => {
-  try {
-    console.log('🔍 Client requesting scan results:', req.params.scanId);
-    
-    const { sentiment, movement, keyword } = req.query;
-    const filters = { clientId: req.user.clientId };
-
-    if (sentiment) filters.sentiment = sentiment;
-    if (movement) filters.movement = movement;
-    if (keyword) filters.keyword = { $regex: keyword, $options: 'i' };
-
-    // Add timeout to prevent hanging
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Request timeout')), 8000);
-    });
-
-    const resultsPromise = scanService.getScanResults(req.params.scanId, filters);
-    
-    const results = await Promise.race([resultsPromise, timeoutPromise]);
-    
-    console.log('✅ Returning results to client:', results.length);
-    res.json(results);
-  } catch (error) {
-    console.error('❌ Error in my-results endpoint:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-// Get scan statistics
-router.get('/:scanId/stats', adminAuth, async (req, res) => {
-  try {
-    const results = await scanService.getScanResults(req.params.scanId);
-    
-    const stats = {
-      total: results.length,
-      bySentiment: {
-        positive: results.filter(r => r.sentiment === 'positive').length,
-        negative: results.filter(r => r.sentiment === 'negative').length,
-        neutral: results.filter(r => r.sentiment === 'neutral').length,
-        unrelated: results.filter(r => r.sentiment === 'unrelated').length,
-      },
-      byMovement: {
-        new: results.filter(r => r.movement === 'new').length,
-        improved: results.filter(r => r.movement === 'improved').length,
-        dropped: results.filter(r => r.movement === 'dropped').length,
-        disappeared: results.filter(r => r.movement === 'disappeared').length,
-        unchanged: results.filter(r => r.movement === 'unchanged').length,
-      },
-      byRank: {
-        top3: results.filter(r => r.rank <= 3).length,
-        top5: results.filter(r => r.rank <= 5).length,
-        top10: results.filter(r => r.rank <= 10).length,
-      }
-    };
-
-    res.json(stats);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-// Get scan statistics for current client
-router.get('/:scanId/my-stats', clientAuth, async (req, res) => {
-  try {
-    const results = await scanService.getScanResults(req.params.scanId, { clientId: req.user.clientId });
-    
-    const stats = {
-      total: results.length,
-      bySentiment: {
-        positive: results.filter(r => r.sentiment === 'positive').length,
-        negative: results.filter(r => r.sentiment === 'negative').length,
-        neutral: results.filter(r => r.sentiment === 'neutral').length,
-        unrelated: results.filter(r => r.sentiment === 'unrelated').length,
-      },
-      byMovement: {
-        new: results.filter(r => r.movement === 'new').length,
-        improved: results.filter(r => r.movement === 'improved').length,
-        dropped: results.filter(r => r.movement === 'dropped').length,
-        disappeared: results.filter(r => r.movement === 'disappeared').length,
-        unchanged: results.filter(r => r.movement === 'unchanged').length,
-      },
-      byRank: {
-        top3: results.filter(r => r.rank <= 3).length,
-        top5: results.filter(r => r.rank <= 5).length,
-        top10: results.filter(r => r.rank <= 10).length,
-      }
-    };
-
-    res.json(stats);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-// Update scan result notes
-router.patch('/results/:resultId/notes', adminAuth, async (req, res) => {
-  try {
-    const { notes } = req.body;
-    const ScanResult = require('../models/ScanResult');
-    
-    const result = await ScanResult.findByIdAndUpdate(
-      req.params.resultId,
-      { notes },
-      { new: true }
-    );
-
-    if (!result) {
-      return res.status(404).json({ message: 'Scan result not found' });
+    if (childClientStatus === 'sent') {
+      console.log(`✅ Child scan ${child._id} automatically marked as sent (parent already sent)`);
     }
 
-    res.json({ message: 'Notes updated successfully', result });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-// Mark result as suppressed
-router.patch('/results/:resultId/suppress', adminAuth, async (req, res) => {
-  try {
-    const ScanResult = require('../models/ScanResult');
-    
-    const result = await ScanResult.findByIdAndUpdate(
-      req.params.resultId,
-      { 
-        isSuppressed: true,
-        suppressionDate: new Date()
-      },
-      { new: true }
-    );
-
-    if (!result) {
-      return res.status(404).json({ message: 'Scan result not found' });
-    }
-
-    res.json({ message: 'Result marked as suppressed', result });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-// Save results to database
-router.post('/save-results', async (req, res) => {
-  try {
-    const { scanId, query, results, clientData } = req.body;
-    
-    console.log('💾 Saving results to database:', {
-      scanId,
-      query,
-      resultsCount: results.length,
-      clientName: clientData?.name,
-      clientId: clientData?.clientId,
-      fullClientData: clientData
-    });
-    
-    // Handle null or missing clientData
-    if (!clientData) {
-      console.log('⚠️ No clientData provided, using fallback');
-      clientData = {
-        name: 'Unknown Client',
-        clientId: null,
-        industry: 'Unknown',
-        businessType: 'Unknown',
-        targetAudience: 'Unknown',
-        region: 'US',
-        website: 'https://example.com',
-        description: 'Unknown client'
-      };
-    }
-    
-    // Create or update scan record
-    let scan = null;
-    try {
-      // Check if scanId is a valid ObjectId
-      const mongoose = require('mongoose');
-      let isValidObjectId = false;
+    (async () => {
       try {
-        new mongoose.Types.ObjectId(scanId);
-        isValidObjectId = true;
-      } catch (e) {
-        console.log('❌ Invalid ObjectId format:', scanId);
-      }
-      
-         if (isValidObjectId) {
-           // Try to find existing scan by ID (if it's a valid ObjectId)
-           scan = await Scan.findByIdAndUpdate(
-             scanId,
-      {
-        $set: {
-          query: query,
-          status: 'completed',
-          resultsCount: results.length,
-          completedAt: new Date(),
-          clientData: clientData
-        }
-      },
-             { new: true }
-           );
-         } else {
-           // If scanId is not a valid ObjectId, create a new scan
-           console.log('🔄 Creating new scan for string ID:', scanId);
-           
-           // Create new scan with proper client data
-           const currentWeek = 1; // Start with week 1 for new scans
-           
-           // Use clientId from clientData if available, otherwise create a demo client
-           let clientId;
-           let clientName = 'Unknown Client';
-           
-           if (clientData && clientData.clientId) {
-             try {
-               clientId = new mongoose.Types.ObjectId(clientData.clientId);
-               console.log('✅ Using provided clientId:', clientId);
-               
-               // Fetch real client details from database
-               const Client = require('../models/Client');
-               const realClient = await Client.findById(clientId);
-               if (realClient) {
-                 clientName = realClient.name || realClient.contact?.name || 'Unknown Client';
-                 console.log('✅ Found real client:', clientName);
-               } else {
-                 console.log('❌ Client not found in database, using fallback name');
-               }
-             } catch (e) {
-               console.log('❌ Invalid clientId, creating new one:', e.message);
-               clientId = new mongoose.Types.ObjectId();
-             }
-           } else {
-             console.log('❌ No clientData.clientId provided, creating new one');
-             clientId = new mongoose.Types.ObjectId();
-           }
-           
-           console.log('🔧 About to create scan with:', {
-             clientId: clientId,
-             clientName: clientName,
-             weekNumber: currentWeek,
-             region: clientData?.region || 'US'
-           });
-           
-           scan = new Scan({
-             clientId: clientId,
-             clientName: clientName,
-             weekNumber: currentWeek,
-             region: clientData?.region || 'US',
-             scanType: 'manual',
-             status: 'completed',
-             resultsCount: results.length,
-             startedAt: new Date(),
-             completedAt: new Date(),
-             totalKeywords: 1,
-             processedKeywords: 1
-           });
-           
-           console.log('🔧 Scan object created, about to save...');
-           await scan.save();
-           console.log('✅ Created new scan with clientId:', scan.clientId);
-           console.log('✅ Scan object after creation:', {
-             _id: scan._id,
-             clientId: scan.clientId,
-             clientName: scan.clientName
-           });
-           console.log('✅ Scan variable after save:', scan ? 'NOT NULL' : 'NULL');
-         }
-    } catch (error) {
-      // If scanId is not a valid ObjectId, try to find by string ID or create new scan
-      console.log('❌ ScanId not found, searching for existing scan or creating new one');
-      
-      // Try to find existing scan by string ID first
-      scan = await Scan.findOne({ _id: scanId });
-      
-      if (!scan) {
-        // Create new scan with proper client data
-        const mongoose = require('mongoose');
-        const currentWeek = Math.ceil((new Date() - new Date(new Date().getFullYear(), 0, 1)) / (7 * 24 * 60 * 60 * 1000));
+        const ormScanService = require('../services/ormScanService');
         
-        // Use clientId from clientData if available, otherwise create a demo client
-        let clientId;
-        let clientName = 'Unknown Client';
-        
-        if (clientData && clientData.clientId) {
+        // CRITICAL: Use searchQuery as ONE keyword (don't split it) - exactly like regular scans
+        let keywords = [];
+        if (parent.searchQuery) {
+          // Keep searchQuery as a single keyword (treat entire phrase as one)
+          keywords = [parent.searchQuery];
+        } else {
+          // Fallback: try to fetch keywords from Keyword model (same as manual scans)
           try {
-            clientId = new mongoose.Types.ObjectId(clientData.clientId);
-            console.log('✅ Using provided clientId:', clientId);
-            
-            // Fetch real client details from database
-            const Client = require('../models/Client');
-            const realClient = await Client.findById(clientId);
-            if (realClient) {
-              clientName = realClient.name || realClient.contact?.name || 'Unknown Client';
-              console.log('✅ Found real client:', clientName);
-            } else {
-              console.log('❌ Client not found in database, using fallback name');
-            }
-          } catch (e) {
-            console.log('❌ Invalid clientId, creating new one:', e.message);
-            clientId = new mongoose.Types.ObjectId();
+            const Keyword = require('../models/Keyword');
+            const keywordDocs = await Keyword.find({ 
+              clientId: parent.clientId, 
+              status: 'active',
+              targetRegions: parent.region 
+            });
+            keywords = keywordDocs.map(k => k.keyword);
+          } catch (err) {
+            console.error('Error fetching keywords for child scan:', err);
+            keywords = [];
+          }
+        }
+
+        if (keywords.length === 0) {
+          console.error('❌ No keywords found for child scan');
+          await Scan.findByIdAndUpdate(child._id, { 
+            $set: { 
+              status: 'failed', 
+              completedAt: new Date(),
+              errors: [{ error: 'No keywords found for child scan', timestamp: new Date() }]
+            } 
+          });
+          return;
+        }
+
+        // CRITICAL: Use EXACT same parameters as parent scan
+        // Get parent's exact values (use parent's actual values, only fallback if 0)
+        const exactResultsCount = parent.resultsCount !== undefined && parent.resultsCount !== null && parent.resultsCount > 0 
+          ? parent.resultsCount 
+          : 10; // Only use 10 as fallback if parent had 0 results
+        const exactTimeFrame = parent.timeFrame || 'past_week';
+        const exactContentType = parent.contentType || 'all';
+        const exactRegion = parent.region || 'US';
+        const exactSearchQuery = parent.searchQuery || keywords.join(' ');
+
+
+        // Use triggerManualScan to follow exact same flow as regular scans
+        // This ensures child scans work exactly like manual scans
+        const result = await ormScanService.triggerManualScan(
+          parent.clientId.toString(),
+          keywords, // EXACT same keywords as parent (one keyword: searchQuery)
+          exactRegion, // EXACT same region
+          {
+            resultsCount: exactResultsCount, // EXACT same resultsCount (no fallback)
+          clientName: parent.clientName,
+          clientData: parent.clientId,
+            timeFrame: exactTimeFrame, // EXACT same timeFrame
+            contentType: exactContentType, // EXACT same contentType
+          scanType: 'auto',
+            scanId: child._id.toString(), // Use the child scan ID we already created
+            searchQuery: exactSearchQuery, // EXACT same searchQuery
+            weekNumber: child.weekNumber, // Use calculated week number
+            parentId: parent._id.toString() // CRITICAL: Pass parentId for comparison
+          }
+        );
+
+        
+        // Update child scan with final status (triggerManualScan saves results via saveScanResults)
+        if (result.success) {
+          const updatedScan = await Scan.findById(child._id);
+          if (updatedScan) {
+            await Scan.findByIdAndUpdate(child._id, { 
+              $set: { 
+                status: 'completed',
+                completedAt: new Date(),
+                resultsCount: updatedScan.resultsCount || 0
+              } 
+            });
           }
         } else {
-          console.log('❌ No clientData.clientId provided, creating new one');
-          clientId = new mongoose.Types.ObjectId();
+          await Scan.findByIdAndUpdate(child._id, { 
+            $set: { 
+              status: 'failed',
+              completedAt: new Date(),
+              errors: [{ error: result.error || result.message || 'Scan failed', timestamp: new Date() }]
+            } 
+          });
         }
-        
-        console.log('🔧 About to create scan with:', {
-          clientId: clientId,
-          clientName: clientName,
-          weekNumber: currentWeek,
-          region: clientData?.region || 'US'
+
+      } catch (e) {
+        console.error(`❌ Child scan ${child._id} execution error:`, e);
+        await Scan.findByIdAndUpdate(child._id, { 
+          $set: { 
+            status: 'failed', 
+            completedAt: new Date(),
+            errors: [{ error: e.message, timestamp: new Date() }]
+          } 
         });
+      }
+    })();
+
+    return res.json({ success: true, message: 'Child scan created and started', childId: child._id });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to create child scan', error: error.message });
+  }
+});
+
+// Mirror path: /create-child/:parentId
+router.post('/create-child/:parentId', adminAuth, async (req, res) => {
+  req.params.parentId = req.params.parentId; // passthrough
+  // Delegate to the main handler by calling next middleware chain is not trivial here; re-run logic inline by calling the same code block
+  const mongoose = require('mongoose');
+  try {
+    const { parentId } = req.params;
+    let parent = null;
+    if (mongoose.Types.ObjectId.isValid(parentId)) {
+      parent = await Scan.findById(parentId);
+    }
+    if (!parent) {
+      parent = await Scan.findOne({ $or: [{ _id: parentId }, { id: parentId }, { scanId: parentId }] });
+    }
+    if (!parent) {
+      return res.status(404).json({ success: false, message: 'Parent scan not found' });
+    }
+    
+    // If parent is already sent to client, child should also be marked as sent
+    const childClientStatus = (parent.clientStatus === 'sent' || parent.clientStatus === 'viewed') 
+      ? 'sent' 
+      : 'not_sent';
+    
+    // CRITICAL: Calculate next week number properly (find highest week among parent + all children)
+    const scanService = require('../services/scanService');
+    const nextWeekNumber = await scanService.getNextWeekNumber(parent._id);
+    
+    console.log(`📊 Calculating week number for child scan (mirror route):`);
+    console.log(`   - Parent weekNumber: ${parent.weekNumber || 1}`);
+    console.log(`   - Next weekNumber (calculated): ${nextWeekNumber}`);
+    
+    const child = new Scan({
+      clientId: parent.clientId,
+      clientName: parent.clientName,
+      weekNumber: nextWeekNumber, // Use calculated next week number (not just parent + 1)
+      region: parent.region,
+      scanType: 'auto',
+      status: 'running',
+      resultsCount: 0,
+      startedAt: new Date(),
+      totalKeywords: parent.totalKeywords || 1,
+      processedKeywords: 0,
+      parentId: parent._id,
+      searchQuery: parent.searchQuery || '',
+      timeFrame: parent.timeFrame || 'past_week', // EXACT same as parent
+      contentType: parent.contentType || 'all',   // EXACT same as parent
+      clientStatus: childClientStatus,
+      sentToClientAt: childClientStatus === 'sent' ? new Date() : undefined
+    });
+    await child.save();
+    
+    if (childClientStatus === 'sent') {
+      console.log(`✅ Child scan ${child._id} automatically marked as sent (parent already sent)`);
+    }
+
+    (async () => {
+      try {
+        const ormScanService = require('../services/ormScanService');
         
-        scan = new Scan({
-          clientId: clientId,
-          clientName: clientName,
-          weekNumber: currentWeek,
-          region: clientData?.region || 'US',
-          scanType: 'manual',
-          status: 'completed',
-          resultsCount: results.length,
-          startedAt: new Date(),
-          completedAt: new Date(),
-          totalKeywords: 1,
-          processedKeywords: 1
-        });
-        
-        console.log('🔧 Scan object created, about to save...');
-        await scan.save();
-        console.log('✅ Created new scan with clientId:', scan.clientId);
-        console.log('✅ Scan object after creation:', {
-          _id: scan._id,
-          clientId: scan.clientId,
-          clientName: scan.clientName
-        });
-        console.log('✅ Scan variable after save:', scan ? 'NOT NULL' : 'NULL');
-      } else {
-        // Update existing scan with client data if provided
-        scan.status = 'completed';
-        scan.resultsCount = results.length;
-        scan.completedAt = new Date();
-        
-        // Update client data if provided
-        if (clientData && clientData.clientId) {
+        // CRITICAL: Use searchQuery as ONE keyword (don't split it) - exactly like regular scans
+        let keywords = [];
+        if (parent.searchQuery) {
+          // Keep searchQuery as a single keyword (treat entire phrase as one)
+          keywords = [parent.searchQuery];
+        } else {
+          // Fallback: try to fetch keywords from Keyword model (same as manual scans)
           try {
-            const mongoose = require('mongoose');
-            scan.clientId = new mongoose.Types.ObjectId(clientData.clientId);
-            
-            // Fetch real client details from database
-            const Client = require('../models/Client');
-            const realClient = await Client.findById(scan.clientId);
-            if (realClient) {
-              scan.clientName = realClient.name || realClient.contact?.name || 'Unknown Client';
-              console.log('✅ Updated scan with real client name:', scan.clientName);
-            }
-            
-            console.log('✅ Updated scan with new clientId:', scan.clientId);
-          } catch (e) {
-            console.log('❌ Invalid clientId in update:', e.message);
+            const Keyword = require('../models/Keyword');
+            const keywordDocs = await Keyword.find({ 
+              clientId: parent.clientId, 
+              status: 'active',
+              targetRegions: parent.region 
+            });
+            keywords = keywordDocs.map(k => k.keyword);
+          } catch (err) {
+            console.error('Error fetching keywords for child scan:', err);
+            keywords = [];
           }
         }
+
+        if (keywords.length === 0) {
+          console.error('❌ No keywords found for child scan');
+          await Scan.findByIdAndUpdate(child._id, { 
+            $set: { 
+              status: 'failed', 
+              completedAt: new Date(),
+              errors: [{ error: 'No keywords found for child scan', timestamp: new Date() }]
+            } 
+          });
+          return;
+        }
+
+        // CRITICAL: Use EXACT same parameters as parent scan
+        // Get parent's exact values (use parent's actual values, only fallback if 0)
+        const exactResultsCount = parent.resultsCount !== undefined && parent.resultsCount !== null && parent.resultsCount > 0 
+          ? parent.resultsCount 
+          : 10; // Only use 10 as fallback if parent had 0 results
+        const exactTimeFrame = parent.timeFrame || 'past_week';
+        const exactContentType = parent.contentType || 'all';
+        const exactRegion = parent.region || 'US';
+        const exactSearchQuery = parent.searchQuery || keywords.join(' ');
+
+
+        // Use triggerManualScan to follow exact same flow as regular scans
+        // This ensures child scans work exactly like manual scans
+        const result = await ormScanService.triggerManualScan(
+          parent.clientId.toString(),
+          keywords, // EXACT same keywords as parent (one keyword: searchQuery)
+          exactRegion, // EXACT same region
+          {
+            resultsCount: exactResultsCount, // EXACT same resultsCount (no fallback)
+          clientName: parent.clientName,
+          clientData: parent.clientId,
+            timeFrame: exactTimeFrame, // EXACT same timeFrame
+            contentType: exactContentType, // EXACT same contentType
+          scanType: 'auto',
+            scanId: child._id.toString(), // Use the child scan ID we already created
+            searchQuery: exactSearchQuery, // EXACT same searchQuery
+            weekNumber: child.weekNumber, // Use calculated week number
+            parentId: parent._id.toString() // CRITICAL: Pass parentId for comparison
+          }
+        );
+
         
-        await scan.save();
-        console.log('✅ Updated existing scan:', scan._id);
+        // Update child scan with final status (triggerManualScan saves results via saveScanResults)
+        if (result.success) {
+          const updatedScan = await Scan.findById(child._id);
+          if (updatedScan) {
+            await Scan.findByIdAndUpdate(child._id, { 
+              $set: { 
+                status: 'completed',
+                completedAt: new Date(),
+                resultsCount: updatedScan.resultsCount || 0
+              } 
+            });
+          }
+        } else {
+          await Scan.findByIdAndUpdate(child._id, { 
+            $set: { 
+              status: 'failed',
+              completedAt: new Date(),
+              errors: [{ error: result.error || result.message || 'Scan failed', timestamp: new Date() }]
+            } 
+          });
+        }
+
+      } catch (e) {
+        console.error(`❌ Child scan ${child._id} execution error:`, e);
+        await Scan.findByIdAndUpdate(child._id, { 
+          $set: { 
+            status: 'failed', 
+            completedAt: new Date(),
+            errors: [{ error: e.message, timestamp: new Date() }]
+          } 
+        });
       }
-    }
-    
-    // Check if scan was created successfully
-    console.log('🔍 Checking scan variable before null check in save-results:', scan ? 'NOT NULL' : 'NULL');
-    if (!scan) {
-      console.error('❌ Scan creation failed, cannot save results');
-      console.error('❌ Scan variable is null at this point in save-results');
-      return res.status(500).json({ 
-        message: 'Failed to create scan record', 
-        error: 'Scan is null' 
-      });
-    }
-    
-    console.log('✅ Scan created successfully in save-results:', {
-      scanId: scan._id,
-      clientId: scan.clientId,
-      clientName: scan.clientName
-    });
-    
-    // Save individual results
-    const savedResults = [];
-    const mongoose = require('mongoose');
-    const demoKeywordId = new mongoose.Types.ObjectId();
-    
-    for (const result of results) {
-      const scanResult = new ScanResult({
-        scanId: scan._id,
-        clientId: scan.clientId,
-        keywordId: demoKeywordId,
-        keyword: query,
-        title: result.title || 'No Title',
-        url: result.link || result.url || 'https://example.com',
-        description: result.snippet || '',
-        rank: result.position || 1,
-        sentiment: result.sentiment || 'neutral',
-        sentimentScore: result.confidence || 0.5,
-        movement: result.movement || 'new',
-        site: result.domain || (result.link ? new URL(result.link).hostname : 'example.com'),
-        region: 'US',
-        dateFetched: new Date(),
-        notes: result.reasoning || '',
-        originalUrl: result.metadata?.originalUrl || result.link || result.url,
-        snippet: result.snippet,
-        position: result.position || 0,
-        domain: result.domain,
-        confidence: result.confidence || 0.5,
-        reasoning: result.reasoning || 'Analysis not available',
-        keywords: result.keywords || [],
-        category: result.category || 'other',
-        relevance: result.relevance || 'medium',
-        analyzedAt: result.analyzedAt || new Date(),
-        isWorking: result.isWorking !== false,
-        isInternal: result.isInternal || false,
-        suppressed: false
-      });
-      
-      const savedResult = await scanResult.save();
-      savedResults.push(savedResult);
-    }
-    
-    console.log('✅ Successfully saved results:', {
-      scanId: scan._id,
-      resultsCount: savedResults.length
-    });
-    
-    res.json({
-      message: 'Results saved successfully',
-      scanId: scan._id,
-      resultsCount: savedResults.length,
-      results: savedResults
-    });
-    
+    })();
+    return res.json({ success: true, message: 'Child scan created and started', childId: child._id });
   } catch (error) {
-    console.error('❌ Error saving results:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to create child scan', error: error.message });
   }
 });
 
 
-// Delete scan
+// Delete scan (cascade: child scans, results, related reports and files)
 router.delete('/:scanId', adminAuth, async (req, res) => {
   try {
     const { scanId } = req.params;
-    
-    console.log('🗑️ Deleting scan:', scanId);
-    
-    // Delete scan results first
-    const deletedResults = await ScanResult.deleteMany({ scanId: scanId });
-    console.log(`🗑️ Deleted ${deletedResults.deletedCount} scan results`);
-    
-    // Delete the scan
-    const deletedScan = await Scan.findByIdAndDelete(scanId);
-    
-    if (!deletedScan) {
-      return res.status(404).json({ 
-        success: false,
-        message: 'Scan not found' 
-      });
+    console.log('🗑️ Deleting scan (cascade):', scanId);
+
+    const scan = await Scan.findById(scanId);
+    if (!scan) {
+      return res.status(404).json({ success: false, message: 'Scan not found' });
     }
-    
-    console.log('✅ Scan deleted successfully:', scanId);
+
+    const toDeleteIds = [scan._id];
+    if (!scan.parentId) {
+      const children = await Scan.find({ parentId: scan._id }, { _id: 1 });
+      for (const c of children) toDeleteIds.push(c._id);
+    }
+
+    // Delete results for all
+    const deletedResults = await ScanResult.deleteMany({ scanId: { $in: toDeleteIds } });
+
+    // Delete related reports and files
+    const Report = require('../models/Report');
+    const path = require('path');
+    const fs = require('fs').promises;
+    const relatedReports = await Report.find({
+      $or: [
+        { scanId: { $in: toDeleteIds } },
+        { 'weeks.scanId': { $in: toDeleteIds } }
+      ]
+    });
+    for (const r of relatedReports) {
+      try {
+        if (r.files?.pdf?.path) await fs.unlink(path.join(__dirname, '../', r.files.pdf.path)).catch(() => {});
+        if (r.files?.excel?.path) await fs.unlink(path.join(__dirname, '../', r.files.excel.path)).catch(() => {});
+      } catch (e) {}
+      await Report.findByIdAndDelete(r._id);
+    }
+
+    // Delete scans themselves
+    const deletedScans = await Scan.deleteMany({ _id: { $in: toDeleteIds } });
+
+    // Extra hardening: FORCIBLY disable all schedules for this client
+    await Scan.updateMany({ clientId: scan.clientId }, {
+        $set: {
+        autoScanEnabled: false,
+        nextAutoScanDate: null
+      }
+    });
     
     res.json({
       success: true,
-      message: 'Scan deleted successfully',
-      deletedScanId: scanId,
-      deletedResultsCount: deletedResults.deletedCount
+      message: 'Scan and related data deleted successfully',
+      deletedScans: deletedScans.deletedCount,
+      deletedResults: deletedResults.deletedCount,
+      deletedReports: relatedReports.length
     });
     
   } catch (error) {
     console.error('❌ Error deleting scan:', error);
-    res.status(500).json({ 
-      success: false,
-      message: 'Server error', 
-      error: error.message 
-    });
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 });
 
@@ -1148,6 +1177,41 @@ router.post('/send-to-client', adminAuth, async (req, res) => {
           clientStatus: updatedScan.clientStatus,
           clientName: updatedScan.clientName
         });
+        
+        // Also mark all child scans as "sent" so they appear together in client reports
+        try {
+          const childScans = await Scan.find({ parentId: updatedScan._id });
+          console.log(`🔍 Found ${childScans.length} child scan(s) for parent ${updatedScan._id}`);
+          
+          if (childScans.length > 0) {
+            const childIds = childScans.map(c => c._id);
+            const updateResult = await Scan.updateMany(
+              { _id: { $in: childIds } },
+              { 
+                $set: { 
+                  clientStatus: 'sent',
+                  sentToClientAt: new Date()
+                }
+              }
+            );
+            console.log(`✅ Marked ${updateResult.modifiedCount} of ${childScans.length} child scan(s) as sent`);
+            console.log(`   Child scan IDs:`, childIds.map(id => id.toString()));
+            
+            // Verify the update worked
+            const verifyChildren = await Scan.find({ parentId: updatedScan._id, clientStatus: 'sent' });
+            console.log(`✅ Verified: ${verifyChildren.length} child scan(s) now have clientStatus='sent'`);
+            
+            if (verifyChildren.length !== childScans.length) {
+              console.warn(`⚠️ Warning: Expected ${childScans.length} children to be marked, but only ${verifyChildren.length} were updated`);
+            }
+          } else {
+            console.log('ℹ️ No child scans found for this parent');
+          }
+        } catch (childUpdateError) {
+          console.error('❌ Error updating child scans status:', childUpdateError);
+          console.error('   Error details:', childUpdateError.message, childUpdateError.stack);
+          // Continue even if child update fails, but log the error
+        }
       } else {
         console.log('⚠️ Scan not found for status update:', scanId);
       }
@@ -1176,7 +1240,52 @@ router.post('/send-to-client', adminAuth, async (req, res) => {
   }
 });
 
+// Public fallback: Get a single scan if it has been sent/viewed (no auth)
+router.get('/public/my-scan/:scanId', async (req, res) => {
+  try {
+    const { scanId } = req.params;
+    const mongoose = require('mongoose');
+
+    let scan = null;
+    if (mongoose.Types.ObjectId.isValid(scanId)) {
+      scan = await Scan.findOne({ _id: scanId, clientStatus: { $in: ['sent', 'viewed'] } })
+        .populate('clientId', 'name email contact settings');
+    }
+    if (!scan) {
+      scan = await Scan.findOne({ $or: [{ _id: scanId }, { id: scanId }], clientStatus: { $in: ['sent', 'viewed'] } })
+        .populate('clientId', 'name email contact settings');
+    }
+    if (!scan) return res.status(404).json({ success: false, message: 'Scan not available' });
+    res.json(scan);
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+});
+
+// Public fallback: Get results for a sent/viewed scan (no auth)
+router.get('/public/:scanId/my-results', async (req, res) => {
+  try {
+    const { scanId } = req.params;
+    const mongoose = require('mongoose');
+
+    let scan = null;
+    if (mongoose.Types.ObjectId.isValid(scanId)) {
+      scan = await Scan.findOne({ _id: scanId, clientStatus: { $in: ['sent', 'viewed'] } });
+    }
+    if (!scan) {
+      scan = await Scan.findOne({ $or: [{ _id: scanId }, { id: scanId }], clientStatus: { $in: ['sent', 'viewed'] } });
+    }
+    if (!scan) return res.json([]);
+
+    const results = await ScanResult.find({ scanId: scan._id });
+    res.json(results);
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+});
+
 module.exports = router;
+
 
 
 

@@ -21,7 +21,7 @@ const reportSchema = new mongoose.Schema({
   },
   reportType: {
     type: String,
-    enum: ['weekly', 'monthly', 'custom'],
+    enum: ['weekly', 'weekly_comparison', 'monthly', 'custom'],
     default: 'weekly',
   },
   status: {
@@ -100,6 +100,76 @@ const reportSchema = new mongoose.Schema({
       return new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
     },
   },
+  // 🎯 NEW: Support for multiple weeks in one report
+  weeks: [{
+    weekNumber: {
+      type: Number,
+      required: true,
+    },
+    scanId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Scan',
+      required: true,
+    },
+    completedAt: {
+      type: Date,
+      required: true,
+    },
+    resultsCount: {
+      type: Number,
+      default: 0,
+    },
+    summary: {
+      type: Object,
+      default: {}
+    }
+  }],
+  
+  // 🎯 NEW: Weekly comparison data
+  comparisonData: {
+    previousWeek: {
+      weekNumber: Number,
+      scanId: mongoose.Schema.Types.ObjectId,
+      resultsCount: Number,
+      summary: Object
+    },
+    currentWeek: {
+      weekNumber: Number,
+      scanId: mongoose.Schema.Types.ObjectId,
+      resultsCount: Number,
+      summary: Object
+    },
+    changes: {
+      newResults: Number,
+      disappearedResults: Number,
+      commonResults: Number,
+      totalChange: Number
+    },
+    movement: {
+      improved: Number,
+      dropped: Number,
+      unchanged: Number,
+      new: Number,
+      disappeared: Number
+    },
+    sentimentChanges: [{
+      url: String,
+      previousSentiment: String,
+      currentSentiment: String,
+      sentimentChange: Boolean
+    }],
+    rankingChanges: [{
+      url: String,
+      previousRank: Number,
+      currentRank: Number,
+      rankChange: Number,
+      movement: String
+    }]
+  },
+  
+  // Dynamic fields for each week's data
+  // week2Summary, week3Summary, etc. will be added dynamically
+  // week2Charts, week3Charts, etc. will be added dynamically
 });
 
 // Index for efficient queries

@@ -54,7 +54,99 @@ router.get('/admin', adminAuth, async (req, res) => {
               date: '$completedAt'
             }
           },
+          count: { $sum: 1 },
+          totalResults: { $sum: '$resultsCount' }
+        }
+      },
+      {
+        $sort: { _id: 1 }
+      }
+    ]);
+
+    // Get client activity data
+    const clientActivity = await Scan.aggregate([
+      {
+        $match: { status: 'completed' }
+      },
+      {
+        $group: {
+          _id: '$clientId',
+          scanCount: { $sum: 1 },
+          totalResults: { $sum: '$resultsCount' }
+        }
+      },
+      {
+        $lookup: {
+          from: 'clients',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'client'
+        }
+      },
+      {
+        $unwind: '$client'
+      },
+      {
+        $project: {
+          name: '$client.name',
+          scans: '$scanCount',
+          results: '$totalResults'
+        }
+      },
+      {
+        $sort: { scans: -1 }
+      },
+      {
+        $limit: 10
+      }
+    ]);
+
+    // Get sentiment analysis data
+    const sentimentData = await ScanResult.aggregate([
+      {
+        $group: {
+          _id: '$sentiment',
           count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // Get weekly sentiment trends
+    const weeklySentimentTrends = await ScanResult.aggregate([
+      {
+        $lookup: {
+          from: 'scans',
+          localField: 'scanId',
+          foreignField: '_id',
+          as: 'scan'
+        }
+      },
+      {
+        $unwind: '$scan'
+      },
+      {
+        $match: {
+          'scan.completedAt': { $gte: new Date(Date.now() - 28 * 24 * 60 * 60 * 1000) }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            week: { $week: '$scan.completedAt' },
+            sentiment: '$sentiment'
+          },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $group: {
+          _id: '$_id.week',
+          sentiments: {
+            $push: {
+              sentiment: '$_id.sentiment',
+              count: '$count'
+            }
+          }
         }
       },
       {
@@ -77,6 +169,9 @@ router.get('/admin', adminAuth, async (req, res) => {
       },
       charts: {
         scanTrends: recentScanStats,
+        clientActivity: clientActivity,
+        sentimentDistribution: sentimentData,
+        weeklySentimentTrends: weeklySentimentTrends
       }
     });
   } catch (error) {
@@ -134,6 +229,15 @@ router.get('/client', clientAuth, async (req, res) => {
 
     const stats = scanStats[0] || {};
 
+    // Get sentiment trend data for charts
+    const sentimentTrends = await getSentimentTrends(clientId);
+    const sentimentDistribution = await getSentimentDistribution(clientId);
+    
+    console.log('📊 Sentiment trends for client:', clientId);
+    console.log('📈 Negative trend:', sentimentTrends.negativeTrend);
+    console.log('📈 Positive trend:', sentimentTrends.positiveTrend);
+    console.log('🥧 Sentiment distribution:', sentimentDistribution);
+
     res.json({
       client: {
         name: client.name,
@@ -149,7 +253,10 @@ router.get('/client', clientAuth, async (req, res) => {
         runningScans: stats.runningScans || 0,
         failedScans: stats.failedScans || 0,
         totalResults: stats.totalResults || 0,
-        avgResults: Math.round(stats.avgResults || 0)
+        avgResults: Math.round(stats.avgResults || 0),
+        negativeTrend: sentimentTrends.negativeTrend || [],
+        positiveTrend: sentimentTrends.positiveTrend || [],
+        sentimentDistribution: sentimentDistribution || []
       },
       recentActivity: {
         scans: recentScans || [],
@@ -295,6 +402,97 @@ router.get('/rank-tracking', clientAuth, async (req, res) => {
   }
 });
 
+// Get ranking changes for reports
+router.get('/ranking-changes/:scanId', adminAuth, async (req, res) => {
+  try {
+    const { scanId } = req.params;
+    const ScanResult = require('../models/ScanResult');
+    const Scan = require('../models/Scan');
+    
+    // Get current scan
+    const currentScan = await Scan.findById(scanId);
+    if (!currentScan) {
+      return res.status(404).json({ message: 'Scan not found' });
+    }
+    
+    // Get current scan results
+    const currentResults = await ScanResult.find({ scanId });
+    
+    // Get previous scan for comparison
+    const previousScan = await Scan.findOne({
+      clientId: currentScan.clientId,
+      region: currentScan.region,
+      status: 'completed',
+      completedAt: { $lt: currentScan.completedAt }
+    }).sort({ completedAt: -1 });
+    
+    let rankingChanges = {
+      new: 0,
+      improved: 0,
+      dropped: 0,
+      unchanged: 0,
+      disappeared: 0
+    };
+    
+    if (previousScan) {
+      // Get previous scan results
+      const previousResults = await ScanResult.find({ scanId: previousScan._id });
+      const previousResultsMap = new Map();
+      
+      // Create map of previous results for quick lookup
+      previousResults.forEach(prev => {
+        const key = `${prev.url}_${prev.keyword}`;
+        previousResultsMap.set(key, prev);
+      });
+      
+      // Analyze current results
+      for (const currentResult of currentResults) {
+        const key = `${currentResult.url}_${currentResult.keyword}`;
+        const previousResult = previousResultsMap.get(key);
+        
+        if (previousResult) {
+          // URL exists in previous scan - check ranking change
+          if (currentResult.rank < previousResult.rank) {
+            rankingChanges.improved++;
+          } else if (currentResult.rank > previousResult.rank) {
+            rankingChanges.dropped++;
+          } else {
+            rankingChanges.unchanged++;
+          }
+        } else {
+          // New URL
+          rankingChanges.new++;
+        }
+      }
+      
+      // Check for disappeared URLs
+      const currentUrls = new Set(currentResults.map(r => `${r.url}_${r.keyword}`));
+      const disappearedCount = previousResults.filter(prev => 
+        !currentUrls.has(`${prev.url}_${prev.keyword}`)
+      ).length;
+      rankingChanges.disappeared = disappearedCount;
+      
+    } else {
+      // First scan - all results are new
+      rankingChanges.new = currentResults.length;
+    }
+    
+    res.json({
+      scanId,
+      clientId: currentScan.clientId,
+      region: currentScan.region,
+      weekNumber: currentScan.weekNumber,
+      rankingChanges,
+      totalResults: currentResults.length,
+      scanDate: currentScan.completedAt
+    });
+    
+  } catch (error) {
+    console.error('Ranking changes error:', error);
+    res.status(500).json({ message: 'Failed to get ranking changes', error: error.message });
+  }
+});
+
 // Helper function to get campaign statistics
 async function getCampaignStats(clientId) {
   try {
@@ -405,6 +603,102 @@ function calculateSentimentScore(results) {
   if (positiveCount + negativeCount === 0) return 0;
   
   return Math.round(((positiveCount - negativeCount) / (positiveCount + negativeCount)) * 100);
+}
+
+// Helper function to get sentiment trends for charts
+async function getSentimentTrends(clientId) {
+  try {
+    console.log('🔍 Getting sentiment trends for client:', clientId);
+    
+    // Get the last 7 completed scans
+    const recentScans = await Scan.find({ 
+      clientId, 
+      status: 'completed' 
+    })
+    .sort({ completedAt: -1 })
+    .limit(7);
+
+    console.log('📊 Found recent scans:', recentScans.length);
+
+    const negativeTrend = [];
+    const positiveTrend = [];
+
+    for (const scan of recentScans.reverse()) {
+      // Get scan results for this scan
+      const results = await ScanResult.find({ scanId: scan._id });
+      
+      const negativeCount = results.filter(r => r.sentiment === 'negative').length;
+      const positiveCount = results.filter(r => r.sentiment === 'positive').length;
+      
+      console.log(`📈 Scan ${scan._id}: ${negativeCount} negative, ${positiveCount} positive`);
+      
+      negativeTrend.push({
+        scanDate: scan.completedAt,
+        negativeLinks: negativeCount
+      });
+      
+      positiveTrend.push({
+        scanDate: scan.completedAt,
+        positiveLinks: positiveCount
+      });
+    }
+
+    console.log('📊 Final trends:', { negativeTrend, positiveTrend });
+    return { negativeTrend, positiveTrend };
+  } catch (error) {
+    console.error('Error getting sentiment trends:', error);
+    return { negativeTrend: [], positiveTrend: [] };
+  }
+}
+
+// Helper function to get current sentiment distribution
+async function getSentimentDistribution(clientId) {
+  try {
+    console.log('🥧 Getting sentiment distribution for client:', clientId);
+    
+    // Get the most recent completed scan
+    const latestScan = await Scan.findOne({ 
+      clientId, 
+      status: 'completed' 
+    }).sort({ completedAt: -1 });
+
+    console.log('🔍 Latest scan found:', latestScan ? latestScan._id : 'None');
+
+    if (!latestScan) {
+      console.log('❌ No completed scans found, returning empty distribution');
+      return [
+        { name: 'Positive', value: 0, color: '#34d399' },
+        { name: 'Negative', value: 0, color: '#f87171' },
+        { name: 'Neutral', value: 0, color: '#9ca3af' }
+      ];
+    }
+
+    // Get results for the latest scan
+    const results = await ScanResult.find({ scanId: latestScan._id });
+    console.log('📊 Found results:', results.length);
+    
+    const positiveCount = results.filter(r => r.sentiment === 'positive').length;
+    const negativeCount = results.filter(r => r.sentiment === 'negative').length;
+    const neutralCount = results.filter(r => r.sentiment === 'neutral').length;
+
+    console.log(`🥧 Sentiment counts: ${positiveCount} positive, ${negativeCount} negative, ${neutralCount} neutral`);
+
+    const distribution = [
+      { name: 'Positive', value: positiveCount, color: '#34d399' },
+      { name: 'Negative', value: negativeCount, color: '#f87171' },
+      { name: 'Neutral', value: neutralCount, color: '#9ca3af' }
+    ];
+
+    console.log('🥧 Final distribution:', distribution);
+    return distribution;
+  } catch (error) {
+    console.error('Error getting sentiment distribution:', error);
+    return [
+      { name: 'Positive', value: 0, color: '#34d399' },
+      { name: 'Negative', value: 0, color: '#f87171' },
+      { name: 'Neutral', value: 0, color: '#9ca3af' }
+    ];
+  }
 }
 
 module.exports = router;

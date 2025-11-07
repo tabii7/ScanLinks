@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Layout from '../../components/Layout';
+import ModernLayout from '../../components/ModernLayout';
 import { motion } from 'framer-motion';
 import {
   Plus,
@@ -155,11 +155,11 @@ const ClientManagement = () => {
 
   if (loading) {
     return (
-      <Layout isAdmin={true}>
+      <ModernLayout isAdmin={true}>
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ace-600"></div>
         </div>
-      </Layout>
+      </ModernLayout>
     );
   }
 
@@ -237,7 +237,7 @@ const ClientManagement = () => {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200" style={{backgroundColor: '#04041B'}}>
                 {filteredClients.map((client) => (
                   <motion.tr
                     key={client._id}
