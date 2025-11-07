@@ -102,8 +102,20 @@ class ORMScanService {
       }
       
       // Step 2: Analyze sentiment using OpenAI with timeout protection
-      // If OpenAI fails, continue with results but sentiment will be 'neutral' with flag
+      // CRITICAL: OpenAI MUST be called - no fallback to dummy data
+      console.log('🤖 Step 2: Calling OpenAI for sentiment analysis...');
+      console.log(`   - Search results to analyze: ${searchResults.length}`);
+      console.log(`   - Client: ${options.clientData?.name || 'Unknown'}`);
+      
       const sentimentResults = await this.analyzeSentimentWithTimeout(searchResults, options.clientData);
+      
+      // Verify results have sentiment from OpenAI
+      const analyzedCount = sentimentResults.filter(r => r._sentimentAnalyzed === true).length;
+      const notAnalyzedCount = sentimentResults.filter(r => r._sentimentAnalyzed === false).length;
+      
+      console.log(`📊 Sentiment analysis summary:`);
+      console.log(`   ✅ Analyzed by OpenAI: ${analyzedCount}`);
+      console.log(`   ❌ NOT analyzed (will show "Sentiments Not Created"): ${notAnalyzedCount}`);
       
       // Ensure we have results even if sentiment analysis failed
       if (sentimentResults.length === 0) {
@@ -633,36 +645,51 @@ class ORMScanService {
       }, 300000); // 5 minute timeout
 
       try {
+        console.log('🤖 Calling OpenAI for sentiment analysis...');
         const results = await sentimentAnalysisService.analyzeSentiment(searchResults, clientData);
         clearTimeout(timeout);
         
-        // Validate results before returning - use defaults if not valid
-        const validatedResults = results.map(result => ({
-          ...result,
-          sentiment: (result.sentiment === 'positive' || result.sentiment === 'negative' || result.sentiment === 'neutral') 
-            ? result.sentiment 
-            : 'neutral', // Default to neutral
-          confidence: (typeof result.confidence === 'number' && !isNaN(result.confidence)) 
-            ? Math.max(0, Math.min(1, result.confidence)) 
-            : 0.5, // Default to 0.5
-          _sentimentAnalyzed: true // Flag that sentiment was actually analyzed
-        }));
+        console.log(`✅ OpenAI returned ${results.length} analyzed result(s)`);
         
+        // Validate results before returning - use defaults if not valid
+        const validatedResults = results.map((result, index) => {
+          const sentiment = (result.sentiment === 'positive' || result.sentiment === 'negative' || result.sentiment === 'neutral') 
+            ? result.sentiment 
+            : 'neutral'; // Default to neutral only if invalid value
+          const confidence = (typeof result.confidence === 'number' && !isNaN(result.confidence)) 
+            ? Math.max(0, Math.min(1, result.confidence)) 
+            : 0.5; // Default to 0.5 only if invalid value
+          
+          console.log(`   Result ${index + 1}: ${sentiment} (confidence: ${confidence}) - ${result.title?.substring(0, 50) || 'N/A'}`);
+          
+          return {
+            ...result,
+            sentiment: sentiment,
+            confidence: confidence,
+            _sentimentAnalyzed: true // Flag that sentiment was actually analyzed by OpenAI
+          };
+        });
+        
+        console.log(`✅ All ${validatedResults.length} results analyzed by OpenAI`);
         resolve(validatedResults);
       } catch (error) {
         clearTimeout(timeout);
-        console.error('Sentiment analysis failed:', error.message);
-        // Return results with default sentiment values instead of rejecting
+        console.error('❌ Sentiment analysis failed:', error.message);
+        console.error('   Error code:', error.code || 'UNKNOWN');
+        console.error('   ⚠️ Returning results WITHOUT sentiment analysis (will show "Sentiments Not Created")');
+        
+        // Return results with default sentiment values and flag indicating OpenAI failed
+        // Frontend will show "Sentiments Not Created" for these
         resolve(searchResults.map(link => ({
           ...link,
           sentiment: 'neutral', // Use neutral as default (required by schema)
           confidence: 0.5, // Use 0.5 as default (required by schema)
-          reasoning: 'Sentiment analysis unavailable - OpenAI quota exceeded or not configured',
+          reasoning: `Sentiment analysis unavailable - ${error.message}`,
           keywords: [],
           category: 'other',
           relevance: 'medium',
           analyzedAt: new Date().toISOString(),
-          _sentimentAnalyzed: false // Flag to indicate sentiment was not analyzed
+          _sentimentAnalyzed: false // CRITICAL: Flag to indicate sentiment was NOT analyzed by OpenAI
         })));
       }
     });

@@ -499,13 +499,13 @@ const ClientScanResults = () => {
 
   return (
     <>
-      <div className="min-h-screen" style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}>
+      <div className="min-h-screen" style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <div className="mb-8">
             <button
               onClick={() => navigate('/scans')}
-              className="flex items-center text-gray-300 hover:text-white mb-4"
+              className="flex items-center text-gray-300 hover: mb-4"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Scans
@@ -513,7 +513,7 @@ const ClientScanResults = () => {
             
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-white mb-2">
+                <h1 className="text-3xl font-bold  mb-2">
                   {scan?.clientId?.name || scan?.clientName || 'Scan Results'}
                 </h1>
                 <p className="text-gray-300">
@@ -538,7 +538,7 @@ const ClientScanResults = () => {
               <div className="flex space-x-3">
                 <button
                   onClick={handleDownloadReport}
-                  className="flex items-center space-x-2 border border-blue-500 text-blue-400 bg-transparent px-4 py-2 rounded-full hover:bg-blue-500 hover:text-white transition-colors"
+                  className="flex items-center space-x-2 border border-blue-500 text-blue-400 bg-transparent px-4 py-2 rounded-full hover:bg-blue-500 hover: transition-colors"
                 >
                   <Download className="w-4 h-4" />
                   <span>Download Report</span>
@@ -553,9 +553,9 @@ const ClientScanResults = () => {
             if (comparisonData.length === 0) return null;
             
             return (
-              <div className="rounded-xl shadow-lg overflow-hidden mb-6 border border-gray-700" style={{background: 'linear-gradient(to bottom, #04041B 66%, #3b1586 100%)'}}>
+              <div className="rounded-xl shadow-lg overflow-hidden mb-6 border border-gray-700" style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}>
                 <div className="p-6 border-b border-gray-600">
-                  <h2 className="text-xl font-bold text-white">
+                  <h2 className="text-xl font-bold" style={{color: '#fafafa'}}>
                     {scan?.clientId?.name || scan?.clientName || 'Client'} | Link Ranking Movement (Before vs After)
                   </h2>
                   <p className="text-sm text-gray-300 mt-1">
@@ -650,14 +650,14 @@ const ClientScanResults = () => {
           })()}
 
           {/* Filters */}
-          <div className="rounded-lg p-4 border border-gray-700 mb-6" style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}>
+          <div className="rounded-lg p-4 border border-gray-700 mb-6" style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Filter by Week</label>
                 <select
                   value={selectedWeek}
                   onChange={(e) => setSelectedWeek(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white"
+                  className="w-full px-4 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 "
                   disabled
                 >
                   <option value="all">All Results</option>
@@ -669,7 +669,7 @@ const ClientScanResults = () => {
                 <select
                   value={filterBy}
                   onChange={(e) => setFilterBy(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white"
+                  className="w-full px-4 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 "
                 >
                   <option value="all">All Sentiments</option>
                   <option value="positive">Positive</option>
@@ -683,7 +683,7 @@ const ClientScanResults = () => {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white"
+                  className="w-full px-4 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 "
                 >
                   <option value="position">Position</option>
                   <option value="sentiment">Sentiment</option>
@@ -701,7 +701,7 @@ const ClientScanResults = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="rounded-lg p-6 shadow-sm border border-gray-700"
-              style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
+              style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
             >
               <div className="flex items-center">
                 <div className="p-2 bg-gray-800 rounded-lg">
@@ -709,7 +709,7 @@ const ClientScanResults = () => {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-300">Total Results</p>
-                  <p className="text-2xl font-bold text-white">{results.length}</p>
+                  <p className="text-2xl font-bold" style={{color: '#fafafa'}}>{results.length}</p>
                 </div>
               </div>
             </motion.div>
@@ -719,7 +719,7 @@ const ClientScanResults = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
               className="rounded-lg p-6 shadow-sm border border-gray-700"
-              style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
+              style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
             >
               <div className="flex items-center">
                 <div className="p-2 bg-gray-800 rounded-lg">
@@ -739,7 +739,7 @@ const ClientScanResults = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
               className="rounded-lg p-6 shadow-sm border border-gray-700"
-              style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
+              style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
             >
               <div className="flex items-center">
                 <div className="p-2 bg-gray-800 rounded-lg">
@@ -759,7 +759,7 @@ const ClientScanResults = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
               className="rounded-lg p-6 shadow-sm border border-gray-700"
-              style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
+              style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
             >
               <div className="flex items-center">
                 <div className="p-2 bg-gray-800 rounded-lg">
@@ -781,10 +781,10 @@ const ClientScanResults = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
             className="rounded-lg shadow-sm border border-gray-700 mb-8"
-            style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
+            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
           >
             <div className="px-6 py-4 border-b border-gray-700">
-              <h3 className="text-lg font-medium text-white">Ranking Trends</h3>
+              <h3 className="text-lg font-medium" style={{color: '#fafafa'}}>Ranking Trends</h3>
               <p className="text-sm text-gray-300">Position changes from previous scan</p>
             </div>
             
@@ -827,16 +827,16 @@ const ClientScanResults = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
             className="rounded-lg shadow-sm border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
+            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
           >
             <div className="px-6 py-4 border-b border-gray-700">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-white">Scan Results</h3>
+                <h3 className="text-lg font-medium" style={{color: '#fafafa'}}>Scan Results</h3>
                 <div className="flex items-center space-x-4">
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="px-3 py-2 border border-gray-600 rounded-lg text-sm bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="px-3 py-2 border border-gray-600 rounded-lg text-sm bg-gray-800  focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="position">Sort by Position</option>
                     <option value="sentiment">Sort by Sentiment</option>
@@ -847,7 +847,7 @@ const ClientScanResults = () => {
                   <select
                     value={resultsPerPage}
                     onChange={(e) => setResultsPerPage(Number(e.target.value))}
-                    className="px-3 py-2 border border-gray-600 rounded-lg text-sm bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="px-3 py-2 border border-gray-600 rounded-lg text-sm bg-gray-800  focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value={10}>10 per page</option>
                     <option value={25}>25 per page</option>
@@ -861,22 +861,22 @@ const ClientScanResults = () => {
               <table className="w-full">
                 <thead style={{backgroundColor: '#04041B'}}>
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider">
                       Position
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider">
                       Change
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider">
                       Title
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider">
                       Sentiment
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider">
                       Confidence
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
@@ -890,7 +890,7 @@ const ClientScanResults = () => {
                       transition={{ delay: index * 0.05 }}
                       className="hover:bg-gray-700"
                     >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium" style={{color: '#fafafa'}}>
                         #{result.rank || index + 1}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -899,7 +899,7 @@ const ClientScanResults = () => {
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-2">
                           <div className="flex-1">
-                            <div className="text-sm font-medium text-white max-w-md truncate">
+                            <div className="text-sm font-medium  max-w-md truncate">
                               {result.title}
                             </div>
                             <div className="text-sm text-blue-400 max-w-md truncate">
@@ -925,7 +925,7 @@ const ClientScanResults = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button className="border border-purple-500 text-purple-400 bg-transparent hover:bg-purple-500 hover:text-white px-3 py-1 rounded-full text-xs font-medium transition-colors">
+                        <button className="border border-purple-500 text-purple-400 bg-transparent hover:bg-purple-500 hover: px-3 py-1 rounded-full text-xs font-medium transition-colors">
                           View Details
                         </button>
                       </td>
@@ -948,14 +948,14 @@ const ClientScanResults = () => {
                     <button
                       onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                       disabled={currentPage === 1}
-                      className="px-3 py-2 text-sm border border-gray-600 rounded-lg bg-gray-800 text-white hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-3 py-2 text-sm border border-gray-600 rounded-lg bg-gray-800  hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Previous
                     </button>
                     <button
                       onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                       disabled={currentPage === totalPages}
-                      className="px-3 py-2 text-sm border border-gray-600 rounded-lg bg-gray-800 text-white hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-3 py-2 text-sm border border-gray-600 rounded-lg bg-gray-800  hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Next
                     </button>

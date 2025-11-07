@@ -105,10 +105,10 @@ const ScanManagement = () => {
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      pending: { color: 'text-yellow-800', bg: 'bg-yellow-100', icon: Clock },
-      running: { color: 'text-blue-800', bg: 'bg-blue-100', icon: RefreshCw },
-      completed: { color: 'text-green-800', bg: 'bg-green-100', icon: CheckCircle },
-      failed: { color: 'text-red-800', bg: 'bg-red-100', icon: AlertCircle },
+      pending: { color: 'text-yellow-200', bg: 'bg-yellow-900', icon: Clock },
+      running: { color: 'text-blue-200', bg: 'bg-blue-900', icon: RefreshCw },
+      completed: { color: 'text-green-200', bg: 'bg-green-900', icon: CheckCircle },
+      failed: { color: 'text-red-200', bg: 'bg-red-900', icon: AlertCircle },
     };
     
     const config = statusConfig[status] || statusConfig.pending;
@@ -124,8 +124,8 @@ const ScanManagement = () => {
 
   const getScanTypeBadge = (type) => {
     const typeConfig = {
-      manual: { color: 'text-blue-800', bg: 'bg-blue-100' },
-      scheduled: { color: 'text-green-800', bg: 'bg-green-100' },
+      manual: { color: 'text-blue-200', bg: 'bg-blue-900' },
+      scheduled: { color: 'text-green-200', bg: 'bg-green-900' },
       automated: { color: 'text-purple-800', bg: 'bg-purple-100' },
     };
     
@@ -158,7 +158,7 @@ const ScanManagement = () => {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Scan Management</h1>
+          <h1 className="text-3xl font-bold" style={{color: '#fafafa'}}>Scan Management</h1>
           <p className="text-gray-400 mt-2">Monitor and manage ORM scanning activities</p>
         </div>
         <div className="mt-4 lg:mt-0">
@@ -184,7 +184,7 @@ const ScanManagement = () => {
                   placeholder="Search by client..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-600 bg-gray-800 text-white rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400"
+                  className="w-full pl-10 pr-3 py-2 border border-gray-600 bg-gray-800  rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400"
                 />
               </div>
             </div>
@@ -193,7 +193,7 @@ const ScanManagement = () => {
               <select
                 value={filterClient}
                 onChange={(e) => setFilterClient(e.target.value)}
-                className="px-4 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white"
+                className="px-4 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 "
               >
                 <option value="all">All Clients</option>
                 {clients.map((client) => (
@@ -208,7 +208,7 @@ const ScanManagement = () => {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-4 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white"
+                className="px-4 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 "
               >
                 <option value="all">All Status</option>
                 <option value="pending">Pending</option>
@@ -226,31 +226,31 @@ const ScanManagement = () => {
             <table className="min-w-full divide-y divide-gray-700">
               <thead className="bg-gray-800">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{color: '#f3f4f6'}}>
                     Client
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{color: '#f3f4f6'}}>
                     Week
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{color: '#f3f4f6'}}>
                     Region
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{color: '#f3f4f6'}}>
                     Type
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{color: '#f3f4f6'}}>
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{color: '#f3f4f6'}}>
                     Results
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{color: '#f3f4f6'}}>
                     Duration
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{color: '#f3f4f6'}}>
                     Started
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider" style={{color: '#f3f4f6'}}>
                     Actions
                   </th>
                 </tr>
@@ -264,17 +264,17 @@ const ScanManagement = () => {
                     className="hover:bg-gray-800"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-white">
+                      <div className="text-sm font-medium" style={{color: '#fafafa'}}>
                         {scan.clientId?.name || 'Unknown Client'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-white">Week {scan.weekNumber}</div>
+                      <div className="text-sm" style={{color: '#f3f4f6'}}>Week {scan.weekNumber}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <Globe className="h-4 w-4 text-gray-400 mr-1" />
-                        <span className="text-sm text-white">{scan.region}</span>
+                        <span className="text-sm" style={{color: '#f3f4f6'}}>{scan.region}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -284,15 +284,15 @@ const ScanManagement = () => {
                       {getStatusBadge(scan.status)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-white">
+                      <div className="text-sm" style={{color: '#f3f4f6'}}>
                         {scan.resultsCount || 0} results
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-gray-400">
                         {scan.processedKeywords || 0}/{scan.totalKeywords || 0} keywords
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-white">
+                      <div className="text-sm" style={{color: '#f3f4f6'}}>
                         {scan.duration ? `${Math.round(scan.duration / 1000)}s` : '-'}
                       </div>
                     </td>
@@ -303,14 +303,14 @@ const ScanManagement = () => {
                       <div className="flex items-center justify-end space-x-2">
                         <button
                           onClick={() => handleView(scan._id)}
-                          className="p-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-all duration-150 shadow focus:outline-none"
+                          className="p-2 rounded-full bg-blue-600 hover:bg-blue-700  transition-all duration-150 shadow focus:outline-none"
                           title="View Results"
                         >
                           <Eye className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(scan._id)}
-                          className="p-2 rounded-full bg-red-600 hover:bg-red-700 text-white transition-all duration-150 shadow focus:outline-none"
+                          className="p-2 rounded-full bg-red-600 hover:bg-red-700  transition-all duration-150 shadow focus:outline-none"
                           title="Delete Scan"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -318,7 +318,7 @@ const ScanManagement = () => {
                         {(!scan.parentId) && (
                           <button
                             onClick={() => handleSendToClient(scan)}
-                            className={`p-2 rounded-full transition-all duration-150 shadow focus:outline-none ${scan.clientStatus === 'sent' ? 'bg-gray-400 text-gray-100 cursor-default opacity-60' : 'bg-green-600 hover:bg-green-700 text-white'}`}
+                            className={`p-2 rounded-full transition-all duration-150 shadow focus:outline-none ${scan.clientStatus === 'sent' ? 'bg-gray-400 text-gray-100 cursor-default opacity-60' : 'bg-green-600 hover:bg-green-700 text-gray-200'}`}
                             title={scan.clientStatus === 'sent' ? 'Already sent' : 'Send to Client'}
                             disabled={scan.clientStatus === 'sent'}
                           >
@@ -340,13 +340,13 @@ const ScanManagement = () => {
             <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-gray-800 border-gray-600">
               <div className="mt-3">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-white">Trigger Manual Scan</h3>
+                  <h3 className="text-lg font-medium" style={{color: '#fafafa'}}>Trigger Manual Scan</h3>
                   <button
                     onClick={() => {
                       setShowTriggerModal(false);
                       setTriggerData({ clientId: '', region: 'US' });
                     }}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-gray-400 hover:text-gray-400"
                   >
                     <span className="sr-only">Close</span>
                     <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -356,7 +356,7 @@ const ScanManagement = () => {
                 </div>
                 <form onSubmit={triggerScan} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Client</label>
+                    <label className="block text-sm font-medium text-gray-300">Client</label>
                     <select
                       required
                       value={triggerData.clientId}
@@ -372,7 +372,7 @@ const ScanManagement = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Region</label>
+                    <label className="block text-sm font-medium text-gray-300">Region</label>
                     <select
                       value={triggerData.region}
                       onChange={(e) => setTriggerData({ ...triggerData, region: e.target.value })}
@@ -392,13 +392,13 @@ const ScanManagement = () => {
                         setShowTriggerModal(false);
                         setTriggerData({ clientId: '', region: 'US' });
                       }}
-                      className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                      className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-800"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-ace-600 hover:bg-ace-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ace-500"
+                      className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium  bg-ace-600 hover:bg-ace-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ace-500"
                     >
                       Trigger Scan
                     </button>

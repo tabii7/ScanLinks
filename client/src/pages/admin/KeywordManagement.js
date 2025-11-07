@@ -145,9 +145,9 @@ const KeywordManagement = () => {
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      active: { color: 'text-green-800', bg: 'bg-green-100', icon: CheckCircle },
-      inactive: { color: 'text-gray-800', bg: 'bg-gray-100', icon: Clock },
-      paused: { color: 'text-yellow-800', bg: 'bg-yellow-100', icon: AlertCircle },
+      active: { color: 'text-green-200', bg: 'bg-green-900', icon: CheckCircle },
+      inactive: { color: 'text-gray-200', bg: 'bg-gray-700', icon: Clock },
+      paused: { color: 'text-yellow-200', bg: 'bg-yellow-900', icon: AlertCircle },
     };
     
     const config = statusConfig[status] || statusConfig.inactive;
@@ -163,9 +163,9 @@ const KeywordManagement = () => {
 
   const getPriorityBadge = (priority) => {
     const priorityConfig = {
-      high: { color: 'text-red-800', bg: 'bg-red-100' },
-      medium: { color: 'text-yellow-800', bg: 'bg-yellow-100' },
-      low: { color: 'text-green-800', bg: 'bg-green-100' },
+      high: { color: 'text-red-200', bg: 'bg-red-900' },
+      medium: { color: 'text-yellow-200', bg: 'bg-yellow-900' },
+      low: { color: 'text-green-200', bg: 'bg-green-900' },
     };
     
     const config = priorityConfig[priority] || priorityConfig.medium;
@@ -193,12 +193,12 @@ const KeywordManagement = () => {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Keyword Management</h1>
-            <p className="text-gray-600">Manage keywords for ORM tracking across all clients</p>
+            <h1 className="text-2xl font-bold text-gray-200">Keyword Management</h1>
+            <p className="text-gray-400">Manage keywords for ORM tracking across all clients</p>
           </div>
           <button
             onClick={() => setShowModal(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-ace-600 hover:bg-ace-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ace-500"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md  bg-ace-600 hover:bg-ace-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ace-500"
           >
             <Plus className="h-4 w-4 mr-2" />
             Add Keyword
@@ -206,10 +206,10 @@ const KeywordManagement = () => {
         </div>
 
         {/* Filters */}
-        <div className="bg-white shadow-ace rounded-lg p-4">
+        <div className="bg-transparent shadow-ace rounded-lg p-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Search Keywords</label>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Search Keywords</label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input
@@ -217,12 +217,12 @@ const KeywordManagement = () => {
                   placeholder="Search keywords..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-ace-500 focus:border-ace-500 sm:text-sm"
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-transparent placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-ace-500 focus:border-ace-500 sm:text-sm"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Filter by Client</label>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Filter by Client</label>
               <select
                 value={filterClient}
                 onChange={(e) => setFilterClient(e.target.value)}
@@ -237,7 +237,7 @@ const KeywordManagement = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Filter by Status</label>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Filter by Status</label>
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
@@ -253,30 +253,30 @@ const KeywordManagement = () => {
         </div>
 
         {/* Keywords Table */}
-        <div className="bg-white shadow-ace rounded-lg overflow-hidden">
+        <div className="bg-transparent shadow-ace rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead style={{backgroundColor: '#04041B'}}>
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider">
                     Keyword
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider">
                     Client
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider">
                     Regions
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider">
                     Priority
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider">
                     Created
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium  uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -287,16 +287,16 @@ const KeywordManagement = () => {
                     key={keyword._id}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="hover:bg-gray-50"
+                    className="hover:bg-gray-800"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{keyword.keyword}</div>
+                      <div className="text-sm font-medium text-gray-200">{keyword.keyword}</div>
                       {keyword.notes && (
-                        <div className="text-sm text-gray-500">{keyword.notes}</div>
+                        <div className="text-sm text-gray-400">{keyword.notes}</div>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
+                      <div className="text-sm text-gray-200">
                         {clients.find(c => c._id === keyword.clientId)?.name || 'Unknown'}
                       </div>
                     </td>
@@ -305,7 +305,7 @@ const KeywordManagement = () => {
                         {keyword.targetRegions.map((region) => (
                           <span
                             key={region}
-                            className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                            className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-900 text-blue-200"
                           >
                             {region}
                           </span>
@@ -318,7 +318,7 @@ const KeywordManagement = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(keyword.status)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                       {new Date(keyword.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -356,10 +356,10 @@ const KeywordManagement = () => {
         {/* Add/Edit Keyword Modal */}
         {showModal && (
           <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-transparent">
               <div className="mt-3">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">
+                  <h3 className="text-lg font-medium text-gray-200">
                     {editingKeyword ? 'Edit Keyword' : 'Add New Keyword'}
                   </h3>
                   <button
@@ -368,7 +368,7 @@ const KeywordManagement = () => {
                       setEditingKeyword(null);
                       resetForm();
                     }}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-gray-400 hover:text-gray-400"
                   >
                     <span className="sr-only">Close</span>
                     <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -378,7 +378,7 @@ const KeywordManagement = () => {
                 </div>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Client</label>
+                    <label className="block text-sm font-medium text-gray-300">Client</label>
                     <select
                       required
                       value={formData.clientId}
@@ -394,7 +394,7 @@ const KeywordManagement = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Keyword</label>
+                    <label className="block text-sm font-medium text-gray-300">Keyword</label>
                     <input
                       type="text"
                       required
@@ -404,7 +404,7 @@ const KeywordManagement = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Target Regions</label>
+                    <label className="block text-sm font-medium text-gray-300">Target Regions</label>
                     <div className="mt-2 grid grid-cols-2 gap-2">
                       {regions.map((region) => (
                         <label key={region.code} className="flex items-center">
@@ -426,13 +426,13 @@ const KeywordManagement = () => {
                             }}
                             className="h-4 w-4 text-ace-600 focus:ring-ace-500 border-gray-300 rounded"
                           />
-                          <span className="ml-2 text-sm text-gray-700">{region.name}</span>
+                          <span className="ml-2 text-sm text-gray-300">{region.name}</span>
                         </label>
                       ))}
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Priority</label>
+                    <label className="block text-sm font-medium text-gray-300">Priority</label>
                     <select
                       value={formData.priority}
                       onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
@@ -444,7 +444,7 @@ const KeywordManagement = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Notes</label>
+                    <label className="block text-sm font-medium text-gray-300">Notes</label>
                     <textarea
                       value={formData.notes}
                       onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
@@ -460,13 +460,13 @@ const KeywordManagement = () => {
                         setEditingKeyword(null);
                         resetForm();
                       }}
-                      className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                      className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-800"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-ace-600 hover:bg-ace-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ace-500"
+                      className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium  bg-ace-600 hover:bg-ace-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ace-500"
                     >
                       {editingKeyword ? 'Update' : 'Create'}
                     </button>

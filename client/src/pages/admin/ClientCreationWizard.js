@@ -140,7 +140,7 @@ const ClientCreationWizard = () => {
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Full Name *
                 </label>
                 <input
@@ -154,7 +154,7 @@ const ClientCreationWizard = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Email Address *
                 </label>
                 <input
@@ -168,7 +168,7 @@ const ClientCreationWizard = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Password *
                 </label>
                 <input
@@ -182,7 +182,7 @@ const ClientCreationWizard = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Phone Number
                 </label>
                 <input
@@ -195,7 +195,7 @@ const ClientCreationWizard = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Company Name *
                 </label>
                 <input
@@ -209,7 +209,7 @@ const ClientCreationWizard = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Industry
                 </label>
                 <select
@@ -232,7 +232,7 @@ const ClientCreationWizard = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Website
                 </label>
                 <input
@@ -246,7 +246,7 @@ const ClientCreationWizard = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 Address
               </label>
               <textarea
@@ -265,7 +265,7 @@ const ClientCreationWizard = () => {
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Industry
                 </label>
                 <input
@@ -278,7 +278,7 @@ const ClientCreationWizard = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Target Audience
                 </label>
                 <input
@@ -292,7 +292,7 @@ const ClientCreationWizard = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 Target Keywords
               </label>
               <input
@@ -302,11 +302,11 @@ const ClientCreationWizard = () => {
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="company name, brand name, product name, services"
               />
-              <p className="text-sm text-gray-500 mt-1">Separate keywords with commas</p>
+              <p className="text-sm text-gray-400 mt-1">Separate keywords with commas</p>
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 Negative Keywords
               </label>
               <input
@@ -316,11 +316,11 @@ const ClientCreationWizard = () => {
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="scam, fraud, complaint, negative"
               />
-              <p className="text-sm text-gray-500 mt-1">Keywords you want to avoid in search results</p>
+              <p className="text-sm text-gray-400 mt-1">Keywords you want to avoid in search results</p>
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 Reputation Goals
               </label>
               <input
@@ -333,7 +333,7 @@ const ClientCreationWizard = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 Current Challenges
               </label>
               <input
@@ -350,13 +350,13 @@ const ClientCreationWizard = () => {
       case 3:
         return (
           <div className="space-y-6">
-            <div className="bg-gray-50 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Review Client Information</h3>
+            <div className="bg-gray-800 rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-gray-200 mb-4">Review Client Information</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="font-medium text-gray-700 mb-2">Basic Information</h4>
-                  <div className="space-y-1 text-sm text-gray-600">
+                  <h4 className="font-medium text-gray-300 mb-2">Basic Information</h4>
+                  <div className="space-y-1 text-sm text-gray-400">
                     <p><strong>Name:</strong> {formData.name}</p>
                     <p><strong>Email:</strong> {formData.email}</p>
                     <p><strong>Password:</strong> {formData.password ? '••••••••' : 'Not set'}</p>
@@ -367,8 +367,8 @@ const ClientCreationWizard = () => {
                 </div>
                 
                 <div>
-                  <h4 className="font-medium text-gray-700 mb-2">Reputation Profile</h4>
-                  <div className="space-y-1 text-sm text-gray-600">
+                  <h4 className="font-medium text-gray-300 mb-2">Reputation Profile</h4>
+                  <div className="space-y-1 text-sm text-gray-400">
                     <p><strong>Industry:</strong> {formData.industry}</p>
                     <p><strong>Target Audience:</strong> {formData.targetAudience}</p>
                     <p><strong>Keywords:</strong> {formData.keywords.join(', ')}</p>
@@ -380,7 +380,7 @@ const ClientCreationWizard = () => {
             
             <div className="bg-blue-50 rounded-xl p-4">
               <h4 className="font-semibold text-blue-900 mb-2">What happens next?</h4>
-              <ul className="text-sm text-blue-800 space-y-1">
+              <ul className="text-sm text-blue-200 space-y-1">
                 <li>• Client will be added to your dashboard</li>
                 <li>• You can start ORM scans immediately</li>
                 <li>• AI will analyze search results based on their profile</li>
@@ -393,7 +393,7 @@ const ClientCreationWizard = () => {
       default:
         return (
           <div className="text-center py-12">
-            <div className="text-gray-500">Step content coming soon...</div>
+            <div className="text-gray-400">Step content coming soon...</div>
           </div>
         );
     }
@@ -402,15 +402,15 @@ const ClientCreationWizard = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-transparent rounded-2xl shadow-sm border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Create New Client</h1>
-            <p className="text-gray-600 mt-2">Complete the wizard to add a new client to your system</p>
+            <h1 className="text-3xl font-bold text-gray-200">Create New Client</h1>
+            <p className="text-gray-400 mt-2">Complete the wizard to add a new client to your system</p>
           </div>
           <button
             onClick={() => navigate('/admin/clients')}
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+            className="p-2 text-gray-400 hover:text-gray-400 hover:bg-gray-700 rounded-lg"
           >
             <X className="h-6 w-6" />
           </button>
@@ -419,10 +419,10 @@ const ClientCreationWizard = () => {
         {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-gray-300">
               Step {currentStep} of {totalSteps}
             </span>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-400">
               {Math.round((currentStep / totalSteps) * 100)}% Complete
             </span>
           </div>
@@ -446,10 +446,10 @@ const ClientCreationWizard = () => {
                   <div
                     className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300 ${
                       currentStep > step.id
-                        ? 'bg-green-500 text-white'
+                        ? 'bg-green-500 text-gray-200'
                         : currentStep === step.id
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-300 text-gray-600'
+                        ? 'bg-blue-600 text-gray-200'
+                        : 'bg-gray-300 text-gray-400'
                     }`}
                   >
                     {currentStep > step.id ? (
@@ -462,12 +462,12 @@ const ClientCreationWizard = () => {
                   {/* Step Title */}
                   <div className="ml-3">
                     <div className={`text-sm font-medium ${
-                      currentStep >= step.id ? 'text-gray-900' : 'text-gray-500'
+                      currentStep >= step.id ? 'text-gray-200' : 'text-gray-400'
                     }`}>
                       {step.title}
                     </div>
                     <div className={`text-xs ${
-                      currentStep >= step.id ? 'text-gray-600' : 'text-gray-400'
+                      currentStep >= step.id ? 'text-gray-400' : 'text-gray-400'
                     }`}>
                       {step.description}
                     </div>
@@ -487,7 +487,7 @@ const ClientCreationWizard = () => {
       </div>
 
       {/* Step Content */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-transparent rounded-2xl shadow-sm border border-gray-200 p-6">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentStep}
@@ -497,10 +497,10 @@ const ClientCreationWizard = () => {
             transition={{ duration: 0.3 }}
           >
             <div className="mb-6">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+              <h2 className="text-2xl font-semibold text-gray-200 mb-2">
                 {steps[currentStep - 1].title}
               </h2>
-              <p className="text-gray-600">{steps[currentStep - 1].description}</p>
+              <p className="text-gray-400">{steps[currentStep - 1].description}</p>
             </div>
 
             {renderStepContent()}
@@ -515,7 +515,7 @@ const ClientCreationWizard = () => {
             className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-medium transition-colors ${
               currentStep === 1
                 ? 'text-gray-400 cursor-not-allowed'
-                : 'text-gray-700 hover:bg-gray-100'
+                : 'text-gray-300 hover:bg-gray-700'
             }`}
           >
             <ArrowLeft className="h-4 w-4" />
@@ -529,8 +529,8 @@ const ClientCreationWizard = () => {
                 disabled={!isStepValid()}
                 className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-medium transition-all duration-200 ${
                   isStepValid()
-                    ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    ? 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700'
+                    : 'bg-gray-300 text-gray-400 cursor-not-allowed'
                 }`}
               >
                 <span>Next</span>
@@ -542,8 +542,8 @@ const ClientCreationWizard = () => {
                 disabled={isSubmitting || !isStepValid()}
                 className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-medium transition-all duration-200 ${
                   isStepValid() && !isSubmitting
-                    ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700'
+                    : 'bg-gray-300 text-gray-400 cursor-not-allowed'
                 }`}
               >
                 {isSubmitting ? (

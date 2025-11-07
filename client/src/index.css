@@ -16,7 +16,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #0b1220;
+  background-color: #060b16;
 }
 
 code {
@@ -78,23 +78,25 @@ code {
   --ar-bg: #060b16;
   --ar-surface: #0b1220;
   --ar-surface-2: #0d1322;
+  --ar-surface-3: #1a1f2e;
   --ar-border: #263143;
   --ar-primary: #6C24E5;
   --ar-primary-600: #5a1ed1;
   --ar-primary-700: #4b1aa8;
   --ar-primary-800: #3b1586;
   --ar-accent: #22d3ee;
-  --ar-text: #e5e7eb;
-  --ar-muted: #9ca3af;
+  --ar-text: #fafafa;
+  --ar-text-muted: #e5e7eb;
+  --ar-text-light: #f3f4f6;
 }
 
 @layer components {
   .ar-theme .ar-card {
-    /* Darker bottom stop for the gradient */
-    background: linear-gradient(to bottom, #04041B 66%, var(--ar-primary-800) 100%);
+    /* Match sidebar gradient style */
+    background: linear-gradient(to bottom, #030f30, #060b16);
     border: 1px solid var(--ar-border);
     border-radius: 0.75rem;
-    box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
   }
   .ar-theme .ar-surface {
     background-color: var(--ar-surface);
@@ -102,30 +104,47 @@ code {
     border-radius: 0.75rem;
   }
   .ar-theme .ar-btn-primary {
-    @apply text-white rounded-xl transition-colors;
-    background: linear-gradient(90deg, var(--ar-primary-800), var(--ar-primary-600));
+    @apply rounded-xl transition-colors;
+    background-color: var(--ar-primary-700);
+    color: var(--ar-text-light);
+  }
+  .ar-theme .ar-btn-primary:hover {
+    background-color: var(--ar-primary-600);
   }
   .ar-theme .ar-btn-secondary {
-    @apply text-blue-400 border border-blue-500 rounded-xl transition-colors;
-    background: transparent;
+    @apply border rounded-xl transition-colors;
+    background-color: transparent;
+    border-color: var(--ar-primary-600);
+    color: var(--ar-accent);
   }
-  /* Branded action buttons */
+  /* Branded action buttons - solid colors */
   .ar-theme .ar-btn-pdf {
-    @apply text-white rounded-full transition-colors;
-    background: linear-gradient(90deg, #b91c1c, #991b1b);
+    @apply rounded-full transition-colors;
+    background-color: #dc2626;
+    color: var(--ar-text-light);
+  }
+  .ar-theme .ar-btn-pdf:hover {
+    background-color: #b91c1c;
   }
   .ar-theme .ar-btn-excel {
-    @apply text-white rounded-full transition-colors;
-    background: linear-gradient(90deg, #15803d, #166534);
+    @apply rounded-full transition-colors;
+    background-color: #16a34a;
+    color: var(--ar-text-light);
   }
-  /* Gentle overrides for existing rounded cards to unify design */
+  .ar-theme .ar-btn-excel:hover {
+    background-color: #15803d;
+  }
+  /* Cards - match sidebar gradient */
   .ar-theme .rounded-2xl {
     border: 1px solid var(--ar-border);
-    background: linear-gradient(to bottom, #04041B 66%, var(--ar-primary-800) 100%);
+    background: linear-gradient(to bottom, #030f30, #060b16);
   }
   .ar-theme .border-gray-700 { border-color: var(--ar-border) !important; }
   .ar-theme .bg-gray-800 { background-color: var(--ar-surface) !important; }
   .ar-theme .bg-gray-700 { background-color: var(--ar-surface-2) !important; }
+  .ar-theme .bg-gray-600 { background-color: var(--ar-surface-3) !important; }
+  /* Text colors - more visible */
+  .ar-theme .text-white { color: var(--ar-text) !important; }
   /* Avoid overriding Tailwind core text utilities to prevent circular @apply */
   .ar-theme select, .ar-theme input, .ar-theme textarea {
     background-color: var(--ar-surface-2);

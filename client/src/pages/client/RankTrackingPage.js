@@ -49,28 +49,28 @@ const RankTrackingPage = () => {
       case 'dropped':
         return <TrendingDown className="w-4 h-4 text-red-500" />;
       case 'unchanged':
-        return <Minus className="w-4 h-4 text-gray-500" />;
+        return <Minus className="w-4 h-4 text-gray-400" />;
       case 'disappeared':
         return <AlertCircle className="w-4 h-4 text-orange-500" />;
       default:
-        return <Minus className="w-4 h-4 text-gray-500" />;
+        return <Minus className="w-4 h-4 text-gray-400" />;
     }
   };
 
   const getMovementColor = (movement) => {
     switch (movement) {
       case 'new':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-blue-900 text-blue-200 border-blue-200';
       case 'improved':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-green-900 text-green-200 border-green-200';
       case 'dropped':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-red-900 text-red-200 border-red-200';
       case 'unchanged':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-700 text-gray-200 border-gray-200';
       case 'disappeared':
         return 'bg-orange-100 text-orange-800 border-orange-200';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-700 text-gray-200 border-gray-200';
     }
   };
 
@@ -96,7 +96,7 @@ const RankTrackingPage = () => {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading rank tracking data...</p>
+          <p className="text-gray-400">Loading rank tracking data...</p>
         </div>
       </div>
     );
@@ -148,21 +148,21 @@ const RankTrackingPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+        <div className="bg-transparent rounded-xl shadow-lg p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Rank Tracking</h1>
-              <p className="text-gray-600">Monitor your keyword rankings and track improvements over time</p>
+              <h1 className="text-3xl font-bold text-gray-200">Rank Tracking</h1>
+              <p className="text-gray-400">Monitor your keyword rankings and track improvements over time</p>
             </div>
             <div className="flex items-center space-x-3">
               <button
                 onClick={fetchRankData}
-                className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                className="flex items-center space-x-2 bg-blue-600  px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
               >
                 <RefreshCw className="w-4 h-4" />
                 <span>Refresh</span>
               </button>
-              <button className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+              <button className="flex items-center space-x-2 bg-green-600  px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
                 <Download className="w-4 h-4" />
                 <span>Export</span>
               </button>
@@ -172,7 +172,7 @@ const RankTrackingPage = () => {
           {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Keyword</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Keyword</label>
               <select
                 value={selectedKeyword}
                 onChange={(e) => setSelectedKeyword(e.target.value)}
@@ -188,7 +188,7 @@ const RankTrackingPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Region</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Region</label>
               <select
                 value={selectedRegion}
                 onChange={(e) => setSelectedRegion(e.target.value)}
@@ -204,7 +204,7 @@ const RankTrackingPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Time Range</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Time Range</label>
               <select
                 value={timeRange}
                 onChange={(e) => setTimeRange(e.target.value)}
@@ -221,7 +221,7 @@ const RankTrackingPage = () => {
             <div className="flex items-end">
               <button
                 onClick={fetchRankData}
-                className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                className="w-full bg-blue-600  px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Apply Filters
               </button>
@@ -234,11 +234,11 @@ const RankTrackingPage = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-xl shadow-lg p-6"
+            className="bg-transparent rounded-xl shadow-lg p-6"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Total Keywords</p>
+                <p className="text-sm text-gray-400">Total Keywords</p>
                 <p className="text-2xl font-bold text-blue-600">{summary?.totalKeywords || 0}</p>
               </div>
               <Target className="w-8 h-8 text-blue-500" />
@@ -249,11 +249,11 @@ const RankTrackingPage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-white rounded-xl shadow-lg p-6"
+            className="bg-transparent rounded-xl shadow-lg p-6"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Improved</p>
+                <p className="text-sm text-gray-400">Improved</p>
                 <p className="text-2xl font-bold text-green-600">{summary?.improved || 0}</p>
               </div>
               <TrendingUp className="w-8 h-8 text-green-500" />
@@ -264,11 +264,11 @@ const RankTrackingPage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-white rounded-xl shadow-lg p-6"
+            className="bg-transparent rounded-xl shadow-lg p-6"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Dropped</p>
+                <p className="text-sm text-gray-400">Dropped</p>
                 <p className="text-2xl font-bold text-red-600">{summary?.dropped || 0}</p>
               </div>
               <TrendingDown className="w-8 h-8 text-red-500" />
@@ -279,11 +279,11 @@ const RankTrackingPage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-white rounded-xl shadow-lg p-6"
+            className="bg-transparent rounded-xl shadow-lg p-6"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Avg Position</p>
+                <p className="text-sm text-gray-400">Avg Position</p>
                 <p className="text-2xl font-bold text-purple-600">{summary?.avgPosition || 0}</p>
               </div>
               <BarChart3 className="w-8 h-8 text-purple-500" />
@@ -293,8 +293,8 @@ const RankTrackingPage = () => {
 
         {/* Keyword Trends Analytics */}
         {trends && trends.length > 0 && (
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Keyword Trends & Analytics</h2>
+          <div className="bg-transparent rounded-xl shadow-lg p-6 mb-6">
+            <h2 className="text-xl font-bold text-gray-200 mb-6">Keyword Trends & Analytics</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {trends.map((trend, index) => (
                 <motion.div
@@ -302,25 +302,25 @@ const RankTrackingPage = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="bg-gray-50 rounded-lg p-4"
+                  className="bg-gray-800 rounded-lg p-4"
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold text-gray-900">{trend.keyword}</h3>
+                    <h3 className="font-semibold text-gray-200">{trend.keyword}</h3>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      trend.trend === 'improving' ? 'bg-green-100 text-green-800' :
-                      trend.trend === 'declining' ? 'bg-red-100 text-red-800' :
-                      'bg-gray-100 text-gray-800'
+                      trend.trend === 'improving' ? 'bg-green-900 text-green-200' :
+                      trend.trend === 'declining' ? 'bg-red-900 text-red-200' :
+                      'bg-gray-700 text-gray-200'
                     }`}>
                       {trend.trend === 'improving' ? '↗ Improving' :
                        trend.trend === 'declining' ? '↘ Declining' :
                        '→ Stable'}
                     </span>
                   </div>
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-gray-400">
                     <p>Avg Position: <span className="font-medium">{trend.avgPosition}</span></p>
                     <p>Total Scans: <span className="font-medium">{trend.positions.length}</span></p>
                     <div className="mt-2">
-                      <p className="text-xs text-gray-500">Recent Movements:</p>
+                      <p className="text-xs text-gray-400">Recent Movements:</p>
                       <div className="flex space-x-1 mt-1">
                         {trend.movements.slice(-5).map((movement, i) => (
                           <span
@@ -344,22 +344,22 @@ const RankTrackingPage = () => {
         )}
 
         {/* Rank History Table */}
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="bg-transparent rounded-xl shadow-lg overflow-hidden">
           <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">Rank History</h2>
-            <p className="text-gray-600">Track how your keywords are performing over time</p>
+            <h2 className="text-xl font-bold text-gray-200">Rank History</h2>
+            <p className="text-gray-400">Track how your keywords are performing over time</p>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-800">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Keyword</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Rank</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Previous Rank</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Movement</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Region</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Keyword</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Current Rank</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Previous Rank</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Movement</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Region</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Last Updated</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200" style={{backgroundColor: '#04041B'}}>
@@ -369,19 +369,19 @@ const RankTrackingPage = () => {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="hover:bg-gray-50"
+                    className="hover:bg-gray-800"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <Target className="w-4 h-4 text-blue-500 mr-2" />
-                        <span className="text-sm font-medium text-gray-900">{item.keyword}</span>
+                        <span className="text-sm font-medium text-gray-200">{item.keyword}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm font-medium text-gray-900">{item.currentRank || '-'}</span>
+                      <span className="text-sm font-medium text-gray-200">{item.currentRank || '-'}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-500">{item.previousRank || '-'}</span>
+                      <span className="text-sm text-gray-400">{item.previousRank || '-'}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center space-x-2">
@@ -394,13 +394,13 @@ const RankTrackingPage = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <Globe className="w-4 h-4 text-gray-400 mr-1" />
-                        <span className="text-sm text-gray-500">{item.region}</span>
+                        <span className="text-sm text-gray-400">{item.region}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <Calendar className="w-4 h-4 text-gray-400 mr-1" />
-                        <span className="text-sm text-gray-500">
+                        <span className="text-sm text-gray-400">
                           {new Date(item.lastUpdated).toLocaleDateString()}
                         </span>
                       </div>
@@ -414,8 +414,8 @@ const RankTrackingPage = () => {
           {(!rankHistory || rankHistory.length === 0) && (
             <div className="p-12 text-center">
               <BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No rank data available</h3>
-              <p className="text-gray-600">Start tracking your keywords to see rank movements here.</p>
+              <h3 className="text-lg font-medium text-gray-200 mb-2">No rank data available</h3>
+              <p className="text-gray-400">Start tracking your keywords to see rank movements here.</p>
             </div>
           )}
         </div>

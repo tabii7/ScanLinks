@@ -196,7 +196,7 @@ const ClientReports = () => {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-white">My Reports</h1>
+            <h1 className="text-2xl font-bold" style={{color: '#fafafa'}}>My Reports</h1>
             <p className="text-gray-300">
               View and download reports sent to you by admin 
               {reports.length > 0 && (
@@ -206,14 +206,14 @@ const ClientReports = () => {
               )}
             </p>
           </div>
-          <button className="inline-flex items-center px-4 py-2 border border-blue-500 text-sm font-medium rounded-full text-blue-400 bg-transparent hover:bg-blue-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+          <button className="inline-flex items-center px-4 py-2 border border-blue-500 text-sm font-medium rounded-full text-blue-400 bg-transparent hover:bg-blue-500 hover: focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
             <Download className="h-4 w-4 mr-2" />
             Download All
           </button>
         </div>
 
         {/* Filters */}
-        <div className="rounded-lg p-4 border border-gray-700" style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}>
+        <div className="rounded-lg p-4 border border-gray-700" style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">Search Reports</label>
@@ -224,7 +224,7 @@ const ClientReports = () => {
                   placeholder="Search sent reports..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-600 rounded-md leading-5 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:placeholder-gray-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-600 rounded-md leading-5 bg-gray-800  placeholder-gray-400 focus:outline-none focus:placeholder-gray-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 />
               </div>
             </div>
@@ -233,7 +233,7 @@ const ClientReports = () => {
               <select
                 value={filterRegion}
                 onChange={(e) => setFilterRegion(e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm bg-gray-800 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm bg-gray-800  focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               >
                 <option value="all">All Regions</option>
                 {regions.map((region) => (
@@ -248,7 +248,7 @@ const ClientReports = () => {
               <select
                 value={filterWeek}
                 onChange={(e) => setFilterWeek(e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm bg-gray-800 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm bg-gray-800  focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               >
                 <option value="all">All Weeks</option>
                 {/* Get unique week numbers from all reports */}
@@ -270,7 +270,7 @@ const ClientReports = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="rounded-lg overflow-hidden hover:shadow-lg transition-shadow border border-gray-700"
-              style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
+              style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
             >
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -279,7 +279,7 @@ const ClientReports = () => {
                       <BarChart3 className="h-5 w-5 text-blue-400" />
                     </div>
                     <div className="ml-3">
-                      <h3 className="text-lg font-medium text-white">
+                      <h3 className="text-lg font-medium" style={{color: '#fafafa'}}>
                         {report.totalWeeks > 1 ? `Weeks ${report.weekNumbers.join(', ')}` : `Week ${report.weekNumbers[0] || 1}`}
                       </h3>
                       <p className="text-sm text-gray-300">
@@ -307,11 +307,11 @@ const ClientReports = () => {
                 <div className="space-y-3 mb-4">
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-300">Region</span>
-                    <span className="text-sm font-medium text-white">{report.region}</span>
+                    <span className="text-sm font-medium" style={{color: '#fafafa'}}>{report.region}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-300">Total Results</span>
-                    <span className="text-sm font-medium text-white">
+                    <span className="text-sm font-medium" style={{color: '#fafafa'}}>
                       {report.resultsCount || 0}
                     </span>
                   </div>
@@ -364,14 +364,14 @@ const ClientReports = () => {
                 <div className="flex space-x-2">
                   <button
                     onClick={() => window.open(`/scans/${report.parentScanId}`, '_blank')}
-                    className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-blue-500 text-sm font-medium rounded-full text-blue-400 bg-transparent hover:bg-blue-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-blue-500 text-sm font-medium rounded-full text-blue-400 bg-transparent hover:bg-blue-500 hover: focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
                     <FileText className="h-4 w-4 mr-1" />
                     View Report
                   </button>
                   <button
                     onClick={() => downloadScanData(report.parentScanId, 'pdf')}
-                    className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-green-500 text-sm font-medium rounded-full text-green-400 bg-transparent hover:bg-green-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                    className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-green-500 text-sm font-medium rounded-full text-green-400 bg-transparent hover:bg-green-500 hover: focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                     title="Download PDF Report"
                   >
                     <Download className="h-4 w-4 mr-1" />
@@ -386,7 +386,7 @@ const ClientReports = () => {
         {filteredReports.length === 0 && (
           <div className="text-center py-12">
             <BarChart3 className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-white">No reports found</h3>
+            <h3 className="mt-2 text-sm font-medium" style={{color: '#fafafa'}}>No reports found</h3>
             <p className="mt-1 text-sm text-gray-300">
               {searchTerm || filterRegion !== 'all' || filterWeek !== 'all'
                 ? 'Try adjusting your filters to see more results.'

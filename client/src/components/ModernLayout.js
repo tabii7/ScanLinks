@@ -55,12 +55,12 @@ const ModernLayout = ({ children, isAdmin = false }) => {
         <div className="relative flex flex-col w-80 h-full shadow-2xl" style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}>
           <div className="flex items-center justify-between p-6">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-purple-800 rounded-xl flex items-center justify-center">
-                <Shield className="h-6 w-6 text-white" />
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{backgroundColor: '#1e40af'}}>
+                <Shield className="h-6 w-6" style={{color: '#d1d5db'}} />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">ACE REPUTATIONS</h1>
-                <p className="text-xs text-gray-400">ORM Platform</p>
+                <h1 className="text-xl font-bold" style={{color: '#fafafa'}}>ACE REPUTATIONS</h1>
+                <p className="text-xs" style={{color: '#e5e7eb'}}>ORM Platform</p>
               </div>
             </div>
             <button
@@ -80,10 +80,10 @@ const ModernLayout = ({ children, isAdmin = false }) => {
                   to={item.href}
                   className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                     isActive
-                      ? 'text-white shadow-lg'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                      ? 'shadow-lg'
+                      : 'hover:bg-gray-700'
                   }`}
-                  style={isActive ? {backgroundColor: '#230D71'} : {}}
+                  style={isActive ? {backgroundColor: '#230D71', color: '#fafafa'} : {color: '#f3f4f6'}}
                   onClick={() => setSidebarOpen(false)}
                 >
                   <item.icon className="h-5 w-5" />
@@ -99,12 +99,12 @@ const ModernLayout = ({ children, isAdmin = false }) => {
       <div className="hidden lg:flex lg:w-72 lg:flex-col lg:fixed lg:inset-y-0">
         <div className="flex flex-col flex-grow shadow-xl" style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}>
           <div className="flex items-center px-6 py-8">
-            <div className="w-12 h-12 bg-gradient-to-r from-purple-600 to-purple-800 rounded-2xl flex items-center justify-center">
-              <Shield className="h-7 w-7 text-white" />
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{backgroundColor: '#1e40af'}}>
+              <Shield className="h-7 w-7" style={{color: '#d1d5db'}} />
             </div>
             <div className="ml-4">
-              <h1 className="text-2xl font-bold text-white">ACE REPUTATIONS</h1>
-              <p className="text-sm text-gray-400">ORM Platform</p>
+              <h1 className="text-2xl font-bold" style={{color: '#fafafa'}}>ACE REPUTATIONS</h1>
+              <p className="text-sm" style={{color: '#e5e7eb'}}>ORM Platform</p>
             </div>
           </div>
           
@@ -117,10 +117,10 @@ const ModernLayout = ({ children, isAdmin = false }) => {
                   to={item.href}
                   className={`flex items-center space-x-4 px-4 py-3 rounded-xl transition-all duration-200 ${
                     isActive
-                      ? 'text-white shadow-lg transform scale-105'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white hover:transform hover:scale-105'
+                      ? 'shadow-lg transform scale-105'
+                      : 'hover:bg-gray-700 hover:transform hover:scale-105'
                   }`}
-                  style={isActive ? {backgroundColor: '#230D71'} : {}}
+                  style={isActive ? {backgroundColor: '#230D71', color: '#fafafa'} : {color: '#f3f4f6'}}
                 >
                   <item.icon className="h-5 w-5" />
                   <span className="font-medium">{item.name}</span>
@@ -132,12 +132,12 @@ const ModernLayout = ({ children, isAdmin = false }) => {
           {/* User section */}
           <div className="p-6">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-purple-800 rounded-full flex items-center justify-center">
-                <User className="h-5 w-5 text-white" />
+              <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{backgroundColor: '#1e40af'}}>
+                <User className="h-5 w-5" style={{color: '#d1d5db'}} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">{user?.email}</p>
-                <p className="text-xs text-gray-400 capitalize">{user?.role}</p>
+                <p className="text-sm font-medium truncate" style={{color: '#fafafa'}}>{user?.email}</p>
+                <p className="text-xs capitalize" style={{color: '#e5e7eb'}}>{user?.role}</p>
               </div>
             </div>
           </div>
@@ -156,7 +156,7 @@ const ModernLayout = ({ children, isAdmin = false }) => {
               <Menu className="h-5 w-5 text-gray-300" />
             </button>
             <div className="hidden lg:block">
-              <h2 className="text-lg font-semibold text-white">
+              <h2 className="text-lg font-semibold" style={{color: '#fafafa'}}>
                 {location.pathname === '/admin' && 'Dashboard'}
                 {location.pathname === '/admin/clients' && 'Client Management'}
                 {location.pathname === '/admin/keywords' && 'Keyword Management'}
@@ -179,12 +179,12 @@ const ModernLayout = ({ children, isAdmin = false }) => {
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
                 className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-700 transition-colors"
               >
-                <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-purple-800 rounded-full flex items-center justify-center">
-                  <User className="h-4 w-4 text-white" />
+                <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{backgroundColor: '#1e40af'}}>
+                  <User className="h-4 w-4" style={{color: '#d1d5db'}} />
                 </div>
                 <div className="hidden md:block text-left">
-                  <p className="text-sm font-medium text-white">{user?.email}</p>
-                  <p className="text-xs text-gray-400 capitalize">{user?.role}</p>
+                  <p className="text-sm font-medium" style={{color: '#f3f4f6'}}>{user?.email}</p>
+                  <p className="text-xs capitalize" style={{color: '#d1d5db'}}>{user?.role}</p>
                 </div>
                 <ChevronDown className="h-4 w-4 text-gray-300" />
               </button>

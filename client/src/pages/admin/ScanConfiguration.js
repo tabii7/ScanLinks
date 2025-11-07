@@ -118,7 +118,7 @@ const ScanConfiguration = () => {
   const renderStep1 = () => (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-white mb-2">Select Client</h3>
+        <h3 className="text-lg font-semibold mb-2" style={{color: '#f3f4f6'}}>Select Client</h3>
         <select
           value={formData.selectedClientId}
           onChange={(e) => {
@@ -126,7 +126,7 @@ const ScanConfiguration = () => {
             handleInputChange('selectedClient', selectedClient?.name || '');
             handleInputChange('selectedClientId', e.target.value);
           }}
-          className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-blue-500 focus:outline-none"
+          className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg  focus:border-blue-500 focus:outline-none"
         >
           <option value="">Select a client</option>
           {clients.map(client => (
@@ -138,13 +138,13 @@ const ScanConfiguration = () => {
       </div>
 
       <div>
-        <h3 className="text-lg font-semibold text-white mb-2">Keywords</h3>
+        <h3 className="text-lg font-semibold mb-2" style={{color: '#f3f4f6'}}>Keywords</h3>
         <textarea
           value={formData.customKeywords}
           onChange={(e) => handleInputChange('customKeywords', e.target.value)}
           placeholder="Enter keywords to search for (one per line)"
           rows={4}
-          className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-blue-500 focus:outline-none"
+          className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg  focus:border-blue-500 focus:outline-none"
         />
       </div>
     </div>
@@ -154,11 +154,11 @@ const ScanConfiguration = () => {
     <div className="space-y-6">
       {/* Country Selection */}
       <div>
-        <h3 className="text-lg font-semibold text-white mb-2">Select Country</h3>
+        <h3 className="text-lg font-semibold mb-2" style={{color: '#f3f4f6'}}>Select Country</h3>
         <select
           value={formData.scanRegion}
           onChange={(e) => handleInputChange('scanRegion', e.target.value)}
-          className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-blue-500 focus:outline-none"
+          className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg  focus:border-blue-500 focus:outline-none"
         >
           <option value="US">United States</option>
           <option value="UK">United Kingdom</option>
@@ -175,11 +175,11 @@ const ScanConfiguration = () => {
 
       {/* Time Frame Selection */}
       <div>
-        <h3 className="text-lg font-semibold text-white mb-2">Time Frame</h3>
+        <h3 className="text-lg font-semibold mb-2" style={{color: '#f3f4f6'}}>Time Frame</h3>
         <select
           value={formData.timeFrame}
           onChange={(e) => handleInputChange('timeFrame', e.target.value)}
-          className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-blue-500 focus:outline-none"
+          className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg  focus:border-blue-500 focus:outline-none"
         >
           <option value="past_week">Past Week</option>
           <option value="past_month">Past Month</option>
@@ -194,11 +194,11 @@ const ScanConfiguration = () => {
 
       {/* Content Type Selection */}
       <div>
-        <h3 className="text-lg font-semibold text-white mb-2">Content Type</h3>
+        <h3 className="text-lg font-semibold mb-2" style={{color: '#f3f4f6'}}>Content Type</h3>
         <select
           value={formData.contentType}
           onChange={(e) => handleInputChange('contentType', e.target.value)}
-          className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-blue-500 focus:outline-none"
+          className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg  focus:border-blue-500 focus:outline-none"
         >
           <option value="all">All Content</option>
           <option value="news">News Articles</option>
@@ -215,7 +215,7 @@ const ScanConfiguration = () => {
 
       {/* API Call Limit */}
       <div>
-        <h3 className="text-lg font-semibold text-white mb-3">Number of Results</h3>
+        <h3 className="text-lg font-semibold mb-3" style={{color: '#f3f4f6'}}>Number of Results</h3>
         <div className="flex items-center space-x-4">
           <input
             type="range"
@@ -225,7 +225,7 @@ const ScanConfiguration = () => {
             onChange={(e) => handleInputChange('apiCallLimit', parseInt(e.target.value))}
             className="flex-1 slider"
           />
-          <span className="text-white font-semibold min-w-[60px]">{formData.apiCallLimit}</span>
+          <span className="font-semibold min-w-[60px]" style={{color: '#f3f4f6'}}>{formData.apiCallLimit}</span>
         </div>
         <p className="text-sm text-slate-500 mt-1">
           Number of search results to analyze (1-10, default: 10)
@@ -237,7 +237,7 @@ const ScanConfiguration = () => {
   const renderStep3 = () => (
     <div className="space-y-6">
       <div className="bg-gray-800 p-6 rounded-lg border border-gray-600">
-        <h3 className="text-xl font-semibold text-white mb-4">Scan Summary</h3>
+        <h3 className="text-xl font-semibold mb-4" style={{color: '#fafafa'}}>Scan Summary</h3>
         
         <div className="space-y-4">
           <div>
@@ -270,7 +270,7 @@ const ScanConfiguration = () => {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Scan Configuration</h1>
+          <h1 className="text-3xl font-bold mb-2" style={{color: '#fafafa'}}>Scan Configuration</h1>
           <p className="text-gray-400">Configure and start a comprehensive ORM scan</p>
         </div>
 
@@ -286,18 +286,18 @@ const ScanConfiguration = () => {
                 <div key={step.id} className="flex items-center">
                   <div className={`flex items-center justify-center w-12 h-12 rounded-full border-2 ${
                     isCompleted 
-                      ? 'bg-green-500 border-green-500 text-white' 
+                      ? 'bg-green-500 border-green-500 text-gray-200' 
                       : isActive 
-                        ? 'bg-blue-500 border-blue-500 text-white' 
+                        ? 'bg-blue-500 border-blue-500 text-gray-200' 
                         : 'border-gray-600 text-slate-400'
                   }`}>
                     {isCompleted ? <CheckCircle size={20} /> : <Icon size={20} />}
                   </div>
                   <div className="ml-3">
-                    <p className={`font-semibold ${isActive ? 'text-white' : 'text-gray-400'}`}>
+                    <p className={`font-semibold ${isActive ? 'text-gray-200' : 'text-gray-400'}`}>
                       {step.title}
                     </p>
-                    <p className="text-sm text-gray-500">{step.description}</p>
+                    <p className="text-sm text-gray-400">{step.description}</p>
                   </div>
                   {index < steps.length - 1 && (
                     <div className={`flex-1 h-0.5 mx-4 ${
@@ -345,7 +345,7 @@ const ScanConfiguration = () => {
           {currentStep < 3 ? (
             <button
               onClick={nextStep}
-              className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              className="flex items-center px-6 py-3 bg-blue-600  rounded-lg font-semibold hover:bg-blue-700 transition-colors"
             >
               Next
               <ArrowRight size={20} className="ml-2" />
@@ -357,7 +357,7 @@ const ScanConfiguration = () => {
               className={`flex items-center px-6 py-3 rounded-lg font-semibold transition-colors ${
                 loading
                   ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                  : 'bg-green-600 text-white hover:bg-green-700'
+                  : 'bg-green-600 hover:bg-green-700'
               }`}
             >
               {loading ? (

@@ -65,107 +65,21 @@ const ScanResultsPage = () => {
       console.log('Google search response:', response.data);
       const resultsData = response.data.results || [];
       
-      // If no results due to API quota exceeded, show fallback results
+      // If no results, show error - NO FALLBACK DATA
       if (resultsData.length === 0) {
-        console.log('⚠️ No results from Google API, showing fallback results');
-        const fallbackResults = [
-          {
-            title: `${searchTerm} - Official Website`,
-            link: `https://example.com/${searchTerm.toLowerCase().replace(/\s+/g, '-')}`,
-            url: `https://example.com/${searchTerm.toLowerCase().replace(/\s+/g, '-')}`,
-            snippet: `Learn more about ${searchTerm} on our official website. Find comprehensive information, resources, and support.`,
-            position: 1,
-            domain: 'example.com',
-            metadata: {
-              originalUrl: `https://example.com/${searchTerm.toLowerCase().replace(/\s+/g, '-')}`
-            }
-          },
-          {
-            title: `${searchTerm} - Wikipedia`,
-            link: `https://en.wikipedia.org/wiki/${searchTerm.replace(/\s+/g, '_')}`,
-            url: `https://en.wikipedia.org/wiki/${searchTerm.replace(/\s+/g, '_')}`,
-            snippet: `Wikipedia article about ${searchTerm}. Comprehensive information and references.`,
-            position: 2,
-            domain: 'wikipedia.org',
-            metadata: {
-              originalUrl: `https://en.wikipedia.org/wiki/${searchTerm.replace(/\s+/g, '_')}`
-            }
-          },
-          {
-            title: `${searchTerm} - Documentation`,
-            link: `https://docs.example.com/${searchTerm.toLowerCase().replace(/\s+/g, '-')}`,
-            url: `https://docs.example.com/${searchTerm.toLowerCase().replace(/\s+/g, '-')}`,
-            snippet: `Complete documentation for ${searchTerm}. Get started with tutorials, examples, and API reference.`,
-            position: 3,
-            domain: 'docs.example.com',
-            metadata: {
-              originalUrl: `https://docs.example.com/${searchTerm.toLowerCase().replace(/\s+/g, '-')}`
-            }
-          }
-        ];
-        
-        // Add fallback sentiment data
-        const fallbackWithSentiment = fallbackResults.map(result => ({
-          ...result,
-          sentiment: 'neutral',
-          confidence: 0.5,
-          reasoning: 'Fallback results - Google API quota exceeded',
-          keywords: [searchTerm],
-          category: 'other',
-          relevance: 'medium',
-          analyzedAt: new Date().toISOString()
-        }));
-        
-        setSearchResults(fallbackWithSentiment);
-        setResults(fallbackWithSentiment);
-        toast.warning('Google API quota exceeded. Showing sample results.');
+        console.log('⚠️ No results from Google API');
+        toast.error('No search results found. Please check your API configuration or try a different search query.');
+        setSearchResults([]);
+        setResults([]);
         return;
       }
       
-      // Perform sentiment analysis on the results
-      console.log('🔍 Starting sentiment analysis...');
-      try {
-        const sentimentResponse = await api.post('/orm-scan/test/sentiment-analysis', {
-          links: resultsData,
-          clientData: {
-            name: scan?.clientId?.name || scan?.clientName || 'Unknown Client',
-            industry: scan?.clientId?.settings?.industry || 'Technology',
-            businessType: scan?.clientId?.settings?.businessType || 'Software Development',
-            targetAudience: scan?.clientId?.settings?.targetAudience || 'Developers and Tech Companies',
-            region: scan?.region || 'US',
-            website: scan?.clientId?.settings?.website || 'https://demo-client.com',
-            description: scan?.clientId?.settings?.description || 'Leading provider of web development and software solutions'
-          }
-        });
-        
-        console.log('✅ Sentiment analysis completed');
-        const analyzedResults = sentimentResponse.data.results || resultsData;
-        
-        // Debug: Check if sentiment data is present
-        console.log('🔍 Analyzed results sample:', analyzedResults[0]);
-        console.log('🔍 Sentiment data:', analyzedResults[0]?.sentiment, analyzedResults[0]?.confidence);
-        console.log('🔍 Full analyzed results:', analyzedResults);
-        
-        // Set both search results and main results with sentiment analysis
-        setSearchResults(analyzedResults);
-        setResults(analyzedResults);
-      } catch (sentimentError) {
-        console.error('❌ Sentiment analysis failed:', sentimentError);
-        // Add fallback sentiment data to results
-        const resultsWithFallbackSentiment = resultsData.map(result => ({
-          ...result,
-          sentiment: 'neutral',
-          confidence: 0.5,
-          reasoning: 'Analysis not available',
-          keywords: [],
-          category: 'other',
-          relevance: 'medium',
-          analyzedAt: new Date().toISOString()
-        }));
-        
-        setSearchResults(resultsWithFallbackSentiment);
-        setResults(resultsWithFallbackSentiment);
-      }
+      // Results from Google Search API - these should be analyzed by OpenAI during actual scan
+      // For test searches, we don't perform sentiment analysis here
+      // Real scans should fetch results from database which already have OpenAI sentiment
+      console.log('✅ Google search completed:', resultsData.length, 'results');
+      setSearchResults(resultsData);
+      setResults(resultsData);
       
       setCurrentPage(1); // Reset to first page
       
@@ -252,19 +166,11 @@ const ScanResultsPage = () => {
               setResults([]);
             }
           } else {
-            // Fallback to demo data
-            setScan({
-              id: scanId,
-              clientId: 'demo-client',
-              clientName: 'Demo Client',
-              region: 'US',
-              scanType: 'manual',
-              status: 'completed',
-              resultsCount: 0,
-              createdAt: new Date().toISOString(),
-              completedAt: new Date().toISOString()
-            });
-            setResults([]);
+            // No scan found - show error, NO DEMO DATA
+            console.error('❌ Scan not found in database');
+            toast.error('Scan not found');
+            navigate('/admin/scans');
+            return;
           }
         } catch (error) {
           console.error('❌ Error fetching scan details:', error);
@@ -533,20 +439,20 @@ const ScanResultsPage = () => {
       case 'neutral':
         return <Clock className="w-4 h-4 text-yellow-500" />;
       default:
-        return <Clock className="w-4 h-4 text-gray-500" />;
+        return <Clock className="w-4 h-4 text-gray-400" />;
     }
   };
 
   const getSentimentColor = (sentiment) => {
     switch (sentiment) {
       case 'positive':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-green-900 text-green-200 border-green-200';
       case 'negative':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-red-900 text-red-200 border-red-200';
       case 'neutral':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-yellow-900 text-yellow-200 border-yellow-200';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-700 text-gray-200 border-gray-200';
     }
   };
 
@@ -582,28 +488,28 @@ const ScanResultsPage = () => {
       case 'dropped':
         return <TrendingDown className="w-4 h-4 text-red-500" />;
       case 'unchanged':
-        return <Minus className="w-4 h-4 text-gray-500" />;
+        return <Minus className="w-4 h-4 text-gray-400" />;
       case 'disappeared':
         return <AlertCircle className="w-4 h-4 text-orange-500" />;
       default:
-        return <Minus className="w-4 h-4 text-gray-500" />;
+        return <Minus className="w-4 h-4 text-gray-400" />;
     }
   };
 
   const getMovementColor = (movement) => {
     switch (movement) {
       case 'new':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-blue-900 text-blue-200 border-blue-200';
       case 'improved':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-green-900 text-green-200 border-green-200';
       case 'dropped':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-red-900 text-red-200 border-red-200';
       case 'unchanged':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-700 text-gray-200 border-gray-200';
       case 'disappeared':
         return 'bg-orange-100 text-orange-800 border-orange-200';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-700 text-gray-200 border-gray-200';
     }
   };
 
@@ -629,7 +535,7 @@ const ScanResultsPage = () => {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading scan results...</p>
+          <p className="text-gray-400">Loading scan results...</p>
         </div>
       </div>
     );
@@ -640,11 +546,11 @@ const ScanResultsPage = () => {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Scan Not Found</h2>
-          <p className="text-gray-600 mb-4">The scan you're looking for doesn't exist.</p>
+          <h2 className="text-2xl font-bold text-gray-200 mb-2">Scan Not Found</h2>
+          <p className="text-gray-400 mb-4">The scan you're looking for doesn't exist.</p>
           <button
             onClick={() => navigate('/admin/scans')}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            className="bg-blue-600  px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
           >
             Back to Scans
           </button>
@@ -676,12 +582,12 @@ const ScanResultsPage = () => {
     <div className="min-h-screen" style={{backgroundColor: '#060b16'}}>
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="rounded-xl shadow-lg p-6 mb-6 border border-gray-700" style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}>
+        <div className="rounded-xl shadow-lg p-6 mb-6 border border-gray-700" style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => navigate('/admin/scans')}
-                className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors"
+                className="flex items-center space-x-2 text-gray-300 hover: transition-colors"
               >
                 <ArrowLeft className="w-5 h-5" />
                 <span>Back to Scans</span>
@@ -691,7 +597,7 @@ const ScanResultsPage = () => {
             <div className="flex items-center space-x-3">
               <button
                 onClick={handleEditScan}
-                className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                className="flex items-center space-x-2 bg-blue-600  px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
               >
                 <Edit className="w-4 h-4" />
                 <span>Edit Scan</span>
@@ -700,7 +606,7 @@ const ScanResultsPage = () => {
               <button
                 onClick={handleSaveResults}
                 disabled={isSaving || results.length === 0}
-                className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center space-x-2 bg-blue-600  px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSaving ? (
                   <Clock className="w-4 h-4 animate-spin" />
@@ -713,7 +619,7 @@ const ScanResultsPage = () => {
               <button
                 onClick={handleSendToClient}
                 disabled={isSending || results.length === 0}
-                className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center space-x-2 bg-green-600  px-4 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSending ? (
                   <Clock className="w-4 h-4 animate-spin" />
@@ -725,7 +631,7 @@ const ScanResultsPage = () => {
               
               <button
                 onClick={handleDeleteScan}
-                className="flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+                className="flex items-center space-x-2 bg-red-600  px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
               >
                 <Trash2 className="w-4 h-4" />
                 <span>Delete Scan</span>
@@ -735,7 +641,7 @@ const ScanResultsPage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-        <h1 className="text-2xl font-bold text-white mb-2">
+        <h1 className="text-2xl font-bold mb-2" style={{color: '#fafafa'}}>
           {scan?.clientId?.name || scan?.clientName || 'Unknown Client'}
         </h1>
         {scan?.clientId?.contact?.email && (
@@ -758,7 +664,7 @@ const ScanResultsPage = () => {
             </div>
             
             <div className="text-right">
-              <div className="text-3xl font-bold text-white">{totalResults}</div>
+              <div className="text-3xl font-bold" style={{color: '#fafafa'}}>{totalResults}</div>
               <div className="text-sm text-gray-300">Total Results</div>
             </div>
           </div>
@@ -770,7 +676,7 @@ const ScanResultsPage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
+            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -787,7 +693,7 @@ const ScanResultsPage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
             className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
+            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -804,7 +710,7 @@ const ScanResultsPage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
             className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
+            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -821,7 +727,7 @@ const ScanResultsPage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
             className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
+            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -842,7 +748,7 @@ const ScanResultsPage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
             className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
+            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -858,7 +764,7 @@ const ScanResultsPage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
             className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
+            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -874,7 +780,7 @@ const ScanResultsPage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
             className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
+            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -890,14 +796,14 @@ const ScanResultsPage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7 }}
             className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
+            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
           >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-400">Unchanged</p>
                 <p className="text-2xl font-bold text-gray-400">{movementStats.unchanged}</p>
               </div>
-              <Minus className="w-8 h-8 text-gray-500" />
+              <Minus className="w-8 h-8 text-gray-400" />
             </div>
           </motion.div>
 
@@ -906,7 +812,7 @@ const ScanResultsPage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8 }}
             className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
+            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -919,7 +825,7 @@ const ScanResultsPage = () => {
         </div>
 
         {/* Google Search Interface */}
-        <div className="rounded-xl shadow-lg p-6 mb-6 border border-gray-700" style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}>
+        <div className="rounded-xl shadow-lg p-6 mb-6 border border-gray-700" style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}>
           <div className="flex flex-col lg:flex-row gap-4 items-center">
             <div className="flex-1">
             <div className="relative">
@@ -930,7 +836,7 @@ const ScanResultsPage = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && performGoogleSearch()}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white placeholder-gray-400"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800  placeholder-gray-400"
                 />
               </div>
             </div>
@@ -938,7 +844,7 @@ const ScanResultsPage = () => {
             <button
               onClick={performGoogleSearch}
               disabled={isSearching || !searchQuery.trim()}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              className="px-6 py-3 bg-blue-600  rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
             >
               {isSearching ? (
                 <>
@@ -957,11 +863,11 @@ const ScanResultsPage = () => {
           {searchResults.length > 0 && (
             <div className="mt-4 flex flex-col lg:flex-row gap-4 items-center justify-between">
               <div className="flex items-center space-x-4">
-                <label className="text-sm font-medium text-gray-300">Sort by:</label>
+                <label className="text-sm font-medium" style={{color: '#f3f4f6'}}>Sort by:</label>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="px-4 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white"
+              className="px-4 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 "
             >
                   <option value="position">Position</option>
                   <option value="sentiment">Sentiment</option>
@@ -978,9 +884,9 @@ const ScanResultsPage = () => {
         </div>
 
         {/* Results List */}
-        <div className="rounded-xl shadow-lg overflow-hidden border border-gray-700" style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}>
+        <div className="rounded-xl shadow-lg overflow-hidden border border-gray-700" style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}>
           <div className="p-6 border-b border-gray-600">
-            <h2 className="text-xl font-bold text-white">
+            <h2 className="text-xl font-bold" style={{color: '#fafafa'}}>
               {searchResults.length > 0 ? 'Google Search Results' : 'Scan Results'} ({sortedResults.length} total)
             </h2>
             <p className="text-sm text-gray-300 mt-1">
@@ -1034,7 +940,7 @@ const ScanResultsPage = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-white mb-2 line-clamp-2">
+                        <h3 className="text-lg font-semibold mb-2 line-clamp-2" style={{color: '#f3f4f6'}}>
                           <a
                             href={result.link || result.url || '#'}
                             target="_blank"
@@ -1075,7 +981,7 @@ const ScanResultsPage = () => {
                       <div className="flex items-center space-x-2 ml-4">
                         <span className={`px-3 py-1 rounded-full text-sm font-medium border ${
                           !isSentimentAnalyzed(result)
-                            ? 'bg-gray-100 text-gray-600 border-gray-300' 
+                            ? 'bg-gray-700 text-gray-400 border-gray-300' 
                             : getSentimentColor(result.sentiment)
                         }`}>
                           {getSentimentText(result)}
@@ -1095,7 +1001,7 @@ const ScanResultsPage = () => {
                         rel="noopener noreferrer"
                         className={`flex items-center space-x-1 transition-colors ${
                           (result.originalUrl || result.originalLink || result.link || result.url) 
-                            ? 'text-blue-600 hover:text-blue-800 cursor-pointer' 
+                            ? 'text-blue-600 hover:text-blue-200 cursor-pointer' 
                             : 'text-gray-400 cursor-not-allowed'
                         }`}
                         onClick={(e) => {
@@ -1132,7 +1038,7 @@ const ScanResultsPage = () => {
                               toast.error('Failed to copy link');
                             });
                           }}
-                          className="flex items-center space-x-1 text-gray-600 hover:text-gray-800 transition-colors"
+                          className="flex items-center space-x-1 text-gray-400 hover:text-gray-200 transition-colors"
                           title="Copy link to clipboard"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1154,10 +1060,10 @@ const ScanResultsPage = () => {
           {sortedResults.length === 0 && (
             <div className="p-12 text-center">
               <Search className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <h3 className="text-lg font-medium text-gray-200 mb-2">
                 {searchResults.length > 0 ? 'No search results found' : 'No scan results available'}
               </h3>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-400 mb-4">
                 {searchResults.length > 0 
                   ? `No results found for "${searchQuery}". Try a different search term.`
                   : 'No scan results available for this scan. Try performing a Google search above.'
@@ -1180,7 +1086,7 @@ const ScanResultsPage = () => {
 
           {/* Pagination Controls - Show for both scan results and search results */}
           {sortedResults.length > 0 && shouldPaginate && totalPages > 1 && (
-            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+            <div className="px-6 py-4 border-t border-gray-200 bg-gray-800">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <button
@@ -1226,7 +1132,7 @@ const ScanResultsPage = () => {
                       
                       return pages.map((page, index) => (
                         page === '...' ? (
-                          <span key={`ellipsis-${index}`} className="px-3 py-2 text-sm text-gray-500">
+                          <span key={`ellipsis-${index}`} className="px-3 py-2 text-sm text-gray-400">
                             ...
                           </span>
                         ) : (
@@ -1235,7 +1141,7 @@ const ScanResultsPage = () => {
                             onClick={() => handlePageChange(page)}
                             className={`px-3 py-2 text-sm font-medium rounded-md ${
                               currentPage === page
-                                ? 'bg-blue-600 text-white'
+                                ? 'bg-blue-600 text-gray-200'
                                 : 'text-gray-300 bg-gray-800 border border-gray-600 hover:bg-gray-700'
                             }`}
                           >
@@ -1255,7 +1161,7 @@ const ScanResultsPage = () => {
                   </button>
                 </div>
                 
-                <div className="flex items-center space-x-4 text-sm text-gray-700">
+                <div className="flex items-center space-x-4 text-sm text-gray-300">
                   <div>
                     Showing {startIndex + 1}-{Math.min(endIndex, sortedResults.length)} of {sortedResults.length} results
                   </div>
@@ -1263,7 +1169,7 @@ const ScanResultsPage = () => {
                     Page {currentPage} of {totalPages}
                   </div>
                   <div className="flex items-center space-x-2">
-                    <label htmlFor="resultsPerPage" className="text-sm font-medium text-gray-700">
+                    <label htmlFor="resultsPerPage" className="text-sm font-medium" style={{color: '#f3f4f6'}}>
                       Show:
                     </label>
                     <select
@@ -1277,10 +1183,10 @@ const ScanResultsPage = () => {
                       <option value={20}>20</option>
                       <option value={50}>50</option>
                     </select>
-                    <span className="text-sm text-gray-500">per page</span>
+                    <span className="text-sm text-gray-400">per page</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <label htmlFor="goToPage" className="text-sm font-medium text-gray-700">
+                    <label htmlFor="goToPage" className="text-sm font-medium" style={{color: '#f3f4f6'}}>
                       Go to:
                     </label>
                     <input
@@ -1297,7 +1203,7 @@ const ScanResultsPage = () => {
                       }}
                       className="w-16 px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
-                    <span className="text-sm text-gray-500">page</span>
+                    <span className="text-sm text-gray-400">page</span>
                   </div>
                 </div>
               </div>

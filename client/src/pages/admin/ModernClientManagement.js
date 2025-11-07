@@ -208,7 +208,7 @@ const ModernClientManagement = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Client Management</h1>
+          <h1 className="text-3xl font-bold" style={{color: '#fafafa'}}>Client Management</h1>
           <p className="text-gray-400 mt-2">Manage your clients and their ORM campaigns</p>
         </div>
         <div className="flex flex-wrap gap-3 mt-4 sm:mt-0">
@@ -216,7 +216,7 @@ const ModernClientManagement = () => {
             <button
               onClick={handleBulkDelete}
               disabled={deleting}
-              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 transition-all duration-200 shadow-lg hover:shadow-xl"
+              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-600 to-red-700  rounded-xl hover:from-red-700 hover:to-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 transition-all duration-200 shadow-lg hover:shadow-xl"
             >
               {deleting ? (
                 <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
@@ -228,7 +228,7 @@ const ModernClientManagement = () => {
           )}
           <button
             onClick={() => navigate('/admin/clients/create')}
-            className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl"
+            className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600  rounded-xl hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl"
           >
             <UserPlus className="h-4 w-4 mr-2" />
             Add Client
@@ -276,7 +276,7 @@ const ModernClientManagement = () => {
                 placeholder="Search clients..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white placeholder-gray-400"
+                className="w-full pl-10 pr-4 py-3 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800  placeholder-gray-400"
               />
             </div>
           </div>
@@ -287,7 +287,7 @@ const ModernClientManagement = () => {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-4 py-3 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white"
+                className="px-4 py-3 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 "
               >
                 <option value="all">All Clients</option>
                 <option value="active">Active</option>
@@ -303,24 +303,24 @@ const ModernClientManagement = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="rounded-2xl shadow-sm border border-gray-700 p-6" style={{backgroundColor: '#04041B'}}>
           <div className="flex items-center">
-            <div className="p-3 bg-blue-100 rounded-xl">
+            <div className="p-3 bg-blue-900 rounded-xl">
               <Users className="h-6 w-6 text-blue-600" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-400">Total Clients</p>
-              <p className="text-2xl font-bold text-white">{clients.length}</p>
+              <p className="text-2xl font-bold" style={{color: '#fafafa'}}>{clients.length}</p>
             </div>
           </div>
         </div>
         
         <div className="rounded-2xl shadow-sm border border-gray-700 p-6" style={{backgroundColor: '#04041B'}}>
           <div className="flex items-center">
-            <div className="p-3 bg-green-100 rounded-xl">
+            <div className="p-3 bg-green-900 rounded-xl">
               <CheckCircle className="h-6 w-6 text-green-600" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-400">Active</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-2xl font-bold" style={{color: '#fafafa'}}>
                 {clients.filter(c => c.subscription?.status === 'active').length}
               </p>
             </div>
@@ -330,12 +330,12 @@ const ModernClientManagement = () => {
         
         <div className="rounded-2xl shadow-sm border border-gray-700 p-6" style={{backgroundColor: '#04041B'}}>
           <div className="flex items-center">
-            <div className="p-3 bg-red-100 rounded-xl">
+            <div className="p-3 bg-red-900 rounded-xl">
               <AlertCircle className="h-6 w-6 text-red-600" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-400">Inactive</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-2xl font-bold" style={{color: '#fafafa'}}>
                 {clients.filter(c => c.subscription?.status === 'inactive').length}
               </p>
             </div>
@@ -346,14 +346,14 @@ const ModernClientManagement = () => {
       {/* Clients List */}
       <div className="rounded-2xl shadow-sm border border-gray-700 overflow-hidden" style={{backgroundColor: '#04041B'}}>
         <div className="px-6 py-4 border-b border-gray-700" style={{backgroundColor: '#04041B'}}>
-          <h3 className="text-lg font-semibold text-white">Clients ({filteredClients.length})</h3>
+          <h3 className="text-lg font-semibold" style={{color: '#fafafa'}}>Clients ({filteredClients.length})</h3>
         </div>
         
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead style={{backgroundColor: '#04041B'}}>
               <tr>
-                <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider" style={{color: '#f3f4f6'}}>
                   <button
                     onClick={handleSelectAll}
                     className="flex items-center justify-center"
@@ -365,19 +365,19 @@ const ModernClientManagement = () => {
                     )}
                   </button>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{color: '#f3f4f6'}}>
                   Client
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{color: '#f3f4f6'}}>
                   Contact
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{color: '#f3f4f6'}}>
                   Company
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{color: '#f3f4f6'}}>
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{color: '#f3f4f6'}}>
                   Actions
                 </th>
               </tr>
@@ -406,13 +406,13 @@ const ModernClientManagement = () => {
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10">
                         <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center">
-                          <span className="text-white font-semibold text-sm">
+                          <span className="font-semibold text-sm" style={{color: '#ffffff'}}>
                             {client.name.charAt(0).toUpperCase()}
                           </span>
                         </div>
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-white">{client.name}</div>
+                        <div className="text-sm font-medium" style={{color: '#fafafa'}}>{client.name}</div>
                         <div className="text-sm text-blue-400">{client.contact?.email || 'No email'}</div>
                       </div>
                     </div>
@@ -421,7 +421,7 @@ const ModernClientManagement = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center space-x-2">
                       <Mail className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm text-white">{client.contact?.email || 'No email'}</span>
+                      <span className="text-sm" style={{color: '#fafafa'}}>{client.contact?.email || 'No email'}</span>
                     </div>
                     {client.contact?.phone && (
                       <div className="flex items-center space-x-2 mt-1">
@@ -432,38 +432,38 @@ const ModernClientManagement = () => {
                   </td>
                   
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-white">{client.contact?.company || 'No company'}</div>
+                    <div className="text-sm" style={{color: '#fafafa'}}>{client.contact?.company || 'No company'}</div>
                     <div className="text-sm text-gray-400">{client.settings?.industry || 'No industry'}</div>
                   </td>
                   
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                       client.subscription?.status === 'active' 
-                        ? 'bg-green-100 text-green-800' 
+                        ? 'bg-green-900 text-green-200' 
                         : client.subscription?.status === 'trial'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-red-100 text-red-800'
+                          ? 'bg-yellow-900 text-yellow-200'
+                          : 'bg-red-900 text-red-200'
                     }`}>
                       {client.subscription?.status || 'inactive'}
                     </span>
                   </td>
                   
                   
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium" style={{color: '#fafafa'}}>
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => {
                           setSelectedClient(client);
                           setShowEditModal(true);
                         }}
-                        className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                        className="bg-purple-600 hover:bg-purple-700  px-3 py-1 rounded text-xs font-medium transition-colors"
                         title="Edit client"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => handleDeleteClient(client._id)}
-                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                        className="bg-red-600 hover:bg-red-700  px-3 py-1 rounded text-xs font-medium transition-colors"
                         title="Delete client"
                       >
                         Delete
@@ -483,14 +483,14 @@ const ModernClientManagement = () => {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl p-6 w-full max-w-2xl mx-4 shadow-2xl max-h-[90vh] overflow-y-auto"
+            className="bg-transparent rounded-2xl p-6 w-full max-w-2xl mx-4 shadow-2xl max-h-[90vh] overflow-y-auto"
           >
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Edit Client</h3>
+            <h3 className="text-lg font-semibold text-gray-200 mb-4">Edit Client</h3>
             
             <div className="space-y-6">
               {/* Basic Information */}
               <div>
-                <h4 className="text-md font-semibold text-gray-900 mb-3">Basic Information</h4>
+                <h4 className="text-md font-semibold text-gray-200 mb-3">Basic Information</h4>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -500,7 +500,7 @@ const ModernClientManagement = () => {
                       type="text"
                       value={selectedClient.name || ''}
                       onChange={(e) => setSelectedClient({ ...selectedClient, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white placeholder-gray-400"
+                      className="w-full px-3 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800  placeholder-gray-400"
                     />
                   </div>
                 </div>
@@ -508,7 +508,7 @@ const ModernClientManagement = () => {
 
               {/* Contact Information */}
               <div>
-                <h4 className="text-md font-semibold text-white mb-3">Contact Information</h4>
+                <h4 className="text-md font-semibold  mb-3">Contact Information</h4>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -521,7 +521,7 @@ const ModernClientManagement = () => {
                         ...selectedClient, 
                         contact: { ...selectedClient.contact, email: e.target.value }
                       })}
-                      className="w-full px-3 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white placeholder-gray-400"
+                      className="w-full px-3 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800  placeholder-gray-400"
                     />
                   </div>
                   
@@ -536,7 +536,7 @@ const ModernClientManagement = () => {
                         ...selectedClient, 
                         contact: { ...selectedClient.contact, phone: e.target.value }
                       })}
-                      className="w-full px-3 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white placeholder-gray-400"
+                      className="w-full px-3 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800  placeholder-gray-400"
                     />
                   </div>
                   
@@ -551,7 +551,7 @@ const ModernClientManagement = () => {
                         ...selectedClient, 
                         contact: { ...selectedClient.contact, company: e.target.value }
                       })}
-                      className="w-full px-3 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white placeholder-gray-400"
+                      className="w-full px-3 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800  placeholder-gray-400"
                     />
                   </div>
                 </div>
@@ -559,7 +559,7 @@ const ModernClientManagement = () => {
 
               {/* Settings Information */}
               <div>
-                <h4 className="text-md font-semibold text-white mb-3">Settings</h4>
+                <h4 className="text-md font-semibold  mb-3">Settings</h4>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -572,7 +572,7 @@ const ModernClientManagement = () => {
                         ...selectedClient, 
                         settings: { ...selectedClient.settings, industry: e.target.value }
                       })}
-                      className="w-full px-3 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white placeholder-gray-400"
+                      className="w-full px-3 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800  placeholder-gray-400"
                     />
                   </div>
                   
@@ -587,7 +587,7 @@ const ModernClientManagement = () => {
                         ...selectedClient, 
                         settings: { ...selectedClient.settings, targetAudience: e.target.value }
                       })}
-                      className="w-full px-3 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white placeholder-gray-400"
+                      className="w-full px-3 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800  placeholder-gray-400"
                     />
                   </div>
                   
@@ -602,7 +602,7 @@ const ModernClientManagement = () => {
                         ...selectedClient, 
                         settings: { ...selectedClient.settings, website: e.target.value }
                       })}
-                      className="w-full px-3 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white placeholder-gray-400"
+                      className="w-full px-3 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800  placeholder-gray-400"
                     />
                   </div>
                 </div>
@@ -610,7 +610,7 @@ const ModernClientManagement = () => {
 
               {/* Status Information */}
               <div>
-                <h4 className="text-md font-semibold text-gray-900 mb-3">Status</h4>
+                <h4 className="text-md font-semibold text-gray-200 mb-3">Status</h4>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -622,7 +622,7 @@ const ModernClientManagement = () => {
                         ...selectedClient, 
                         subscription: { ...selectedClient.subscription, status: e.target.value }
                       })}
-                      className="w-full px-3 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white placeholder-gray-400"
+                      className="w-full px-3 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800  placeholder-gray-400"
                     >
                       <option value="active">Active</option>
                       <option value="trial">Trial</option>
@@ -642,7 +642,7 @@ const ModernClientManagement = () => {
               </button>
               <button
                 onClick={handleEditClient}
-                className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all duration-200"
+                className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600  rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all duration-200"
               >
                 Save Changes
               </button>

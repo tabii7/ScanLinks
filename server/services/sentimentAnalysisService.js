@@ -2,28 +2,58 @@ const axios = require('axios');
 
 class SentimentAnalysisService {
   constructor() {
+    // Reload environment variables to ensure we have the latest key
+    require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
     this.openaiApiKey = process.env.OPENAI_API_KEY;
     this.openaiBaseUrl = 'https://api.openai.com/v1/chat/completions';
     this.maxRetries = 3;
     this.retryDelay = 1000;
+    
+    // Log key status on initialization
+    if (this.openaiApiKey && this.openaiApiKey.length > 10) {
+      const keyPreview = `${this.openaiApiKey.substring(0, 4)}...${this.openaiApiKey.substring(this.openaiApiKey.length - 4)}`;
+      console.log(`✅ SentimentAnalysisService initialized with OpenAI key: ${keyPreview}`);
+    } else {
+      console.error('❌ SentimentAnalysisService: OpenAI API key NOT FOUND or invalid');
+    }
+  }
+  
+  // Method to get current API key (reloads from env if needed)
+  getApiKey() {
+    // Always reload from environment to get latest key
+    require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
+    this.openaiApiKey = process.env.OPENAI_API_KEY;
+    return this.openaiApiKey;
   }
 
   async analyzeSentiment(links, clientData) {
     try {
       console.log('🔍 Starting OpenAI sentiment analysis for', links.length, 'results');
       
+      // CRITICAL: Reload API key from environment to ensure we have the latest
+      const apiKey = this.getApiKey();
+      
       // Check if we have OpenAI API key - throw error if not configured
-      if (!this.openaiApiKey || this.openaiApiKey === 'sk-proj-1234567890abcdef' || this.openaiApiKey.trim() === '') {
+      if (!apiKey || apiKey === 'sk-proj-1234567890abcdef' || apiKey.trim() === '') {
         const error = new Error('OpenAI API key is not configured. Please set OPENAI_API_KEY environment variable.');
         error.code = 'API_NOT_CONFIGURED';
         console.error('❌ OpenAI API key not configured:', error.message);
+        console.error('   Please check server/.env file has OPENAI_API_KEY set');
         throw error;
       }
+
+      // Log API key status (masked for security)
+      const keyPreview = apiKey.length > 8 
+        ? `${apiKey.substring(0, 4)}...${apiKey.substring(apiKey.length - 4)}`
+        : '***';
+      console.log(`✅ Using OpenAI API Key: ${keyPreview}`);
+      console.log(`📏 Key length: ${apiKey.length} characters`);
 
       // Prepare the prompt with user context and search results
       const prompt = this.createAnalysisPrompt(links, clientData);
       
-      console.log('📝 Sending request to OpenAI...');
+      console.log('📝 Sending request to OpenAI API (GPT-4)...');
+      console.log(`📊 Analyzing ${links.length} search result(s)`);
       
       const response = await axios.post(this.openaiBaseUrl, {
         model: 'gpt-4',
@@ -41,7 +71,7 @@ class SentimentAnalysisService {
         temperature: 0.3
       }, {
         headers: {
-          'Authorization': `Bearer ${this.openaiApiKey}`,
+          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json'
         },
         timeout: 60000 // 60 second timeout
@@ -51,10 +81,26 @@ class SentimentAnalysisService {
       // Parse the response
       const analysisResults = this.parseOpenAIResponse(response.data.choices[0].message.content, links);
       
+      console.log(`✅ OpenAI analysis completed successfully`);
+      console.log(`📊 Received ${analysisResults.length} analyzed result(s) from OpenAI`);
+      console.log(`🎯 Sentiments: ${analysisResults.map(r => r.sentiment).join(', ')}`);
+      
       return analysisResults;
       
     } catch (error) {
       console.error('❌ OpenAI sentiment analysis failed:', error.message);
+      
+      // Log detailed error information
+      if (error.response) {
+        console.error(`   Status: ${error.response.status}`);
+        console.error(`   Error: ${JSON.stringify(error.response.data)}`);
+        if (error.response.status === 401) {
+          console.error('   ❌ Authentication failed - Invalid API key');
+        } else if (error.response.status === 429) {
+          console.error('   ⚠️ Rate limit exceeded');
+        }
+      }
+      
       // Re-throw the error instead of using fallback
       if (error.code === 'API_NOT_CONFIGURED') {
         throw error; // Re-throw configuration errors

@@ -63,19 +63,19 @@ const ModernLogin = () => {
                 <Shield className="h-8 w-8 text-white" />
               </div>
               <div className="ml-4">
-                <h1 className="text-4xl font-bold text-gray-900">AceTrack™</h1>
-                <p className="text-lg text-gray-600">ORM Platform</p>
+                <h1 className="text-4xl font-bold text-gray-200">AceTrack™</h1>
+                <p className="text-lg text-gray-400">ORM Platform</p>
               </div>
             </div>
             
-            <h2 className="text-5xl font-bold text-gray-900 mb-6">
+            <h2 className="text-5xl font-bold text-gray-200 mb-6">
               Monitor Your
               <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                 {' '}Online Reputation
               </span>
             </h2>
             
-            <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+            <p className="text-xl text-gray-400 mb-8 leading-relaxed">
               Track keyword rankings, analyze sentiment, and generate comprehensive reports 
               to manage your online presence effectively.
             </p>
@@ -89,18 +89,18 @@ const ModernLogin = () => {
           transition={{ duration: 0.6 }}
           className="w-full max-w-md mx-auto"
         >
-          <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-2xl p-8 border border-white/20">
+          <div className="bg-transparent/80 backdrop-blur-md rounded-3xl shadow-2xl p-8 border border-white/20">
             <div className="text-center mb-8">
               <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
                 <Shield className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900">Welcome Back</h3>
-              <p className="text-gray-600">Sign in to your account</p>
+              <h3 className="text-2xl font-bold text-gray-200">Welcome Back</h3>
+              <p className="text-gray-400">Sign in to your account</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Email Address
                 </label>
                 <div className="relative">
@@ -113,14 +113,14 @@ const ModernLogin = () => {
                     value={formData.email}
                     onChange={handleChange}
                     required
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/50"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-transparent/50"
                     placeholder="Enter your email"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Password
                 </label>
                 <div className="relative">
@@ -133,7 +133,7 @@ const ModernLogin = () => {
                     value={formData.password}
                     onChange={handleChange}
                     required
-                    className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/50"
+                    className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-transparent/50"
                     placeholder="Enter your password"
                   />
                   <button
@@ -142,9 +142,9 @@ const ModernLogin = () => {
                     className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   >
                     {showPassword ? (
-                      <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                      <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-400" />
                     ) : (
-                      <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                      <Eye className="h-5 w-5 text-gray-400 hover:text-gray-400" />
                     )}
                   </button>
                 </div>
@@ -156,7 +156,7 @@ const ModernLogin = () => {
                     type="checkbox"
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
-                  <span className="ml-2 text-sm text-gray-600">Remember me</span>
+                  <span className="ml-2 text-sm text-gray-400">Remember me</span>
                 </label>
                 <a href="#" className="text-sm text-blue-600 hover:text-blue-700">
                   Forgot password?
@@ -182,7 +182,7 @@ const ModernLogin = () => {
             </form>
 
             <div className="mt-8 pt-6 border-t border-gray-200">
-              <p className="text-center text-sm text-gray-600">
+              <p className="text-center text-sm text-gray-400">
                 Don't have an account?{' '}
                 <a href="#" className="text-blue-600 hover:text-blue-700 font-medium">
                   Contact your administrator

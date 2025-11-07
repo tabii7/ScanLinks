@@ -137,9 +137,9 @@ const ClientManagement = () => {
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      active: { color: 'text-green-800', bg: 'bg-green-100', icon: CheckCircle },
-      inactive: { color: 'text-gray-800', bg: 'bg-gray-100', icon: Clock },
-      suspended: { color: 'text-red-800', bg: 'bg-red-100', icon: AlertCircle },
+      active: { color: 'text-green-200', bg: 'bg-green-900', icon: CheckCircle },
+      inactive: { color: 'text-gray-200', bg: 'bg-gray-700', icon: Clock },
+      suspended: { color: 'text-red-200', bg: 'bg-red-900', icon: AlertCircle },
     };
     
     const config = statusConfig[status] || statusConfig.inactive;
@@ -164,17 +164,17 @@ const ClientManagement = () => {
   }
 
   return (
-    <Layout isAdmin={true}>
+    <ModernLayout isAdmin={true}>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Client Management</h1>
-            <p className="text-gray-600">Manage your ORM clients and their campaigns</p>
+            <h1 className="text-2xl font-bold" style={{color: '#fafafa'}}>Client Management</h1>
+            <p className="text-gray-400">Manage your ORM clients and their campaigns</p>
           </div>
           <button
             onClick={() => setShowModal(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-ace-600 hover:bg-ace-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ace-500"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md  bg-ace-600 hover:bg-ace-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ace-500"
           >
             <Plus className="h-4 w-4 mr-2" />
             Add Client
@@ -182,7 +182,7 @@ const ClientManagement = () => {
         </div>
 
         {/* Filters */}
-        <div className="bg-white shadow-ace rounded-lg p-4">
+        <div className="rounded-lg p-4" style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
             <div className="flex-1 max-w-lg">
               <div className="relative">
@@ -192,7 +192,8 @@ const ClientManagement = () => {
                   placeholder="Search clients..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-ace-500 focus:border-ace-500 sm:text-sm"
+                  className="block w-full pl-10 pr-3 py-2 border rounded-md leading-5 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-ace-500 focus:border-ace-500 sm:text-sm"
+                  style={{borderColor: '#263143', backgroundColor: '#0b1220', color: '#fafafa'}}
                 />
               </div>
             </div>
@@ -200,7 +201,8 @@ const ClientManagement = () => {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-ace-500 focus:border-ace-500 sm:text-sm"
+                className="block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-ace-500 focus:border-ace-500 sm:text-sm"
+                style={{borderColor: '#263143', backgroundColor: '#0b1220', color: '#fafafa'}}
               >
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
@@ -212,38 +214,39 @@ const ClientManagement = () => {
         </div>
 
         {/* Clients Table */}
-        <div className="bg-white shadow-ace rounded-lg overflow-hidden">
+        <div className="rounded-lg overflow-hidden" style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y" style={{borderColor: '#263143'}}>
+              <thead style={{backgroundColor: '#0b1220'}}>
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{color: '#f3f4f6'}}>
                     Client
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{color: '#f3f4f6'}}>
                     Contact
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{color: '#f3f4f6'}}>
                     Subscription
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{color: '#f3f4f6'}}>
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{color: '#f3f4f6'}}>
                     Created
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider" style={{color: '#f3f4f6'}}>
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200" style={{backgroundColor: '#04041B'}}>
+              <tbody className="divide-y" style={{borderColor: '#263143'}}>
                 {filteredClients.map((client) => (
                   <motion.tr
                     key={client._id}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="hover:bg-gray-50"
+                    className="hover:opacity-80"
+                    style={{backgroundColor: 'transparent'}}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
@@ -259,26 +262,26 @@ const ClientManagement = () => {
                           </div>
                         )}
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{client.name}</div>
-                          <div className="text-sm text-gray-500">{client.contact.company}</div>
+                          <div className="text-sm font-medium" style={{color: '#fafafa'}}>{client.name}</div>
+                          <div className="text-sm text-gray-400">{client.contact.company}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{client.contact.email}</div>
-                      <div className="text-sm text-gray-500">{client.contact.phone}</div>
+                      <div className="text-sm" style={{color: '#fafafa'}}>{client.contact.email}</div>
+                      <div className="text-sm text-gray-400">{client.contact.phone}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{client.subscription.plan}</div>
-                      <div className="text-sm text-gray-500">{client.subscription.duration} months</div>
+                      <div className="text-sm" style={{color: '#fafafa'}}>{client.subscription.plan}</div>
+                      <div className="text-sm text-gray-400">{client.subscription.duration} months</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(client.status)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                       {new Date(client.createdAt).toLocaleDateString()}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium" style={{color: '#fafafa'}}>
                       <div className="flex items-center justify-end space-x-2">
                         <button
                           onClick={() => handleEdit(client)}
@@ -304,10 +307,10 @@ const ClientManagement = () => {
         {/* Add/Edit Client Modal */}
         {showModal && (
           <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-transparent">
               <div className="mt-3">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">
+                  <h3 className="text-lg font-medium text-gray-200">
                     {editingClient ? 'Edit Client' : 'Add New Client'}
                   </h3>
                   <button
@@ -316,7 +319,7 @@ const ClientManagement = () => {
                       setEditingClient(null);
                       resetForm();
                     }}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-gray-400 hover:text-gray-400"
                   >
                     <span className="sr-only">Close</span>
                     <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -326,7 +329,7 @@ const ClientManagement = () => {
                 </div>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Client Name</label>
+                    <label className="block text-sm font-medium text-gray-300">Client Name</label>
                     <input
                       type="text"
                       required
@@ -336,7 +339,7 @@ const ClientManagement = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Email</label>
+                    <label className="block text-sm font-medium text-gray-300">Email</label>
                     <input
                       type="email"
                       required
@@ -346,7 +349,7 @@ const ClientManagement = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Phone</label>
+                    <label className="block text-sm font-medium text-gray-300">Phone</label>
                     <input
                       type="tel"
                       value={formData.phone}
@@ -355,7 +358,7 @@ const ClientManagement = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Company</label>
+                    <label className="block text-sm font-medium text-gray-300">Company</label>
                     <input
                       type="text"
                       value={formData.company}
@@ -365,7 +368,7 @@ const ClientManagement = () => {
                   </div>
                   <div className="flex space-x-3">
                     <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700">Plan</label>
+                      <label className="block text-sm font-medium text-gray-300">Plan</label>
                       <select
                         value={formData.subscription.plan}
                         onChange={(e) => setFormData({
@@ -381,7 +384,7 @@ const ClientManagement = () => {
                       </select>
                     </div>
                     <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700">Duration (months)</label>
+                      <label className="block text-sm font-medium text-gray-300">Duration (months)</label>
                       <input
                         type="number"
                         min="1"
@@ -402,13 +405,13 @@ const ClientManagement = () => {
                         setEditingClient(null);
                         resetForm();
                       }}
-                      className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                      className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-800"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-ace-600 hover:bg-ace-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ace-500"
+                      className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium  bg-ace-600 hover:bg-ace-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ace-500"
                     >
                       {editingClient ? 'Update' : 'Create'}
                     </button>
@@ -419,7 +422,7 @@ const ClientManagement = () => {
           </div>
         )}
       </div>
-    </Layout>
+    </ModernLayout>
   );
 };
 

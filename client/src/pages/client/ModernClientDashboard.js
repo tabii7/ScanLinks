@@ -150,14 +150,14 @@ const ModernClientDashboard = () => {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Your ORM Dashboard</h1>
+          <h1 className="text-3xl font-bold" style={{color: '#fafafa'}}>Your ORM Dashboard</h1>
           <p className="text-gray-300 mt-2">Track your online reputation progress</p>
         </div>
         <div className="mt-4 lg:mt-0 flex space-x-3">
           <select
             value={selectedRegion}
             onChange={(e) => setSelectedRegion(e.target.value)}
-            className="px-4 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white"
+            className="px-4 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 "
           >
             {regions.map((region) => (
               <option key={region.value} value={region.value}>
@@ -165,7 +165,7 @@ const ModernClientDashboard = () => {
               </option>
             ))}
           </select>
-          <button className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl">
+          <button className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600  rounded-xl hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl">
             <Download className="h-4 w-4 mr-2" />
             Download Report
           </button>
@@ -181,12 +181,12 @@ const ModernClientDashboard = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
             className="rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
+            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
           >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-300 mb-1">{stat.name}</p>
-                <p className="text-3xl font-bold text-white">{stat.value}</p>
+                <p className="text-3xl font-bold" style={{color: '#fafafa'}}>{stat.value}</p>
                 <div className="flex items-center mt-2">
                   <span className={`text-sm font-medium ${
                     stat.changeType === 'positive' ? 'text-green-400' : 'text-red-400'
@@ -197,7 +197,7 @@ const ModernClientDashboard = () => {
                 </div>
               </div>
               <div className="p-3 rounded-xl bg-gray-800">
-                <stat.icon className="h-6 w-6 text-white" />
+                <stat.icon className="h-6 w-6 " />
               </div>
             </div>
           </motion.div>
@@ -212,10 +212,10 @@ const ModernClientDashboard = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3 }}
           className="lg:col-span-2 rounded-2xl p-6 shadow-lg border border-gray-700"
-          style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
+          style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
         >
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold text-white">Keyword Rankings</h3>
+            <h3 className="text-xl font-semibold" style={{color: '#fafafa'}}>Keyword Rankings</h3>
             <button 
               onClick={() => navigate('/rank-tracking')}
               className="text-blue-400 hover:text-blue-300 text-sm font-medium"
@@ -225,23 +225,23 @@ const ModernClientDashboard = () => {
           </div>
           <div className="space-y-4">
             {keywordRankings?.slice(0, 5).map((keyword, index) => (
-              <div key={index} className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 transition-colors">
+              <div key={index} className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-800 transition-colors">
                 <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <div className="w-10 h-10 bg-blue-900 rounded-full flex items-center justify-center">
                     <Target className="h-5 w-5 text-blue-600" />
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">{keyword.keyword}</p>
-                    <p className="text-sm text-gray-500">Position: {keyword.currentPosition}</p>
+                    <p className="font-medium text-gray-200">{keyword.keyword}</p>
+                    <p className="text-sm text-gray-400">Position: {keyword.currentPosition}</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                     keyword.change > 0 
-                      ? 'bg-green-100 text-green-800' 
+                      ? 'bg-green-900 text-green-200' 
                       : keyword.change < 0 
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-gray-100 text-gray-800'
+                        ? 'bg-red-900 text-red-200'
+                        : 'bg-gray-700 text-gray-200'
                   }`}>
                     {keyword.change > 0 ? '+' : ''}{keyword.change}
                   </span>
@@ -264,9 +264,9 @@ const ModernClientDashboard = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4 }}
           className="rounded-2xl p-6 shadow-lg border border-gray-700"
-          style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
+          style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
         >
-          <h3 className="text-xl font-semibold text-white mb-6">Recent Activity</h3>
+          <h3 className="text-xl font-semibold  mb-6">Recent Activity</h3>
           <div className="space-y-4">
             {recentScans?.slice(0, 4).map((scan, index) => (
               <div 
@@ -278,7 +278,7 @@ const ModernClientDashboard = () => {
                   <Activity className="h-4 w-4 text-green-400" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-white">
+                  <p className="text-sm font-medium" style={{color: '#fafafa'}}>
                     Scan completed
                   </p>
                   <p className="text-xs text-gray-400">
@@ -316,10 +316,10 @@ const ModernClientDashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
           className="rounded-2xl p-6 shadow-lg border border-gray-700"
-          style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
+          style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
         >
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold text-white">Negative Links Trend</h3>
+            <h3 className="text-xl font-semibold" style={{color: '#fafafa'}}>Negative Links Trend</h3>
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-red-400 rounded-full"></div>
               <span className="text-sm text-gray-300">Last 7 Scans</span>
@@ -381,10 +381,10 @@ const ModernClientDashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
           className="rounded-2xl p-6 shadow-lg border border-gray-700"
-          style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
+          style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
         >
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold text-white">Positive Links Trend</h3>
+            <h3 className="text-xl font-semibold" style={{color: '#fafafa'}}>Positive Links Trend</h3>
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-green-400 rounded-full"></div>
               <span className="text-sm text-gray-300">Last 7 Scans</span>
@@ -447,10 +447,10 @@ const ModernClientDashboard = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.7 }}
         className="rounded-2xl p-6 shadow-lg border border-gray-700"
-        style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
+        style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
       >
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-semibold text-white">Sentiment Distribution</h3>
+          <h3 className="text-xl font-semibold" style={{color: '#fafafa'}}>Sentiment Distribution</h3>
           <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-purple-400 rounded-full"></div>
               <span className="text-sm text-gray-300">Current Scan</span>
@@ -507,10 +507,10 @@ const ModernClientDashboard = () => {
                     className="w-4 h-4 rounded-full" 
                     style={{ backgroundColor: item.color }}
                   ></div>
-                  <span className="font-medium text-white">{item.name}</span>
+                  <span className="font-medium" style={{color: '#fafafa'}}>{item.name}</span>
                 </div>
                 <div className="text-right">
-                  <div className="text-lg font-bold text-white">{item.value}</div>
+                  <div className="text-lg font-bold" style={{color: '#fafafa'}}>{item.value}</div>
                   <div className="text-sm text-gray-400">links</div>
                 </div>
               </div>
@@ -526,7 +526,7 @@ const ModernClientDashboard = () => {
         transition={{ delay: 0.6 }}
         className="grid grid-cols-1 md:grid-cols-3 gap-6"
       >
-        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-6 text-white">
+        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-6 ">
           <div className="flex items-center justify-between mb-4">
             <FileText className="h-8 w-8" />
             <Download className="h-5 w-5" />
@@ -537,7 +537,7 @@ const ModernClientDashboard = () => {
         
         <div 
           onClick={() => navigate('/scans')}
-          className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl p-6 text-white cursor-pointer hover:from-green-600 hover:to-emerald-700 transition-all"
+          className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl p-6  cursor-pointer hover:from-green-600 hover:to-emerald-700 transition-all"
         >
           <div className="flex items-center justify-between mb-4">
             <BarChart3 className="h-8 w-8" />
@@ -547,7 +547,7 @@ const ModernClientDashboard = () => {
           <p className="text-green-100 text-sm">See all your scan results and analysis</p>
         </div>
         
-        <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-2xl p-6 text-white">
+        <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-2xl p-6 ">
           <div className="flex items-center justify-between mb-4">
             <Calendar className="h-8 w-8" />
             <Clock className="h-5 w-5" />

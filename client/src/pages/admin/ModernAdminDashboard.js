@@ -196,16 +196,16 @@ const ModernAdminDashboard = () => {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-white">Dashboard</h1>
+          <h1 className="text-3xl font-bold" style={{color: '#fafafa'}}>Dashboard</h1>
           <p className="text-gray-400 mt-2">Monitor and manage your ORM campaigns</p>
         </div>
         <div className="mt-4 lg:mt-0 flex items-center space-x-4">
-          <button className="p-2 text-gray-400 hover:text-white transition-colors">
+          <button className="p-2 text-gray-400 hover: transition-colors">
             <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
           </button>
-          <button className="relative p-2 text-gray-400 hover:text-white transition-colors">
+          <button className="relative p-2 text-gray-400 hover: transition-colors">
             <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4.828 7l2.586 2.586a2 2 0 002.828 0L15 7H4.828z" />
             </svg>
@@ -213,7 +213,7 @@ const ModernAdminDashboard = () => {
           </button>
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
-              <span className="text-white text-sm font-medium">A</span>
+              <span className=" text-sm font-medium">A</span>
             </div>
             <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -231,12 +231,12 @@ const ModernAdminDashboard = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
             className="rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
+            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
           >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-400 mb-1">{stat.name}</p>
-                <p className="text-3xl font-bold text-white">{stat.value.toLocaleString()}</p>
+                <p className="text-3xl font-bold" style={{color: '#fafafa'}}>{stat.value.toLocaleString()}</p>
                 <div className="flex items-center mt-2">
                   <span className={`text-sm font-medium ${
                     stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'
@@ -247,7 +247,7 @@ const ModernAdminDashboard = () => {
                 </div>
               </div>
               <div className={`p-3 rounded-xl ${stat.bgColor}`}>
-                <stat.icon className={`h-6 w-6 text-white`} />
+                <stat.icon className={`h-6 w-6`} />
               </div>
             </div>
           </motion.div>
@@ -262,10 +262,10 @@ const ModernAdminDashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           className="rounded-2xl p-6 shadow-lg border border-gray-700"
-          style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
+          style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
         >
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold text-white">Scan Trends</h3>
+            <h3 className="text-xl font-semibold" style={{color: '#fafafa'}}>Scan Trends</h3>
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
               <span className="text-sm text-gray-400">Scans</span>
@@ -294,10 +294,10 @@ const ModernAdminDashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
           className="rounded-2xl p-6 shadow-lg border border-gray-700"
-          style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
+          style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
         >
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold text-white">Client Activity</h3>
+            <h3 className="text-xl font-semibold" style={{color: '#fafafa'}}>Client Activity</h3>
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
               <span className="text-sm text-gray-400">Scans</span>
@@ -329,10 +329,10 @@ const ModernAdminDashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
           className="rounded-2xl p-6 shadow-lg border border-gray-700"
-          style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
+          style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
         >
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold text-white">Sentiment Trends</h3>
+            <h3 className="text-xl font-semibold" style={{color: '#fafafa'}}>Sentiment Trends</h3>
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-green-500 rounded-full"></div>
               <span className="text-sm text-gray-400">Positive</span>
@@ -364,10 +364,10 @@ const ModernAdminDashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
           className="rounded-2xl p-6 shadow-lg border border-gray-700"
-          style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
+          style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
         >
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold text-white">Keyword Performance</h3>
+            <h3 className="text-xl font-semibold" style={{color: '#fafafa'}}>Keyword Performance</h3>
             <div className="text-sm text-gray-400">Overall Distribution</div>
           </div>
           <div className="h-80">
@@ -403,10 +403,10 @@ const ModernAdminDashboard = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3 }}
           className="lg:col-span-2 rounded-2xl p-6 shadow-lg border border-gray-700"
-          style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
+          style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
         >
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold text-white">Recent Activity</h3>
+            <h3 className="text-xl font-semibold" style={{color: '#fafafa'}}>Recent Activity</h3>
             <button className="text-blue-400 hover:text-blue-300 text-sm font-medium">
               View All
             </button>
@@ -415,13 +415,13 @@ const ModernAdminDashboard = () => {
             {recentActivity?.scans?.slice(0, 5).map((scan, index) => (
               <div key={index} className="flex items-center space-x-4 p-4 rounded-xl hover:bg-gray-700 transition-colors">
                 <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
-                  <Activity className="h-5 w-5 text-white" />
+                  <Activity className="h-5 w-5 " />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-white">
+                  <p className="text-sm font-medium" style={{color: '#fafafa'}}>
                     Scan completed for {scan.clientId?.name || 'Unknown Client'}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-400">
                     {new Date(scan.completedAt).toLocaleString()}
                   </p>
                 </div>
@@ -439,9 +439,9 @@ const ModernAdminDashboard = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4 }}
           className="rounded-2xl p-6 shadow-lg border border-gray-700"
-          style={{background: 'linear-gradient(to bottom, #04041B 70%, #6C24E5 100%)'}}
+          style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
         >
-          <h3 className="text-xl font-semibold text-white mb-6">Quick Actions</h3>
+          <h3 className="text-xl font-semibold  mb-6">Quick Actions</h3>
           <div className="space-y-4">
             {quickActions.map((action, index) => (
               <button
@@ -456,11 +456,11 @@ const ModernAdminDashboard = () => {
                 className="w-full flex items-center space-x-3 p-4 rounded-xl hover:bg-gray-700 transition-colors group"
               >
                 <div className={`w-10 h-10 ${action.color} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                  <action.icon className="h-5 w-5 text-white" />
+                  <action.icon className="h-5 w-5 " />
                 </div>
                 <div className="flex-1 text-left">
-                  <p className="text-sm font-medium text-white">{action.name}</p>
-                  <p className="text-xs text-gray-500">{action.description}</p>
+                  <p className="text-sm font-medium" style={{color: '#fafafa'}}>{action.name}</p>
+                  <p className="text-xs text-gray-400">{action.description}</p>
                 </div>
                 <ArrowUpRight className="h-4 w-4 text-gray-400 group-hover:text-blue-400" />
               </button>

@@ -515,16 +515,16 @@ const ComprehensiveScanResults = () => {
       case 'positive': return <CheckCircle className="w-4 h-4 text-green-500" />;
       case 'negative': return <AlertCircle className="w-4 h-4 text-red-500" />;
       case 'neutral': return <Clock className="w-4 h-4 text-yellow-500" />;
-      default: return <Clock className="w-4 h-4 text-gray-500" />;
+      default: return <Clock className="w-4 h-4 text-gray-400" />;
     }
   };
 
   const getSentimentColor = (sentiment) => {
     switch (sentiment) {
-      case 'positive': return 'bg-green-100 text-green-800 border-green-200';
-      case 'negative': return 'bg-red-100 text-red-800 border-red-200';
-      case 'neutral': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'positive': return 'bg-green-900 text-green-200 border-green-200';
+      case 'negative': return 'bg-red-900 text-red-200 border-red-200';
+      case 'neutral': return 'bg-yellow-900 text-yellow-200 border-yellow-200';
+      default: return 'bg-gray-700 text-gray-200 border-gray-200';
     }
   };
 
@@ -533,10 +533,10 @@ const ComprehensiveScanResults = () => {
       case 'new': return <Plus className="w-4 h-4 text-blue-500" />;
       case 'improved': return <TrendingUp className="w-4 h-4 text-green-500" />;
       case 'dropped': return <TrendingDown className="w-4 h-4 text-red-500" />;
-      case 'unchanged': return <Minus className="w-4 h-4 text-gray-500" />;
+      case 'unchanged': return <Minus className="w-4 h-4 text-gray-400" />;
       case 'disappeared': return <AlertCircle className="w-4 h-4 text-orange-500" />;
       case 'baseline': return <Minus className="w-4 h-4 text-purple-500" />;
-      default: return <Minus className="w-4 h-4 text-gray-500" />;
+      default: return <Minus className="w-4 h-4 text-gray-400" />;
     }
   };
 
@@ -544,12 +544,12 @@ const ComprehensiveScanResults = () => {
     switch (movement) {
       // Make 'New Entry' clearly distinct from 'Week' tag (blue)
       case 'new': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
-      case 'improved': return 'bg-green-100 text-green-800 border-green-200';
-      case 'dropped': return 'bg-red-100 text-red-800 border-red-200';
-      case 'unchanged': return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'improved': return 'bg-green-900 text-green-200 border-green-200';
+      case 'dropped': return 'bg-red-900 text-red-200 border-red-200';
+      case 'unchanged': return 'bg-gray-700 text-gray-200 border-gray-200';
       case 'disappeared': return 'bg-orange-100 text-orange-800 border-orange-200';
       case 'baseline': return 'bg-purple-100 text-purple-800 border-purple-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      default: return 'bg-gray-700 text-gray-200 border-gray-200';
     }
   };
 
@@ -570,7 +570,7 @@ const ComprehensiveScanResults = () => {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading comprehensive scan results...</p>
+          <p className="text-gray-400">Loading comprehensive scan results...</p>
         </div>
       </div>
     );
@@ -581,11 +581,11 @@ const ComprehensiveScanResults = () => {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Client Not Found</h2>
-          <p className="text-gray-600 mb-4">The client you're looking for doesn't exist.</p>
+          <h2 className="text-2xl font-bold text-gray-200 mb-2">Client Not Found</h2>
+          <p className="text-gray-400 mb-4">The client you're looking for doesn't exist.</p>
           <button
             onClick={() => navigate('/admin/reports')}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            className="bg-blue-600  px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
           >
             Back to Reports
           </button>
@@ -598,12 +598,12 @@ const ComprehensiveScanResults = () => {
     <div className="min-h-screen" style={{backgroundColor: '#060b16'}}>
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="rounded-xl shadow-lg p-6 mb-6 border border-gray-700" style={{background: 'linear-gradient(to bottom, #04041B 66%, #3b1586 100%)'}}>
+        <div className="rounded-xl shadow-lg p-6 mb-6 border border-gray-700" style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => navigate('/admin/reports')}
-                className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors"
+                className="flex items-center space-x-2 text-gray-300 hover: transition-colors"
               >
                 <ArrowLeft className="w-5 h-5" />
                 <span>Back to Reports</span>
@@ -620,7 +620,7 @@ const ComprehensiveScanResults = () => {
                     .then(() => { toast.success('Report sent to client (includes all weeks)'); fetchClientData(); })
                     .catch(() => toast.error('Failed to send to client'));
                 }}
-                className={`inline-flex items-center px-4 py-2 rounded-md font-semibold transition-all duration-150 shadow focus:outline-none text-white ${(() => {const p = scans.find(s => !s.parentId);return p?.clientStatus === 'sent' ? 'bg-gray-400 cursor-default opacity-60' : 'bg-green-600 hover:bg-green-700';})()}`}
+                className={`inline-flex items-center px-4 py-2 rounded-md font-semibold transition-all duration-150 shadow focus:outline-none ${(() => {const p = scans.find(s => !s.parentId);return p?.clientStatus === 'sent' ? 'bg-gray-400 cursor-default opacity-60' : 'bg-green-600 hover:bg-green-700';})()}`}
                 title="Send to Client"
                 disabled={(() => {const p = scans.find(s => !s.parentId);return p?.clientStatus === 'sent';})()}
                 style={{marginLeft: '1rem'}}
@@ -629,7 +629,7 @@ const ComprehensiveScanResults = () => {
                 {(() => {const p = scans.find(s => !s.parentId);return p?.clientStatus === 'sent' ? 'Sent to Client' : 'Send to Client';})()}
               </button>
               <div className="text-right">
-                <div className="text-3xl font-bold text-white">{stats.totalResults}</div>
+                <div className="text-3xl font-bold" style={{color: '#fafafa'}}>{stats.totalResults}</div>
                 <div className="text-sm text-gray-300">Total Results</div>
               </div>
             </div>
@@ -637,7 +637,7 @@ const ComprehensiveScanResults = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <h1 className="text-2xl font-bold text-white mb-2">{client.name}</h1>
+              <h1 className="text-2xl font-bold  mb-2">{client.name}</h1>
               {client.contact?.email && (
                 <p className="text-sm text-gray-400">{client.contact.email}</p>
               )}
@@ -660,15 +660,15 @@ const ComprehensiveScanResults = () => {
             </div>
             
             <div className="text-right">
-              <div className="text-2xl font-bold text-white">{scans.length}</div>
+              <div className="text-2xl font-bold" style={{color: '#fafafa'}}>{scans.length}</div>
               <div className="text-sm text-gray-300">Total Scans</div>
             </div>
           </div>
         </div>
 
         {/* Scan Parameters Section */}
-        <div className="rounded-xl shadow-lg p-6 mb-6 border border-gray-700" style={{background: 'linear-gradient(to bottom, #04041B 66%, #3b1586 100%)'}}>
-          <h2 className="text-xl font-bold text-white mb-4">Scan Parameters</h2>
+        <div className="rounded-xl shadow-lg p-6 mb-6 border border-gray-700" style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}>
+          <h2 className="text-xl font-bold  mb-4">Scan Parameters</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {scans.map((scan, index) => {
               const keywords = scan.searchQuery ? scan.searchQuery.split(' ').filter(k => k.trim()) : [];
@@ -681,7 +681,7 @@ const ComprehensiveScanResults = () => {
                   className="rounded-lg p-4 border border-gray-600 bg-gray-800/50"
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-lg font-semibold text-white">
+                    <h3 className="text-lg font-semibold" style={{color: '#fafafa'}}>
                       {scan.parentId ? 'Child Scan' : 'Parent Scan'} - Week {scan.weekNumber}
                     </h3>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -706,48 +706,48 @@ const ComprehensiveScanResults = () => {
                             ))}
                           </div>
                         ) : (
-                          <span className="text-gray-500">No keywords</span>
+                          <span className="text-gray-400">No keywords</span>
                         )}
                       </div>
                     </div>
                     
                     <div className="flex items-center">
                       <span className="text-gray-400 w-24 flex-shrink-0">Search Query:</span>
-                      <span className="text-white flex-1 font-mono text-xs break-all">
+                      <span className=" flex-1 font-mono text-xs break-all">
                         "{scan.searchQuery || 'N/A'}"
                       </span>
                     </div>
                     
                     <div className="flex items-center">
                       <span className="text-gray-400 w-24 flex-shrink-0">Region:</span>
-                      <span className="text-white">{scan.region || 'N/A'}</span>
+                      <span className="">{scan.region || 'N/A'}</span>
                     </div>
                     
                     <div className="flex items-center">
                       <span className="text-gray-400 w-24 flex-shrink-0">Week Number:</span>
-                      <span className="text-white">{scan.weekNumber || 'N/A'}</span>
+                      <span className="">{scan.weekNumber || 'N/A'}</span>
                     </div>
                     
                     <div className="flex items-center">
                       <span className="text-gray-400 w-24 flex-shrink-0">Total Keywords:</span>
-                      <span className="text-white">{scan.totalKeywords || keywords.length || 0}</span>
+                      <span className="">{scan.totalKeywords || keywords.length || 0}</span>
                     </div>
                     
                     <div className="flex items-center">
                       <span className="text-gray-400 w-24 flex-shrink-0">Results:</span>
-                      <span className="text-white">{scan.resultsCount || 0}</span>
+                      <span className="">{scan.resultsCount || 0}</span>
                     </div>
                     
                     <div className="flex items-center">
                       <span className="text-gray-400 w-24 flex-shrink-0">Started:</span>
-                      <span className="text-white text-xs">
+                      <span className=" text-xs">
                         {scan.startedAt ? new Date(scan.startedAt).toLocaleString() : 'N/A'}
                       </span>
                     </div>
                     
                     <div className="flex items-center">
                       <span className="text-gray-400 w-24 flex-shrink-0">Completed:</span>
-                      <span className="text-white text-xs">
+                      <span className=" text-xs">
                         {scan.completedAt ? new Date(scan.completedAt).toLocaleString() : 'N/A'}
                       </span>
                     </div>
@@ -787,16 +787,16 @@ const ComprehensiveScanResults = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
               className="rounded-xl shadow-lg p-4 border border-gray-700"
-              style={{background: 'linear-gradient(to bottom, #04041B 66%, #3b1586 100%)'}}
+              style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
             >
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-lg font-semibold text-white">Week {week.weekNumber}</h3>
+                <h3 className="text-lg font-semibold" style={{color: '#fafafa'}}>Week {week.weekNumber}</h3>
                 <Calendar className="w-5 h-5 text-blue-400" />
               </div>
               <div className="space-y-1">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-400">Total:</span>
-                  <span className="text-white font-medium">{week.totalResults}</span>
+                  <span className=" font-medium">{week.totalResults}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-green-400">Positive:</span>
@@ -821,7 +821,7 @@ const ComprehensiveScanResults = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #04041B 66%, #3b1586 100%)'}}
+            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -840,7 +840,7 @@ const ComprehensiveScanResults = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
             className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #04041B 66%, #3b1586 100%)'}}
+            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -859,7 +859,7 @@ const ComprehensiveScanResults = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
             className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #04041B 66%, #3b1586 100%)'}}
+            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -878,7 +878,7 @@ const ComprehensiveScanResults = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
             className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #04041B 66%, #3b1586 100%)'}}
+            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -899,7 +899,7 @@ const ComprehensiveScanResults = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
             className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #04041B 66%, #3b1586 100%)'}}
+            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -915,7 +915,7 @@ const ComprehensiveScanResults = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
             className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #04041B 66%, #3b1586 100%)'}}
+            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -931,7 +931,7 @@ const ComprehensiveScanResults = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
             className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #04041B 66%, #3b1586 100%)'}}
+            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -947,14 +947,14 @@ const ComprehensiveScanResults = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7 }}
             className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #04041B 66%, #3b1586 100%)'}}
+            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
           >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-400">Unchanged</p>
                 <p className="text-2xl font-bold text-gray-400">{stats.movementStats.unchanged}</p>
               </div>
-              <Minus className="w-8 h-8 text-gray-500" />
+              <Minus className="w-8 h-8 text-gray-400" />
             </div>
           </motion.div>
 
@@ -963,7 +963,7 @@ const ComprehensiveScanResults = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8 }}
             className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #04041B 66%, #3b1586 100%)'}}
+            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -981,9 +981,9 @@ const ComprehensiveScanResults = () => {
           if (comparisonData.length === 0) return null;
           
           return (
-            <div className="rounded-xl shadow-lg overflow-hidden mb-6 border border-gray-700" style={{background: 'linear-gradient(to bottom, #04041B 66%, #3b1586 100%)'}}>
+            <div className="rounded-xl shadow-lg overflow-hidden mb-6 border border-gray-700" style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}>
               <div className="p-6 border-b border-gray-600">
-                <h2 className="text-xl font-bold text-white">
+                <h2 className="text-xl font-bold" style={{color: '#fafafa'}}>
                   {client?.name || 'Client'} | Link Ranking Movement (Before vs After)
                 </h2>
                 <p className="text-sm text-gray-300 mt-1">
@@ -1078,14 +1078,14 @@ const ComprehensiveScanResults = () => {
         })()}
             
         {/* Filters */}
-        <div className="rounded-xl shadow-lg p-6 mb-6 border border-gray-700" style={{background: 'linear-gradient(to bottom, #04041B 66%, #3b1586 100%)'}}>
+        <div className="rounded-xl shadow-lg p-6 mb-6 border border-gray-700" style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}>
           <div className="mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">Sort by</label>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="w-full max-w-xs px-4 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 text-white"
+                className="w-full max-w-xs px-4 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 "
               >
                 <option value="position">Week 2 Position</option>
                 <option value="title">Link Name</option>
@@ -1095,9 +1095,9 @@ const ComprehensiveScanResults = () => {
         </div>
 
         {/* Results List */}
-        <div className="rounded-xl shadow-lg overflow-hidden border border-gray-700" style={{background: 'linear-gradient(to bottom, #04041B 66%, #3b1586 100%)'}}>
+        <div className="rounded-xl shadow-lg overflow-hidden border border-gray-700" style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}>
           <div className="p-6 border-b border-gray-600">
-            <h2 className="text-xl font-bold text-white">
+            <h2 className="text-xl font-bold" style={{color: '#fafafa'}}>
               {client?.name || 'Client'} | Scan Results ({filteredResults.length} total)
             </h2>
             <p className="text-sm text-gray-300 mt-1">
@@ -1112,7 +1112,7 @@ const ComprehensiveScanResults = () => {
                   case 'positive': return <CheckCircle className="w-6 h-6 text-green-500" />;
                   case 'negative': return <AlertCircle className="w-6 h-6 text-red-500" />;
                   case 'neutral': return <Minus className="w-6 h-6 text-yellow-500" />;
-                  default: return <Minus className="w-6 h-6 text-gray-500" />;
+                  default: return <Minus className="w-6 h-6 text-gray-400" />;
                 }
               };
 
@@ -1121,7 +1121,7 @@ const ComprehensiveScanResults = () => {
                   case 'positive': return 'bg-green-900 text-green-200 border-green-700';
                   case 'negative': return 'bg-red-900 text-red-200 border-red-700';
                   case 'neutral': return 'bg-yellow-900 text-yellow-200 border-yellow-700';
-                  default: return 'bg-gray-100 text-gray-600 border-gray-300';
+                  default: return 'bg-gray-700 text-gray-400 border-gray-300';
                 }
               };
 
@@ -1158,7 +1158,7 @@ const ComprehensiveScanResults = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-white mb-2 line-clamp-2">
+                          <h3 className="text-lg font-semibold  mb-2 line-clamp-2">
                             <a
                               href={result.url || result.link || '#'}
                               target="_blank"
@@ -1215,7 +1215,7 @@ const ComprehensiveScanResults = () => {
           {filteredResults.length === 0 && (
             <div className="p-12 text-center">
               <Search className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-white mb-2">No results found</h3>
+              <h3 className="text-lg font-medium  mb-2">No results found</h3>
               <p className="text-gray-400 mb-4">
                 No scan results available for this client.
               </p>
@@ -1233,7 +1233,7 @@ const ComprehensiveScanResults = () => {
                   <button
                     onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                     disabled={currentPage === 1}
-                    className="px-3 py-2 text-sm border border-gray-600 rounded-lg bg-gray-800 text-white hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-3 py-2 text-sm border border-gray-600 rounded-lg bg-gray-800  hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Previous
                   </button>
@@ -1243,7 +1243,7 @@ const ComprehensiveScanResults = () => {
                   <button
                     onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                     disabled={currentPage === totalPages}
-                    className="px-3 py-2 text-sm border border-gray-600 rounded-lg bg-gray-800 text-white hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-3 py-2 text-sm border border-gray-600 rounded-lg bg-gray-800  hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Next
                   </button>
