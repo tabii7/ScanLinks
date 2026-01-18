@@ -216,7 +216,7 @@ const ModernClientManagement = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex items-center justify-center w-full h-full absolute top-0 left-0 right-0 bottom-0" style={{ margin: '-24px', minHeight: '100vh' }}>
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );

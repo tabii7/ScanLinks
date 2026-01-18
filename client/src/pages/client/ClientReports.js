@@ -184,8 +184,8 @@ const ClientReports = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ace-600"></div>
+      <div className="flex items-center justify-center w-full h-full absolute top-0 left-0 right-0 bottom-0" style={{ margin: '-24px', minHeight: '100vh' }}>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
@@ -280,10 +280,10 @@ const ClientReports = () => {
                     </div>
                     <div className="ml-3">
                       <h3 className="text-lg font-medium" style={{color: '#fafafa'}}>
-                        {report.totalWeeks > 1 ? `Weeks ${report.weekNumbers.join(', ')}` : `Week ${report.weekNumbers[0] || 1}`}
+                        {report.clientName || 'Report'}
                       </h3>
                       <p className="text-sm text-gray-300">
-                        {report.totalWeeks > 1 ? `${report.totalWeeks} weeks` : report.region}
+                        {report.region}
                       </p>
                       {report.searchQuery && (
                         <p className="text-xs text-blue-400 mt-1">🔍 "{report.searchQuery}"</p>
