@@ -35,11 +35,8 @@ const ClientCreationWizard = () => {
     
     // Step 2: Reputation Profile
     keywords: [],
-    negativeKeywords: [],
     reputationGoals: [],
-    currentChallenges: [],
-    industry: '',
-    targetAudience: ''
+    industry: ''
   });
 
   const steps = [
@@ -116,7 +113,6 @@ const ClientCreationWizard = () => {
         settings: JSON.stringify({
           industry: formData.industry,
           businessType: 'Business',
-          targetAudience: formData.targetAudience,
           website: formData.website,
           description: `Client profile for ${formData.name}`
         })
@@ -277,18 +273,6 @@ const ClientCreationWizard = () => {
                 />
               </div>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Target Audience
-                </label>
-                <input
-                  type="text"
-                  value={formData.targetAudience}
-                  onChange={(e) => handleInputChange('targetAudience', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Who are your customers?"
-                />
-              </div>
             </div>
             
             <div>
@@ -307,20 +291,6 @@ const ClientCreationWizard = () => {
             
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Negative Keywords
-              </label>
-              <input
-                type="text"
-                value={formData.negativeKeywords.join(', ')}
-                onChange={(e) => handleInputChange('negativeKeywords', e.target.value.split(', ').filter(s => s.trim()))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="scam, fraud, complaint, negative"
-              />
-              <p className="text-sm text-gray-400 mt-1">Keywords you want to avoid in search results</p>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
                 Reputation Goals
               </label>
               <input
@@ -331,60 +301,58 @@ const ClientCreationWizard = () => {
                 placeholder="Improve online reputation, Remove negative content, Build positive presence"
               />
             </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Current Challenges
-              </label>
-              <input
-                type="text"
-                value={formData.currentChallenges.join(', ')}
-                onChange={(e) => handleInputChange('currentChallenges', e.target.value.split(', ').filter(s => s.trim()))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Negative reviews, Low visibility, Competitor issues"
-              />
-            </div>
           </div>
         );
 
       case 3:
         return (
           <div className="space-y-6">
-            <div className="bg-gray-800 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-gray-200 mb-4">Review Client Information</h3>
+            <div className="rounded-xl p-6 border border-gray-700 bg-gray-800">
+              <h3 className="text-lg font-semibold mb-4" style={{color: '#fafafa'}}>Review Client Information</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="font-medium text-gray-300 mb-2">Basic Information</h4>
-                  <div className="space-y-1 text-sm text-gray-400">
-                    <p><strong>Name:</strong> {formData.name}</p>
-                    <p><strong>Email:</strong> {formData.email}</p>
-                    <p><strong>Password:</strong> {formData.password ? '••••••••' : 'Not set'}</p>
-                    <p><strong>Phone:</strong> {formData.phone}</p>
-                    <p><strong>Company:</strong> {formData.company}</p>
-                    <p><strong>Website:</strong> {formData.website}</p>
+                  <h4 className="font-medium mb-2" style={{color: '#f3f4f6'}}>Basic Information</h4>
+                  <div className="space-y-2 text-sm">
+                    <p style={{color: '#d1d5db'}}><strong style={{color: '#fafafa'}}>Name:</strong> {formData.name || 'Not provided'}</p>
+                    <p style={{color: '#d1d5db'}}><strong style={{color: '#fafafa'}}>Email:</strong> {formData.email || 'Not provided'}</p>
+                    <p style={{color: '#d1d5db'}}><strong style={{color: '#fafafa'}}>Password:</strong> {formData.password ? '••••••••' : 'Not set'}</p>
+                    <p style={{color: '#d1d5db'}}><strong style={{color: '#fafafa'}}>Phone:</strong> {formData.phone || 'Not provided'}</p>
+                    <p style={{color: '#d1d5db'}}><strong style={{color: '#fafafa'}}>Company:</strong> {formData.company || 'Not provided'}</p>
+                    <p style={{color: '#d1d5db'}}><strong style={{color: '#fafafa'}}>Website:</strong> {formData.website || 'Not provided'}</p>
                   </div>
                 </div>
                 
                 <div>
-                  <h4 className="font-medium text-gray-300 mb-2">Reputation Profile</h4>
-                  <div className="space-y-1 text-sm text-gray-400">
-                    <p><strong>Industry:</strong> {formData.industry}</p>
-                    <p><strong>Target Audience:</strong> {formData.targetAudience}</p>
-                    <p><strong>Keywords:</strong> {formData.keywords.join(', ')}</p>
-                    <p><strong>Goals:</strong> {formData.reputationGoals.join(', ')}</p>
+                  <h4 className="font-medium mb-2" style={{color: '#f3f4f6'}}>Reputation Profile</h4>
+                  <div className="space-y-2 text-sm">
+                    <p style={{color: '#d1d5db'}}><strong style={{color: '#fafafa'}}>Industry:</strong> {formData.industry || 'Not provided'}</p>
+                    <p style={{color: '#d1d5db'}}><strong style={{color: '#fafafa'}}>Keywords:</strong> {formData.keywords.length > 0 ? formData.keywords.join(', ') : 'Not provided'}</p>
+                    <p style={{color: '#d1d5db'}}><strong style={{color: '#fafafa'}}>Goals:</strong> {formData.reputationGoals.length > 0 ? formData.reputationGoals.join(', ') : 'Not provided'}</p>
                   </div>
                 </div>
               </div>
             </div>
             
-            <div className="bg-blue-50 rounded-xl p-4">
-              <h4 className="font-semibold text-blue-900 mb-2">What happens next?</h4>
-              <ul className="text-sm text-blue-200 space-y-1">
-                <li>• Client will be added to your dashboard</li>
-                <li>• You can start ORM scans immediately</li>
-                <li>• AI will analyze search results based on their profile</li>
-                <li>• Weekly reports will be generated automatically</li>
+            <div className="rounded-xl p-6 border border-gray-700 bg-gray-800">
+              <h4 className="font-semibold mb-3" style={{color: '#fafafa'}}>What happens next?</h4>
+              <ul className="text-sm space-y-2" style={{color: '#e5e7eb'}}>
+                <li className="flex items-start">
+                  <span className="mr-2" style={{color: '#60a5fa'}}>•</span>
+                  <span>Client will be added to your dashboard</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2" style={{color: '#60a5fa'}}>•</span>
+                  <span>You can start ORM scans immediately</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2" style={{color: '#60a5fa'}}>•</span>
+                  <span>AI will analyze search results based on their profile</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2" style={{color: '#60a5fa'}}>•</span>
+                  <span>Weekly reports will be generated automatically</span>
+                </li>
               </ul>
             </div>
           </div>

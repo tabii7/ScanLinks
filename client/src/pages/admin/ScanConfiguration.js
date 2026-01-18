@@ -20,11 +20,12 @@ const ScanConfiguration = () => {
     // Step 1: Client Selection & Keywords
     selectedClient: '',
     selectedClientId: '',
+    scanWithKeywords: true, // New option: scan with or without keywords
     customKeywords: '',
     
     // Step 2: Basic Settings
     scanRegion: 'US',
-    apiCallLimit: 10, // Default to 10 results
+    apiCallLimit: 100, // Default to 100 results (up to 10 pages)
     timeFrame: 'past_week',
     contentType: 'all'
   });
@@ -70,19 +71,28 @@ const ScanConfiguration = () => {
   const startScan = async () => {
     setLoading(true);
     try {
-      // First, save keywords permanently for the client
-      const keywords = formData.customKeywords.split('\n').filter(k => k.trim());
+      let keywords = [];
       
-      // Save keywords to database
-      await api.post('/keywords/bulk-create', {
-        clientId: formData.selectedClientId,
-        keywords: keywords.map(keyword => ({
-          keyword: keyword.trim(),
-          targetRegions: [formData.scanRegion],
-          priority: 'medium',
-          status: 'active'
-        }))
-      });
+      if (formData.scanWithKeywords) {
+        // Scan with keywords: extract from textarea
+        keywords = formData.customKeywords.split('\n').filter(k => k.trim());
+        
+        // Save keywords to database only if keywords are provided
+        if (keywords.length > 0) {
+          await api.post('/keywords/bulk-create', {
+            clientId: formData.selectedClientId,
+            keywords: keywords.map(keyword => ({
+              keyword: keyword.trim(),
+              targetRegions: [formData.scanRegion],
+              priority: 'medium',
+              status: 'active'
+            }))
+          });
+        }
+      } else {
+        // Scan without keywords: use client name as the search term
+        keywords = [formData.selectedClient];
+      }
       
       // Start the scan with enhanced parameters
       const response = await api.post('/orm-scan/trigger', {
@@ -138,15 +148,50 @@ const ScanConfiguration = () => {
       </div>
 
       <div>
-        <h3 className="text-lg font-semibold mb-2" style={{color: '#f3f4f6'}}>Keywords</h3>
-        <textarea
-          value={formData.customKeywords}
-          onChange={(e) => handleInputChange('customKeywords', e.target.value)}
-          placeholder="Enter keywords to search for (one per line)"
-          rows={4}
-          className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg  focus:border-blue-500 focus:outline-none"
-        />
+        <h3 className="text-lg font-semibold mb-3" style={{color: '#f3f4f6'}}>Scan Type</h3>
+        <div className="flex gap-4">
+          <label className="flex items-center cursor-pointer">
+            <input
+              type="radio"
+              name="scanType"
+              value="withKeywords"
+              checked={formData.scanWithKeywords}
+              onChange={() => handleInputChange('scanWithKeywords', true)}
+              className="w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 focus:ring-blue-500"
+            />
+            <span className="ml-2" style={{color: '#f3f4f6'}}>With Keywords</span>
+          </label>
+          <label className="flex items-center cursor-pointer">
+            <input
+              type="radio"
+              name="scanType"
+              value="withoutKeywords"
+              checked={!formData.scanWithKeywords}
+              onChange={() => handleInputChange('scanWithKeywords', false)}
+              className="w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 focus:ring-blue-500"
+            />
+            <span className="ml-2" style={{color: '#f3f4f6'}}>Without Keywords</span>
+          </label>
+        </div>
+        <p className="text-sm text-gray-400 mt-2">
+          {formData.scanWithKeywords 
+            ? 'Search using specific keywords (one per line)' 
+            : `Search using client name: "${formData.selectedClient || 'Client name'}"`}
+        </p>
       </div>
+
+      {formData.scanWithKeywords && (
+        <div>
+          <h3 className="text-lg font-semibold mb-2" style={{color: '#f3f4f6'}}>Keywords</h3>
+          <textarea
+            value={formData.customKeywords}
+            onChange={(e) => handleInputChange('customKeywords', e.target.value)}
+            placeholder="Enter keywords to search for (one per line)"
+            rows={4}
+            className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg  focus:border-blue-500 focus:outline-none"
+          />
+        </div>
+      )}
     </div>
   );
 
@@ -220,7 +265,7 @@ const ScanConfiguration = () => {
           <input
             type="range"
             min="1"
-            max="10"
+            max="100"
             value={formData.apiCallLimit}
             onChange={(e) => handleInputChange('apiCallLimit', parseInt(e.target.value))}
             className="flex-1 slider"
@@ -228,7 +273,7 @@ const ScanConfiguration = () => {
           <span className="font-semibold min-w-[60px]" style={{color: '#f3f4f6'}}>{formData.apiCallLimit}</span>
         </div>
         <p className="text-sm text-slate-500 mt-1">
-          Number of search results to analyze (1-10, default: 10)
+          Number of search results to analyze (1-100, default: 100). Each keyword can fetch up to 100 results using pagination.
         </p>
       </div>
     </div>
@@ -241,9 +286,14 @@ const ScanConfiguration = () => {
         
         <div className="space-y-4">
           <div>
-            <h4 className="text-lg font-medium text-blue-400 mb-2">Client & Keywords</h4>
+            <h4 className="text-lg font-medium text-blue-400 mb-2">Client & Scan Type</h4>
             <p className="text-gray-300">Client: {clients.find(c => c._id === formData.selectedClientId)?.name || 'Not selected'}</p>
-            <p className="text-gray-300">Keywords: {formData.customKeywords || 'None entered'}</p>
+            <p className="text-gray-300">Scan Type: {formData.scanWithKeywords ? 'With Keywords' : 'Without Keywords'}</p>
+            {formData.scanWithKeywords ? (
+              <p className="text-gray-300">Keywords: {formData.customKeywords || 'None entered'}</p>
+            ) : (
+              <p className="text-gray-300">Search Term: {formData.selectedClient || 'Client name'}</p>
+            )}
           </div>
           
           <div>
@@ -311,7 +361,7 @@ const ScanConfiguration = () => {
         </div>
 
         {/* Step Content */}
-        <div className="rounded-lg p-8 shadow-lg border border-gray-700" style={{backgroundColor: '#04041B'}}>
+        <div className="rounded-lg p-8 shadow-lg border border-gray-700" style={{backgroundColor: '#1f2937'}}>
           <AnimatePresence mode="wait">
             <motion.div
               key={currentStep}

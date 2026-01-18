@@ -22,9 +22,98 @@ import {
 const ModernLayout = ({ children, isAdmin = false }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [readNotifications, setReadNotifications] = useState(() => {
+    // Load read notifications from localStorage
+    try {
+      const stored = localStorage.getItem('readNotifications');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Save read notifications to localStorage whenever they change
+  React.useEffect(() => {
+    try {
+      localStorage.setItem('readNotifications', JSON.stringify(readNotifications));
+    } catch (error) {
+      console.error('Error saving read notifications:', error);
+    }
+  }, [readNotifications]);
+
+  // Fetch notifications
+  React.useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const api = require('../services/api').default;
+        const response = await api.get('/notifications');
+        if (response.data && response.data.success) {
+          const fetchedNotifications = response.data.notifications || [];
+          // Mark notifications as read if they're in the read list
+          const notificationsWithReadStatus = fetchedNotifications.map(notif => ({
+            ...notif,
+            read: readNotifications.includes(notif.id)
+          }));
+          setNotifications(notificationsWithReadStatus);
+          // Calculate unread count
+          const unread = notificationsWithReadStatus.filter(n => !n.read).length;
+          setUnreadCount(unread);
+        }
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+        setNotifications([]);
+        setUnreadCount(0);
+      }
+    };
+
+    fetchNotifications();
+    // Refresh notifications every 30 seconds
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [readNotifications]);
+
+  // Mark notification as read
+  const markAsRead = (notificationId) => {
+    if (!readNotifications.includes(notificationId)) {
+      setReadNotifications([...readNotifications, notificationId]);
+    }
+  };
+
+  // Close sidebar when clicking outside or pressing ESC
+  React.useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        setSidebarOpen(false);
+        setUserMenuOpen(false);
+        setNotificationsOpen(false);
+      }
+    };
+
+    const handleClickOutside = (e) => {
+      // Close user menu if clicking outside
+      if (userMenuOpen && !e.target.closest('.user-menu-container')) {
+        setUserMenuOpen(false);
+      }
+      // Close notifications if clicking outside
+      if (notificationsOpen && !e.target.closest('.notifications-container')) {
+        setNotificationsOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    document.addEventListener('click', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [userMenuOpen, notificationsOpen]);
 
   const handleLogout = () => {
     logout();
@@ -50,8 +139,16 @@ const ModernLayout = ({ children, isAdmin = false }) => {
   return (
     <div className="min-h-screen bg-gray-900">
       {/* Mobile sidebar */}
-      <div className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? 'block' : 'hidden'}`}>
-        <div className="fixed inset-0 bg-black bg-opacity-50" onClick={() => setSidebarOpen(false)} />
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50" 
+            onClick={() => setSidebarOpen(false)}
+            onKeyDown={(e) => e.key === 'Escape' && setSidebarOpen(false)}
+            role="button"
+            tabIndex={0}
+            aria-label="Close sidebar"
+          />
         <div className="relative flex flex-col w-80 h-full shadow-2xl" style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}>
           <div className="flex items-center justify-between p-6">
             <div className="flex items-center space-x-3">
@@ -93,7 +190,8 @@ const ModernLayout = ({ children, isAdmin = false }) => {
             })}
           </nav>
         </div>
-      </div>
+        </div>
+      )}
 
       {/* Desktop sidebar */}
       <div className="hidden lg:flex lg:w-72 lg:flex-col lg:fixed lg:inset-y-0">
@@ -169,12 +267,73 @@ const ModernLayout = ({ children, isAdmin = false }) => {
           </div>
 
           <div className="flex items-center space-x-4">
-            <button className="p-2 rounded-lg hover:bg-gray-700 transition-colors relative">
-              <Bell className="h-5 w-5 text-gray-300" />
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
-            </button>
+            <div className="relative notifications-container">
+              <button 
+                onClick={() => setNotificationsOpen(!notificationsOpen)}
+                className="p-2 rounded-lg hover:bg-gray-700 transition-colors relative"
+              >
+                <Bell className="h-5 w-5 text-gray-300" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 rounded-full flex items-center justify-center px-1">
+                    <span className="text-[10px] text-white font-bold">{unreadCount > 9 ? '9+' : unreadCount}</span>
+                  </span>
+                )}
+              </button>
 
-            <div className="relative">
+              {notificationsOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-gray-800 rounded-xl shadow-lg border border-gray-700 py-2 z-50 max-h-96 overflow-y-auto">
+                  <div className="px-4 py-2 border-b border-gray-700">
+                    <h3 className="text-sm font-semibold" style={{color: '#fafafa'}}>Notifications</h3>
+                  </div>
+                  {notifications.length > 0 ? (
+                    <div className="py-2">
+                      {notifications.map((notification) => (
+                        <button
+                          key={notification.id}
+                          onClick={() => {
+                            markAsRead(notification.id);
+                            if (notification.link) {
+                              navigate(notification.link);
+                              setNotificationsOpen(false);
+                            }
+                          }}
+                          className={`w-full px-4 py-3 text-left hover:bg-gray-700 transition-colors border-b border-gray-700 last:border-b-0 ${
+                            notification.read ? 'opacity-70' : ''
+                          }`}
+                        >
+                          <div className="flex items-start space-x-3">
+                            <div className={`flex-shrink-0 w-2 h-2 rounded-full mt-2 ${
+                              notification.type === 'scan_due' ? 'bg-yellow-500' :
+                              notification.type === 'scan_completed' ? 'bg-green-500' :
+                              notification.type === 'scan_failed' ? 'bg-red-500' :
+                              'bg-blue-500'
+                            }`}></div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium" style={{color: '#fafafa'}}>
+                                {notification.title}
+                              </p>
+                              <p className="text-xs text-gray-400 mt-1">
+                                {notification.message}
+                              </p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {new Date(notification.timestamp).toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="px-4 py-8 text-center">
+                      <Bell className="h-8 w-8 text-gray-500 mx-auto mb-2" />
+                      <p className="text-sm text-gray-400">No notifications</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="relative user-menu-container">
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
                 className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-700 transition-colors"
@@ -191,10 +350,6 @@ const ModernLayout = ({ children, isAdmin = false }) => {
 
               {userMenuOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-xl shadow-lg border border-gray-700 py-2 z-50">
-                  <button className="flex items-center space-x-3 w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
-                    <Settings className="h-4 w-4" />
-                    <span>Settings</span>
-                  </button>
                   <button
                     onClick={handleLogout}
                     className="flex items-center space-x-3 w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"

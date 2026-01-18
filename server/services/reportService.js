@@ -48,9 +48,9 @@ class ReportService {
             
             // Fill background first
             if (isHeader) {
-              // Header: Purple gradient background
+              // Header: Dark gray background
               doc.rect(currentX, currentY, width, rowHeight)
-                .fillColor('#6C24E5')
+                .fillColor('#1F2937')
                 .fill();
             } else if (alternateRows && isEvenRow) {
               // Alternate rows: Light gray background
@@ -62,13 +62,13 @@ class ReportService {
             // Draw cell border (thicker for header)
             doc.rect(currentX, currentY, width, rowHeight)
               .lineWidth(isHeader ? 1 : 0.5)
-              .strokeColor(isHeader ? '#4B0082' : '#E5E7EB')
+              .strokeColor('#000000')
               .stroke();
             
             // Add text with proper alignment and padding
             const cellPadding = isHeader ? 8 : 6;
             const fontSize = isHeader ? 11 : 9;
-            const textColor = isHeader ? '#FFFFFF' : '#1F2937';
+            const textColor = isHeader ? '#FFFFFF' : '#000000';
             
             // Determine alignment based on column
             let align = 'left';
@@ -100,14 +100,9 @@ class ReportService {
       // Professional Header Design
       const headerHeight = 100;
       
-      // Main header background with gradient effect
+      // Main header background - simple black
       doc.rect(margin, yPosition, contentWidth, headerHeight)
-        .fillColor('#6C24E5')
-        .fill();
-      
-      // Add accent line at top
-      doc.rect(margin, yPosition, contentWidth, 4)
-        .fillColor('#8B5CF6')
+        .fillColor('#000000')
         .fill();
       
       // Company name - larger and bold
@@ -118,15 +113,15 @@ class ReportService {
       
       // Subtitle
       doc.fontSize(12)
-        .fillColor('#E9D5FF')
+        .fillColor('#CCCCCC')
         .font('Helvetica')
         .text('Online Reputation Management Platform', margin + 20, yPosition + 50);
       
-      // Report type badge
+      // Report type badge - simple border
       doc.roundedRect(margin + contentWidth - 150, yPosition + 15, 130, 30, 5)
         .lineWidth(2)
         .strokeColor('#FFFFFF')
-        .fillColor('rgba(255, 255, 255, 0.2)')
+        .fillColor('#333333')
         .fill()
         .stroke();
       
@@ -138,9 +133,9 @@ class ReportService {
           width: 120
         });
       
-      // Client name in a highlighted box
+      // Client name in a simple box
       doc.roundedRect(margin + 20, yPosition + 60, contentWidth - 40, 30, 5)
-        .fillColor('rgba(255, 255, 255, 0.15)')
+        .fillColor('#333333')
         .fill();
       
       doc.fontSize(16)
@@ -173,28 +168,28 @@ class ReportService {
         const cardX = margin + (cardCol * (cardWidth + 20));
         const cardY = yPosition + (cardRow * (cardHeight + 15));
         
-        // Card background with shadow effect
+        // Card background - simple white with black border
         doc.roundedRect(cardX, cardY, cardWidth, cardHeight, 8)
           .lineWidth(1.5)
-          .strokeColor('#E5E7EB')
+          .strokeColor('#000000')
           .fillColor('#FFFFFF')
           .fill()
           .stroke();
         
-        // Accent bar on left
+        // Accent bar on left - black
         doc.rect(cardX, cardY, 4, cardHeight)
-          .fillColor('#6C24E5')
+          .fillColor('#000000')
           .fill();
         
         // Label
         doc.fontSize(9)
-          .fillColor('#6B7280')
+          .fillColor('#666666')
           .font('Helvetica')
           .text(item.label.toUpperCase(), cardX + 12, cardY + 8);
         
         // Value
         doc.fontSize(14)
-          .fillColor('#1F2937')
+          .fillColor('#000000')
           .font('Helvetica-Bold')
           .text(item.value, cardX + 12, cardY + 22, {
             width: cardWidth - 24,
@@ -210,19 +205,19 @@ class ReportService {
       
       yPosition += (Math.ceil(metadataItems.length / 2) * (cardHeight + 15)) + 20;
 
-      // Executive Summary Section - Enhanced Design
-      // Section header with icon-like design
+      // Executive Summary Section - Simple Design
+      // Section header - black bar
       doc.rect(margin, yPosition, 6, 28)
-        .fillColor('#6C24E5')
+        .fillColor('#000000')
         .fill();
       
       doc.fontSize(20)
-        .fillColor('#1F2937')
+        .fillColor('#000000')
         .font('Helvetica-Bold')
         .text('Executive Summary', margin + 15, yPosition + 4);
       
       doc.fontSize(10)
-        .fillColor('#6B7280')
+        .fillColor('#666666')
         .font('Helvetica')
         .text('Overview of key metrics and performance indicators', margin + 15, yPosition + 22);
       
@@ -244,24 +239,24 @@ class ReportService {
 
       yPosition += 30;
 
-      // Ranking Changes Section - Enhanced Design
+      // Ranking Changes Section - Simple Design
       if (yPosition > pageHeight - 200) {
             doc.addPage();
         yPosition = margin;
       }
 
-      // Section header with icon-like design
+      // Section header - black bar
       doc.rect(margin, yPosition, 6, 28)
-        .fillColor('#6C24E5')
+        .fillColor('#000000')
         .fill();
       
       doc.fontSize(20)
-        .fillColor('#1F2937')
+        .fillColor('#000000')
         .font('Helvetica-Bold')
         .text('Ranking Changes Overview', margin + 15, yPosition + 4);
       
       doc.fontSize(10)
-        .fillColor('#6B7280')
+        .fillColor('#666666')
         .font('Helvetica')
         .text('Analysis of ranking movements and changes', margin + 15, yPosition + 22);
       
@@ -292,18 +287,18 @@ class ReportService {
 
       const comparisonTableData = this.buildComparisonTableData(reportData);
       if (comparisonTableData && comparisonTableData.length > 0) {
-        // Section header with icon-like design
+        // Section header - black bar
         doc.rect(margin, yPosition, 6, 28)
-          .fillColor('#6C24E5')
+          .fillColor('#000000')
           .fill();
         
         doc.fontSize(20)
-          .fillColor('#1F2937')
+          .fillColor('#000000')
           .font('Helvetica-Bold')
           .text('Link Ranking Movement Analysis', margin + 15, yPosition + 4);
         
         doc.fontSize(10)
-          .fillColor('#6B7280')
+          .fillColor('#666666')
           .font('Helvetica')
           .text('Detailed comparison: Before vs After rankings', margin + 15, yPosition + 22);
         
@@ -366,7 +361,7 @@ class ReportService {
         if (comparisonTableData.length > maxRows) {
           yPosition += 10;
           doc.fontSize(8)
-            .fillColor('#6B7280')
+            .fillColor('#666666')
             .font('Helvetica-Oblique')
             .text(`Showing ${maxRows} of ${comparisonTableData.length} links. Full data available in Excel export.`, margin, yPosition);
           yPosition += 15;
@@ -381,45 +376,45 @@ class ReportService {
         yPosition = margin;
       }
 
-      // Section header with icon-like design
+      // Section header - black bar
       doc.rect(margin, yPosition, 6, 28)
-        .fillColor('#6C24E5')
+        .fillColor('#000000')
         .fill();
       
       doc.fontSize(20)
-        .fillColor('#1F2937')
+        .fillColor('#000000')
         .font('Helvetica-Bold')
         .text('AI Analysis & Insights', margin + 15, yPosition + 4);
       
       doc.fontSize(10)
-        .fillColor('#6B7280')
+        .fillColor('#666666')
         .font('Helvetica')
         .text('Artificial intelligence powered analysis and recommendations', margin + 15, yPosition + 22);
       
       yPosition += 40;
 
-      // Enhanced analysis box with modern design
+      // Simple analysis box with black border
       doc.roundedRect(margin, yPosition, contentWidth, 130, 10)
         .lineWidth(2)
-        .strokeColor('#6C24E5')
-        .fillColor('#F9FAFB')
+        .strokeColor('#000000')
+        .fillColor('#FFFFFF')
         .fill()
         .stroke();
 
-      // Left accent bar
+      // Left accent bar - black
       doc.rect(margin + 2, yPosition + 2, 4, 126)
-        .fillColor('#6C24E5')
+        .fillColor('#000000')
         .fill();
 
       const analysisText = reportData.aiSummary || 'No analysis available. This section will contain AI-generated insights based on the scan results.';
       
-      // Add subtle background pattern
+      // White background
       doc.rect(margin + 10, yPosition + 10, contentWidth - 20, 110)
         .fillColor('#FFFFFF')
         .fill();
 
       doc.fontSize(11)
-        .fillColor('#1F2937')
+        .fillColor('#000000')
         .font('Helvetica')
         .text(analysisText, margin + 20, yPosition + 20, {
           width: contentWidth - 40,
@@ -432,7 +427,7 @@ class ReportService {
       // Footer on each page
       const addFooter = (pageNum) => {
         doc.fontSize(8)
-          .fillColor('#6B7280')
+          .fillColor('#666666')
           .font('Helvetica-Oblique')
           .text('Generated by ACE REPUTATIONS ORM Platform', margin, pageHeight - 40, {
             width: contentWidth,

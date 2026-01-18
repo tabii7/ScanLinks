@@ -238,10 +238,46 @@ router.get('/client', clientAuth, async (req, res) => {
     console.log('📈 Positive trend:', sentimentTrends.positiveTrend);
     console.log('🥧 Sentiment distribution:', sentimentDistribution);
 
+    // Handle null client (like previous_code - always return structured response)
+    if (!client) {
+      console.warn(`⚠️ Client not found for clientId: ${clientId}`);
+      return res.json({
+        client: {
+          name: 'Unknown Client',
+          logo: null,
+          campaignProgress: {
+            percentage: 0,
+            monthsElapsed: 0,
+            totalMonths: 0,
+            remainingMonths: 0,
+          },
+        },
+        overview: {
+          totalKeywords: totalKeywords || 0,
+          activeKeywords: activeKeywords || 0,
+          totalScans: totalScans || 0,
+          totalReports: totalReports || 0,
+          completedScans: stats.completedScans || 0,
+          runningScans: stats.runningScans || 0,
+          failedScans: stats.failedScans || 0,
+          totalResults: stats.totalResults || 0,
+          avgResults: Math.round(stats.avgResults || 0),
+          negativeTrend: sentimentTrends.negativeTrend || [],
+          positiveTrend: sentimentTrends.positiveTrend || [],
+          sentimentDistribution: sentimentDistribution || []
+        },
+        recentActivity: {
+          scans: recentScans || [],
+          reports: recentReports || [],
+        },
+        campaignStats: campaignStats || {},
+      });
+    }
+
     res.json({
       client: {
-        name: client.name,
-        logo: client.logo,
+        name: client.name || 'Unknown Client',
+        logo: client.logo || null,
         campaignProgress,
       },
       overview: {

@@ -24,6 +24,39 @@ class ORMScanService {
     try {
       console.log(`Starting ORM scan for client ${clientId} in region ${region}`);
       
+      // Fetch client data for sentiment analysis (if not provided in options)
+      let clientData = options.clientData;
+      if (!clientData) {
+        const Client = require('../models/Client');
+        const mongoose = require('mongoose');
+        const clientIdObj = typeof clientId === 'string' ? new mongoose.Types.ObjectId(clientId) : clientId;
+        const client = await Client.findById(clientIdObj);
+        if (client) {
+          clientData = {
+            name: client.name || options.clientName || 'Unknown Client',
+            industry: client.industry || 'Unknown Industry',
+            businessType: client.businessType || 'Unknown Business Type',
+            targetAudience: client.targetAudience || 'General Audience',
+            region: client.region || region || 'US',
+            website: client.website || 'Not specified',
+            description: client.description || 'No description available'
+          };
+          console.log(`✅ Fetched client data for sentiment analysis: ${clientData.name}`);
+        } else {
+          // Fallback to options if client not found
+          clientData = {
+            name: options.clientName || 'Unknown Client',
+            industry: 'Unknown Industry',
+            businessType: 'Unknown Business Type',
+            targetAudience: 'General Audience',
+            region: region || 'US',
+            website: 'Not specified',
+            description: 'No description available'
+          };
+          console.log(`⚠️ Client not found in database, using fallback data: ${clientData.name}`);
+        }
+      }
+      
       // Step 1: Search keywords using Google Custom Search API
       // Use default of 10 results if not specified
       const exactResultsCount = options.resultsCount !== undefined && options.resultsCount !== null ? options.resultsCount : 10;
@@ -105,9 +138,9 @@ class ORMScanService {
       // CRITICAL: OpenAI MUST be called - no fallback to dummy data
       console.log('🤖 Step 2: Calling OpenAI for sentiment analysis...');
       console.log(`   - Search results to analyze: ${searchResults.length}`);
-      console.log(`   - Client: ${options.clientData?.name || 'Unknown'}`);
+      console.log(`   - Client: ${clientData?.name || 'Unknown'}`);
       
-      const sentimentResults = await this.analyzeSentimentWithTimeout(searchResults, options.clientData);
+      const sentimentResults = await this.analyzeSentimentWithTimeout(searchResults, clientData);
       
       // Verify results have sentiment from OpenAI
       const analyzedCount = sentimentResults.filter(r => r._sentimentAnalyzed === true).length;
@@ -117,13 +150,22 @@ class ORMScanService {
       console.log(`   ✅ Analyzed by OpenAI: ${analyzedCount}`);
       console.log(`   ❌ NOT analyzed (will show "Sentiments Not Created"): ${notAnalyzedCount}`);
       
-      // Ensure we have results even if sentiment analysis failed
-      if (sentimentResults.length === 0) {
+      // CRITICAL: If sentiment analysis returns no results, preserve original Google results
+      // Don't create fake data - use original search results with default sentiment flags
+      if (sentimentResults.length === 0 && searchResults.length > 0) {
+        console.warn('⚠️ Sentiment analysis returned 0 results, but we have original Google results');
+        console.warn('   Preserving original Google search results with sentiment analysis flags');
         sentimentResults = searchResults.map(link => ({
           ...link,
-          sentiment: 'neutral', // Use neutral as default
-          confidence: 0.5, // Use 0.5 as default
-          reasoning: 'No sentiment analysis results',
+          // Preserve original Google data
+          title: link.metadata?.originalTitle || link.title,
+          snippet: link.metadata?.originalSnippet || link.snippet,
+          url: link.metadata?.originalUrl || link.originalUrl || link.link || link.url,
+          domain: link.metadata?.originalDomain || link.domain,
+          // Default sentiment values (will show "Sentiments Not Created" in frontend)
+          sentiment: 'neutral',
+          confidence: 0.5,
+          reasoning: 'Sentiment analysis unavailable - no results returned',
           keywords: [],
           category: 'other',
           relevance: 'medium',
@@ -185,7 +227,7 @@ class ORMScanService {
       }
       
       // Step 5: Generate report summary
-      const reportSummary = await sentimentAnalysisService.generateReportSummary(sentimentResults, options.clientData);
+      const reportSummary = await sentimentAnalysisService.generateReportSummary(sentimentResults, clientData);
       
       // Step 6: Save scan results
       // CRITICAL: Store exactGoogleQuery and exactDateRestrict for child scan inheritance
@@ -595,10 +637,15 @@ class ORMScanService {
           analyzedAt: result.analyzedAt || new Date(),
           createdAt: new Date(),
           // Store metadata to track if sentiment was actually analyzed
+          // CRITICAL: Preserve original Google search data
           metadata: {
             ...(result.metadata || {}),
             sentimentAnalyzed: sentimentAnalyzed || result._sentimentAnalyzed === true,
-            originalSentiment: result.sentiment // Store original value for display
+            originalSentiment: result.sentiment, // Store original value for display
+            originalUrl: result.link || result.url || '', // Preserve original Google URL
+            originalSnippet: result.snippet || '', // Preserve original Google snippet
+            originalTitle: result.title || '', // Preserve original Google title
+            originalDomain: result.domain || '' // Preserve original Google domain
           }
         };
       }));
@@ -629,12 +676,19 @@ class ORMScanService {
   async analyzeSentimentWithTimeout(searchResults, clientData) {
     return new Promise(async (resolve, reject) => {
       const timeout = setTimeout(() => {
-        console.log('Sentiment analysis timeout');
+        console.log('⚠️ Sentiment analysis timeout - preserving original Google results');
         clearTimeout(timeout);
+        // Return ORIGINAL Google results, not fake data
         resolve(searchResults.map(link => ({
           ...link,
-          sentiment: 'neutral', // Use neutral as default (required by schema)
-          confidence: 0.5, // Use 0.5 as default (required by schema)
+          // Preserve original Google search data
+          title: link.metadata?.originalTitle || link.title,
+          snippet: link.metadata?.originalSnippet || link.snippet,
+          url: link.metadata?.originalUrl || link.originalUrl || link.link || link.url,
+          domain: link.metadata?.originalDomain || link.domain,
+          // Default sentiment values (required by schema, but flagged as not analyzed)
+          sentiment: 'neutral',
+          confidence: 0.5,
           reasoning: 'Sentiment analysis timeout - OpenAI did not respond',
           keywords: [],
           category: 'other',
@@ -678,12 +732,19 @@ class ORMScanService {
         console.error('   Error code:', error.code || 'UNKNOWN');
         console.error('   ⚠️ Returning results WITHOUT sentiment analysis (will show "Sentiments Not Created")');
         
-        // Return results with default sentiment values and flag indicating OpenAI failed
+        // Return ORIGINAL Google results with default sentiment values
+        // Preserve all original Google data - don't create fake data
         // Frontend will show "Sentiments Not Created" for these
         resolve(searchResults.map(link => ({
           ...link,
-          sentiment: 'neutral', // Use neutral as default (required by schema)
-          confidence: 0.5, // Use 0.5 as default (required by schema)
+          // Preserve original Google search data
+          title: link.metadata?.originalTitle || link.title,
+          snippet: link.metadata?.originalSnippet || link.snippet,
+          url: link.metadata?.originalUrl || link.originalUrl || link.link || link.url,
+          domain: link.metadata?.originalDomain || link.domain,
+          // Default sentiment values (required by schema, but flagged as not analyzed)
+          sentiment: 'neutral',
+          confidence: 0.5,
           reasoning: `Sentiment analysis unavailable - ${error.message}`,
           keywords: [],
           category: 'other',

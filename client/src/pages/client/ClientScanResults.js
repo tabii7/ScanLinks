@@ -199,13 +199,13 @@ const ClientScanResults = () => {
   const getSentimentColor = (sentiment) => {
     switch (sentiment?.toLowerCase()) {
       case 'positive':
-        return 'text-green-200 bg-green-800';
+        return 'sentiment-badge-positive';
       case 'negative':
-        return 'text-red-200 bg-red-800';
+        return 'sentiment-badge-negative';
       case 'neutral':
-        return 'text-gray-200 bg-gray-800';
+        return 'sentiment-badge-neutral';
       default:
-        return 'text-gray-200 bg-gray-800';
+        return 'text-gray-200 bg-gray-800 border border-gray-600';
     }
   };
 
@@ -230,13 +230,8 @@ const ClientScanResults = () => {
 
   const getRankingChange = (result) => {
     if (!result.rankingChange && result.rankingChange !== 0) {
-      // New result - no previous data
-      return (
-        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-800 text-blue-200">
-          <span className="w-2 h-2 bg-blue-400 rounded-full mr-1"></span>
-          New
-        </span>
-      );
+      // New result - no previous data - return null to hide the badge
+      return null;
     }
 
     if (result.rankingChange === 0) {
@@ -442,8 +437,6 @@ const ClientScanResults = () => {
         case 'sentiment':
           const sentimentOrder = { positive: 1, neutral: 2, negative: 3 };
           return (sentimentOrder[a.sentiment] || 4) - (sentimentOrder[b.sentiment] || 4);
-        case 'confidence':
-          return (b.confidence || 0) - (a.confidence || 0);
         case 'title':
           return (a.title || '').localeCompare(b.title || '');
         case 'week':
@@ -469,23 +462,32 @@ const ClientScanResults = () => {
     try {
       toast.loading('Generating report...', { id: 'download-report' });
       
-      const response = await api.get(`/scans/${scanId}/download`, {
+      // Use the reports route for downloading PDF
+      const response = await api.get(`/reports/scan/${scanId}/download/pdf`, {
         responseType: 'blob',
       });
       
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      // Create blob from response
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create download link
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `scan-report-${scanId}.pdf`);
+      const fileName = `ORM_Report_${scan?.clientName || scan?.clientId?.name || 'Client'}_Week${scan?.weekNumber || 1}.pdf`;
+      link.setAttribute('download', fileName);
       document.body.appendChild(link);
       link.click();
-      link.remove();
+      
+      // Cleanup
+      document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       
       toast.success('Report downloaded successfully', { id: 'download-report' });
     } catch (error) {
       console.error('Download error:', error);
-      toast.error('Failed to download report', { id: 'download-report' });
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to download report';
+      toast.error(errorMessage, { id: 'download-report' });
     }
   };
 
@@ -499,7 +501,7 @@ const ClientScanResults = () => {
 
   return (
     <>
-      <div className="min-h-screen" style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}>
+      <div className="min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <div className="mb-8">
@@ -513,7 +515,7 @@ const ClientScanResults = () => {
             
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold  mb-2">
+                <h1 className="text-3xl font-bold mb-2" style={{color: '#fafafa'}}>
                   {scan?.clientId?.name || scan?.clientName || 'Scan Results'}
                 </h1>
                 <p className="text-gray-300">
@@ -547,19 +549,20 @@ const ClientScanResults = () => {
             </div>
           </div>
 
-          {/* Comparison Table */}
+          {/* Comparison Table - Only show if there's comparison data */}
           {(() => {
             const comparisonData = buildComparisonData();
-            if (comparisonData.length === 0) return null;
+            // Only show if there are multiple scans and actual comparison data
+            if (comparisonData.length === 0 || scans.length <= 1) return null;
             
             return (
-              <div className="rounded-xl shadow-lg overflow-hidden mb-6 border border-gray-700" style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}>
+              <div className="rounded-xl shadow-lg overflow-hidden mb-6 border border-gray-700 bg-gray-800">
                 <div className="p-6 border-b border-gray-600">
                   <h2 className="text-xl font-bold" style={{color: '#fafafa'}}>
-                    {scan?.clientId?.name || scan?.clientName || 'Client'} | Link Ranking Movement (Before vs After)
+                    Ranking Comparison
                   </h2>
                   <p className="text-sm text-gray-300 mt-1">
-                    Comparing {scans.find(s => !s.parentId)?.weekNumber ? `Week ${scans.find(s => !s.parentId)?.weekNumber}` : 'Parent'} with Latest Scan
+                    Comparing previous scan with current results
                   </p>
                 </div>
                 
@@ -578,12 +581,18 @@ const ClientScanResults = () => {
                     <tbody className="divide-y divide-gray-600">
                       {comparisonData.map((row, index) => {
                         const getSentimentColor = (sentiment) => {
-                          if (sentiment === '–' || !sentiment) return 'text-gray-400';
+                          if (sentiment === '–' || !sentiment) {
+                            return 'text-gray-400';
+                          }
                           switch (sentiment.toLowerCase()) {
-                            case 'positive': return 'text-green-400';
-                            case 'negative': return 'text-red-400';
-                            case 'neutral': return 'text-yellow-400';
-                            default: return 'text-gray-400';
+                            case 'positive': 
+                              return 'sentiment-badge-positive';
+                            case 'negative': 
+                              return 'sentiment-badge-negative';
+                            case 'neutral': 
+                              return 'sentiment-badge-neutral';
+                            default: 
+                              return 'text-gray-400';
                           }
                         };
 
@@ -611,7 +620,7 @@ const ClientScanResults = () => {
                               </a>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={getSentimentColor(row.sentimentBefore)}>
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getSentimentColor(row.sentimentBefore)}`}>
                                 {getSentimentText(row.sentimentBefore)}
                               </span>
                             </td>
@@ -619,7 +628,7 @@ const ClientScanResults = () => {
                               {row.rankBefore}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={getSentimentColor(row.sentimentAfter)}>
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getSentimentColor(row.sentimentAfter)}`}>
                                 {getSentimentText(row.sentimentAfter)}
                               </span>
                             </td>
@@ -649,32 +658,21 @@ const ClientScanResults = () => {
             );
           })()}
 
-          {/* Filters */}
-          <div className="rounded-lg p-4 border border-gray-700 mb-6" style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Filter by Week</label>
-                <select
-                  value={selectedWeek}
-                  onChange={(e) => setSelectedWeek(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 "
-                  disabled
-                >
-                  <option value="all">All Results</option>
-                </select>
-              </div>
-              
+          {/* Filters - Simplified */}
+          <div className="rounded-lg p-4 border border-gray-700 mb-6 bg-gray-800">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Filter by Sentiment</label>
                 <select
                   value={filterBy}
                   onChange={(e) => setFilterBy(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 "
+                  className="w-full px-4 py-2 border border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-gray-900"
+                  style={{color: '#fafafa'}}
                 >
-                  <option value="all">All Sentiments</option>
-                  <option value="positive">Positive</option>
-                  <option value="negative">Negative</option>
-                  <option value="neutral">Neutral</option>
+                  <option value="all" style={{backgroundColor: '#1f2937', color: '#fafafa'}}>All Sentiments</option>
+                  <option value="positive" style={{backgroundColor: '#1f2937', color: '#fafafa'}}>Positive</option>
+                  <option value="negative" style={{backgroundColor: '#1f2937', color: '#fafafa'}}>Negative</option>
+                  <option value="neutral" style={{backgroundColor: '#1f2937', color: '#fafafa'}}>Neutral</option>
                 </select>
               </div>
               
@@ -683,13 +681,12 @@ const ClientScanResults = () => {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 "
+                  className="w-full px-4 py-2 border border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-gray-900"
+                  style={{color: '#fafafa'}}
                 >
-                  <option value="position">Position</option>
-                  <option value="sentiment">Sentiment</option>
-                  <option value="confidence">Confidence</option>
-                  <option value="title">Title</option>
-                  <option value="week">Week</option>
+                  <option value="position" style={{backgroundColor: '#1f2937', color: '#fafafa'}}>Position</option>
+                  <option value="sentiment" style={{backgroundColor: '#1f2937', color: '#fafafa'}}>Sentiment</option>
+                  <option value="title" style={{backgroundColor: '#1f2937', color: '#fafafa'}}>Title</option>
                 </select>
               </div>
             </div>
@@ -700,8 +697,7 @@ const ClientScanResults = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="rounded-lg p-6 shadow-sm border border-gray-700"
-              style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+              className="bg-gray-800 border border-gray-700 rounded-xl shadow-lg p-6"
             >
               <div className="flex items-center">
                 <div className="p-2 bg-gray-800 rounded-lg">
@@ -718,8 +714,7 @@ const ClientScanResults = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="rounded-lg p-6 shadow-sm border border-gray-700"
-              style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+              className="bg-gray-800 border border-gray-700 rounded-xl shadow-lg p-6"
             >
               <div className="flex items-center">
                 <div className="p-2 bg-gray-800 rounded-lg">
@@ -738,8 +733,7 @@ const ClientScanResults = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="rounded-lg p-6 shadow-sm border border-gray-700"
-              style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+              className="bg-gray-800 border border-gray-700 rounded-xl shadow-lg p-6"
             >
               <div className="flex items-center">
                 <div className="p-2 bg-gray-800 rounded-lg">
@@ -758,8 +752,7 @@ const ClientScanResults = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="rounded-lg p-6 shadow-sm border border-gray-700"
-              style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+              className="bg-gray-800 border border-gray-700 rounded-xl shadow-lg p-6"
             >
               <div className="flex items-center">
                 <div className="p-2 bg-gray-800 rounded-lg">
@@ -775,59 +768,64 @@ const ClientScanResults = () => {
             </motion.div>
           </div>
 
-          {/* Ranking Trends Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="rounded-lg shadow-sm border border-gray-700 mb-8"
-            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
-          >
-            <div className="px-6 py-4 border-b border-gray-700">
-              <h3 className="text-lg font-medium" style={{color: '#fafafa'}}>Ranking Trends</h3>
-              <p className="text-sm text-gray-300">Position changes from previous scan</p>
-            </div>
+          {/* Ranking Trends Section - Only show if there are ranking changes */}
+          {(() => {
+            const hasRankingChanges = results.some(r => r.rankingChange !== undefined && r.rankingChange !== null);
+            if (!hasRankingChanges) return null;
             
-            <div className="p-6">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-400">
-                    {results.filter(r => r.rankingChange > 0).length}
-                  </div>
-                  <div className="text-sm text-gray-300">Moved Up</div>
+            return (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="bg-gray-800 border border-gray-700 rounded-xl shadow-lg p-6 mb-8"
+              >
+                <div className="px-6 py-4 border-b border-gray-700">
+                  <h3 className="text-lg font-medium" style={{color: '#fafafa'}}>Ranking Changes</h3>
+                  <p className="text-sm text-gray-300">Position changes from previous scan</p>
                 </div>
                 
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-red-400">
-                    {results.filter(r => r.rankingChange < 0).length}
+                <div className="p-6">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-400">
+                        {results.filter(r => r.rankingChange > 0).length}
+                      </div>
+                      <div className="text-sm text-gray-300">Moved Up</div>
+                    </div>
+                    
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-red-400">
+                        {results.filter(r => r.rankingChange < 0).length}
+                      </div>
+                      <div className="text-sm text-gray-300">Moved Down</div>
+                    </div>
+                    
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-gray-400">
+                        {results.filter(r => r.rankingChange === 0).length}
+                      </div>
+                      <div className="text-sm text-gray-300">Same Position</div>
+                    </div>
+                    
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-400">
+                        {results.filter(r => !r.rankingChange && r.rankingChange !== 0).length}
+                      </div>
+                      <div className="text-sm text-gray-300">New Results</div>
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-300">Moved Down</div>
                 </div>
-                
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-400">
-                    {results.filter(r => r.rankingChange === 0).length}
-                  </div>
-                  <div className="text-sm text-gray-300">Same Position</div>
-                </div>
-                
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-400">
-                    {results.filter(r => !r.rankingChange && r.rankingChange !== 0).length}
-                  </div>
-                  <div className="text-sm text-gray-300">New Results</div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
+              </motion.div>
+            );
+          })()}
 
           {/* Results Table */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="rounded-lg shadow-sm border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+            className="bg-gray-800 border border-gray-700 rounded-xl shadow-lg p-6"
           >
             <div className="px-6 py-4 border-b border-gray-700">
               <div className="flex items-center justify-between">
@@ -836,22 +834,23 @@ const ClientScanResults = () => {
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="px-3 py-2 border border-gray-600 rounded-lg text-sm bg-gray-800  focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="px-3 py-2 border border-gray-600 rounded-lg text-sm bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{color: '#fafafa'}}
                   >
-                    <option value="position">Sort by Position</option>
-                    <option value="sentiment">Sort by Sentiment</option>
-                    <option value="confidence">Sort by Confidence</option>
-                    <option value="title">Sort by Title</option>
+                    <option value="position" style={{backgroundColor: '#1f2937', color: '#fafafa'}}>Sort by Position</option>
+                    <option value="sentiment" style={{backgroundColor: '#1f2937', color: '#fafafa'}}>Sort by Sentiment</option>
+                    <option value="title" style={{backgroundColor: '#1f2937', color: '#fafafa'}}>Sort by Title</option>
                   </select>
                   
                   <select
                     value={resultsPerPage}
                     onChange={(e) => setResultsPerPage(Number(e.target.value))}
-                    className="px-3 py-2 border border-gray-600 rounded-lg text-sm bg-gray-800  focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="px-3 py-2 border border-gray-600 rounded-lg text-sm bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{color: '#fafafa'}}
                   >
-                    <option value={10}>10 per page</option>
-                    <option value={25}>25 per page</option>
-                    <option value={50}>50 per page</option>
+                    <option value={10} style={{backgroundColor: '#1f2937', color: '#fafafa'}}>10 per page</option>
+                    <option value={25} style={{backgroundColor: '#1f2937', color: '#fafafa'}}>25 per page</option>
+                    <option value={50} style={{backgroundColor: '#1f2937', color: '#fafafa'}}>50 per page</option>
                   </select>
                 </div>
               </div>
@@ -859,29 +858,23 @@ const ClientScanResults = () => {
 
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead style={{backgroundColor: '#04041B'}}>
+                <thead className="bg-gray-800">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{color: '#f3f4f6'}}>
                       Position
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider">
-                      Change
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{color: '#f3f4f6'}}>
                       Title
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{color: '#f3f4f6'}}>
                       Sentiment
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider">
-                      Confidence
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{color: '#f3f4f6'}}>
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200" style={{backgroundColor: '#04041B'}}>
+                <tbody className="divide-y divide-gray-700 bg-gray-800">
                   {paginatedResults.map((result, index) => (
                     <motion.tr
                       key={index}
@@ -893,14 +886,11 @@ const ClientScanResults = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium" style={{color: '#fafafa'}}>
                         #{result.rank || index + 1}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getRankingChange(result)}
-                      </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-2">
                           <div className="flex-1">
-                            <div className="text-sm font-medium  max-w-md truncate">
-                              {result.title}
+                            <div className="text-sm font-medium max-w-md truncate" style={{color: '#fafafa'}}>
+                              {result.title || result.metadata?.originalTitle || 'No title'}
                             </div>
                             <div className="text-sm text-blue-400 max-w-md truncate">
                               {result.url || result.link}
@@ -914,20 +904,21 @@ const ClientScanResults = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSentimentColor(result.sentiment)}`}>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getSentimentColor(result.sentiment)}`}>
                           {getSentimentIcon(result.sentiment)}
                           <span className="ml-1 capitalize">{result.sentiment}</span>
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`text-sm font-medium ${getConfidenceColor(result.confidence)}`}>
-                          {Math.round((result.confidence || 0) * 100)}%
-                        </span>
-                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button className="border border-purple-500 text-purple-400 bg-transparent hover:bg-purple-500 hover: px-3 py-1 rounded-full text-xs font-medium transition-colors">
-                          View Details
-                        </button>
+                        <a
+                          href={result.url || result.link || result.metadata?.originalUrl || '#'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="border border-purple-500 text-purple-400 bg-transparent hover:bg-purple-500 hover:text-white px-3 py-1 rounded-full text-xs font-medium transition-colors inline-block"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          Visit Link
+                        </a>
                       </td>
                     </motion.tr>
                   ))}
@@ -948,14 +939,16 @@ const ClientScanResults = () => {
                     <button
                       onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                       disabled={currentPage === 1}
-                      className="px-3 py-2 text-sm border border-gray-600 rounded-lg bg-gray-800  hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-3 py-2 text-sm border border-gray-600 rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{color: '#fafafa'}}
                     >
                       Previous
                     </button>
                     <button
                       onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                       disabled={currentPage === totalPages}
-                      className="px-3 py-2 text-sm border border-gray-600 rounded-lg bg-gray-800  hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-3 py-2 text-sm border border-gray-600 rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{color: '#fafafa'}}
                     >
                       Next
                     </button>

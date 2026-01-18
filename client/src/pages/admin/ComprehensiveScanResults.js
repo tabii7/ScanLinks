@@ -567,10 +567,12 @@ const ComprehensiveScanResults = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading comprehensive scan results...</p>
+      <div className="min-h-screen" style={{backgroundColor: '#060b16'}}>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-400">Loading comprehensive scan results...</p>
+          </div>
         </div>
       </div>
     );
@@ -578,17 +580,19 @@ const ComprehensiveScanResults = () => {
 
   if (!client) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-200 mb-2">Client Not Found</h2>
-          <p className="text-gray-400 mb-4">The client you're looking for doesn't exist.</p>
-          <button
-            onClick={() => navigate('/admin/reports')}
-            className="bg-blue-600  px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Back to Reports
-          </button>
+      <div className="min-h-screen" style={{backgroundColor: '#060b16'}}>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-2" style={{color: '#fafafa'}}>Client Not Found</h2>
+            <p className="text-gray-400 mb-4">The client you're looking for doesn't exist.</p>
+            <button
+              onClick={() => navigate('/admin/reports')}
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Back to Reports
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -598,7 +602,7 @@ const ComprehensiveScanResults = () => {
     <div className="min-h-screen" style={{backgroundColor: '#060b16'}}>
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="rounded-xl shadow-lg p-6 mb-6 border border-gray-700" style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}>
+        <div className="rounded-xl shadow-lg p-6 mb-6 bg-gray-800 border border-gray-700">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-4">
               <button
@@ -637,7 +641,7 @@ const ComprehensiveScanResults = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <h1 className="text-2xl font-bold  mb-2">{client.name}</h1>
+              <h1 className="text-2xl font-bold mb-2" style={{color: '#fafafa'}}>{client.name}</h1>
               {client.contact?.email && (
                 <p className="text-sm text-gray-400">{client.contact.email}</p>
               )}
@@ -667,8 +671,8 @@ const ComprehensiveScanResults = () => {
         </div>
 
         {/* Scan Parameters Section */}
-        <div className="rounded-xl shadow-lg p-6 mb-6 border border-gray-700" style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}>
-          <h2 className="text-xl font-bold  mb-4">Scan Parameters</h2>
+        <div className="rounded-xl shadow-lg p-6 mb-6 bg-gray-800 border border-gray-700">
+          <h2 className="text-xl font-bold mb-4" style={{color: '#fafafa'}}>Scan Parameters</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {scans.map((scan, index) => {
               const keywords = scan.searchQuery ? scan.searchQuery.split(' ').filter(k => k.trim()) : [];
@@ -678,7 +682,7 @@ const ComprehensiveScanResults = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="rounded-lg p-4 border border-gray-600 bg-gray-800/50"
+                  className="rounded-lg p-4 border border-gray-600 bg-gray-800"
                 >
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-lg font-semibold" style={{color: '#fafafa'}}>
@@ -713,41 +717,41 @@ const ComprehensiveScanResults = () => {
                     
                     <div className="flex items-center">
                       <span className="text-gray-400 w-24 flex-shrink-0">Search Query:</span>
-                      <span className=" flex-1 font-mono text-xs break-all">
+                      <span className="flex-1 font-mono text-xs break-all" style={{color: '#fafafa'}}>
                         "{scan.searchQuery || 'N/A'}"
                       </span>
                     </div>
                     
                     <div className="flex items-center">
                       <span className="text-gray-400 w-24 flex-shrink-0">Region:</span>
-                      <span className="">{scan.region || 'N/A'}</span>
+                      <span className="" style={{color: '#fafafa'}}>{scan.region || 'N/A'}</span>
                     </div>
                     
                     <div className="flex items-center">
                       <span className="text-gray-400 w-24 flex-shrink-0">Week Number:</span>
-                      <span className="">{scan.weekNumber || 'N/A'}</span>
+                      <span className="" style={{color: '#fafafa'}}>{scan.weekNumber || 'N/A'}</span>
                     </div>
                     
                     <div className="flex items-center">
                       <span className="text-gray-400 w-24 flex-shrink-0">Total Keywords:</span>
-                      <span className="">{scan.totalKeywords || keywords.length || 0}</span>
+                      <span className="" style={{color: '#fafafa'}}>{scan.totalKeywords || keywords.length || 0}</span>
                     </div>
                     
                     <div className="flex items-center">
                       <span className="text-gray-400 w-24 flex-shrink-0">Results:</span>
-                      <span className="">{scan.resultsCount || 0}</span>
+                      <span className="" style={{color: '#fafafa'}}>{scan.resultsCount || 0}</span>
                     </div>
                     
                     <div className="flex items-center">
                       <span className="text-gray-400 w-24 flex-shrink-0">Started:</span>
-                      <span className=" text-xs">
+                      <span className="text-xs" style={{color: '#fafafa'}}>
                         {scan.startedAt ? new Date(scan.startedAt).toLocaleString() : 'N/A'}
                       </span>
                     </div>
                     
                     <div className="flex items-center">
                       <span className="text-gray-400 w-24 flex-shrink-0">Completed:</span>
-                      <span className=" text-xs">
+                      <span className="text-xs" style={{color: '#fafafa'}}>
                         {scan.completedAt ? new Date(scan.completedAt).toLocaleString() : 'N/A'}
                       </span>
                     </div>
@@ -786,8 +790,7 @@ const ComprehensiveScanResults = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="rounded-xl shadow-lg p-4 border border-gray-700"
-              style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+              className="rounded-xl shadow-lg p-4 bg-gray-800 border border-gray-700"
             >
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-lg font-semibold" style={{color: '#fafafa'}}>Week {week.weekNumber}</h3>
@@ -796,7 +799,7 @@ const ComprehensiveScanResults = () => {
               <div className="space-y-1">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-400">Total:</span>
-                  <span className=" font-medium">{week.totalResults}</span>
+                  <span className="font-medium" style={{color: '#fafafa'}}>{week.totalResults}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-green-400">Positive:</span>
@@ -820,8 +823,7 @@ const ComprehensiveScanResults = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+            className="rounded-xl shadow-lg p-6 bg-gray-800 border border-gray-700"
           >
             <div className="flex items-center justify-between">
               <div>
@@ -839,8 +841,7 @@ const ComprehensiveScanResults = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+            className="rounded-xl shadow-lg p-6 bg-gray-800 border border-gray-700"
           >
             <div className="flex items-center justify-between">
               <div>
@@ -858,8 +859,7 @@ const ComprehensiveScanResults = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+            className="rounded-xl shadow-lg p-6 bg-gray-800 border border-gray-700"
           >
             <div className="flex items-center justify-between">
               <div>
@@ -877,8 +877,7 @@ const ComprehensiveScanResults = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+            className="rounded-xl shadow-lg p-6 bg-gray-800 border border-gray-700"
           >
             <div className="flex items-center justify-between">
               <div>
@@ -898,8 +897,7 @@ const ComprehensiveScanResults = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+            className="rounded-xl shadow-lg p-6 bg-gray-800 border border-gray-700"
           >
             <div className="flex items-center justify-between">
               <div>
@@ -914,8 +912,7 @@ const ComprehensiveScanResults = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+            className="rounded-xl shadow-lg p-6 bg-gray-800 border border-gray-700"
           >
             <div className="flex items-center justify-between">
               <div>
@@ -930,8 +927,7 @@ const ComprehensiveScanResults = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
-            className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+            className="rounded-xl shadow-lg p-6 bg-gray-800 border border-gray-700"
           >
             <div className="flex items-center justify-between">
               <div>
@@ -946,8 +942,7 @@ const ComprehensiveScanResults = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7 }}
-            className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+            className="rounded-xl shadow-lg p-6 bg-gray-800 border border-gray-700"
           >
             <div className="flex items-center justify-between">
               <div>
@@ -962,8 +957,7 @@ const ComprehensiveScanResults = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8 }}
-            className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+            className="rounded-xl shadow-lg p-6 bg-gray-800 border border-gray-700"
           >
             <div className="flex items-center justify-between">
               <div>
@@ -981,7 +975,7 @@ const ComprehensiveScanResults = () => {
           if (comparisonData.length === 0) return null;
           
           return (
-            <div className="rounded-xl shadow-lg overflow-hidden mb-6 border border-gray-700" style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}>
+            <div className="rounded-xl shadow-lg overflow-hidden mb-6 bg-gray-800 border border-gray-700">
               <div className="p-6 border-b border-gray-600">
                 <h2 className="text-xl font-bold" style={{color: '#fafafa'}}>
                   {client?.name || 'Client'} | Link Ranking Movement (Before vs After)
@@ -1026,14 +1020,15 @@ const ComprehensiveScanResults = () => {
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           transition={{ delay: index * 0.02 }}
-                          className="hover:bg-gray-800/50 transition-colors"
+                          className="hover:bg-gray-700 transition-colors"
                         >
                           <td className="px-6 py-4 whitespace-nowrap">
                             <a
                               href={row.url || '#'}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-400 hover:text-blue-300 underline"
+                              className="underline"
+                              style={{color: '#fafafa'}}
                             >
                               {row.link || row.url || 'N/A'}
                             </a>
@@ -1078,14 +1073,15 @@ const ComprehensiveScanResults = () => {
         })()}
             
         {/* Filters */}
-        <div className="rounded-xl shadow-lg p-6 mb-6 border border-gray-700" style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}>
+        <div className="rounded-xl shadow-lg p-6 mb-6 bg-gray-800 border border-gray-700">
           <div className="mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">Sort by</label>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="w-full max-w-xs px-4 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 "
+                className="w-full max-w-xs px-4 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800"
+                style={{color: '#fafafa'}}
               >
                 <option value="position">Week 2 Position</option>
                 <option value="title">Link Name</option>
@@ -1095,7 +1091,7 @@ const ComprehensiveScanResults = () => {
         </div>
 
         {/* Results List */}
-        <div className="rounded-xl shadow-lg overflow-hidden border border-gray-700" style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}>
+        <div className="rounded-xl shadow-lg overflow-hidden bg-gray-800 border border-gray-700">
           <div className="p-6 border-b border-gray-600">
             <h2 className="text-xl font-bold" style={{color: '#fafafa'}}>
               {client?.name || 'Client'} | Scan Results ({filteredResults.length} total)
@@ -1148,7 +1144,7 @@ const ComprehensiveScanResults = () => {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05 }}
-                  className="p-6 hover:bg-gray-800/50 transition-colors"
+                  className="p-6 hover:bg-gray-700 transition-colors"
               >
                 <div className="flex items-start space-x-4">
                   <div className="flex-shrink-0">
@@ -1158,12 +1154,13 @@ const ComprehensiveScanResults = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                          <h3 className="text-lg font-semibold  mb-2 line-clamp-2">
+                          <h3 className="text-lg font-semibold mb-2 line-clamp-2">
                             <a
                               href={result.url || result.link || '#'}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="hover:text-blue-400 transition-colors"
+                              className="transition-colors"
+                              style={{color: '#fafafa'}}
                             >
                               {result.link || result.title || result.url}
                             </a>
@@ -1199,7 +1196,8 @@ const ComprehensiveScanResults = () => {
                           href={result.url || result.link || '#'}
                         target="_blank"
                         rel="noopener noreferrer"
-                          className="flex items-center space-x-1 text-blue-400 hover:text-blue-300 transition-colors"
+                          className="flex items-center space-x-1 transition-colors"
+                          style={{color: '#fafafa'}}
                       >
                         <ExternalLink className="w-4 h-4" />
                         <span>Visit Link</span>

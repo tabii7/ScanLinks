@@ -265,14 +265,19 @@ router.get('/scan/:scanId/download/pdf', clientAuth, async (req, res) => {
     }
     
     // Verify the scan belongs to the current client
-    if (scan.clientId.toString() !== req.user.clientId.toString()) {
-      return res.status(403).json({ message: 'Access denied' });
+    const scanClientId = scan.clientId?._id?.toString() || scan.clientId?.toString();
+    const userClientId = req.user.clientId?._id?.toString() || req.user.clientId?.toString();
+    
+    if (!scanClientId || !userClientId || scanClientId !== userClientId) {
+      console.log('❌ [DOWNLOAD PDF] Client ID mismatch:', {
+        scanClientId,
+        userClientId,
+        scanId: scan._id.toString()
+      });
+      return res.status(403).json({ message: 'Access denied - scan does not belong to this client' });
     }
     
-    // Check if scan has been sent to client
-    if (scan.clientStatus !== 'sent' && scan.clientStatus !== 'viewed') {
-      return res.status(403).json({ message: 'This report has not been sent to you yet' });
-    }
+    // Allow clients to download their own scans regardless of status
     
     // Check if there's an existing report for this scan
     const Report = require('../models/Report');
@@ -348,14 +353,19 @@ router.get('/scan/:scanId/download/excel', clientAuth, async (req, res) => {
     }
     
     // Verify the scan belongs to the current client
-    if (scan.clientId.toString() !== req.user.clientId.toString()) {
-      return res.status(403).json({ message: 'Access denied' });
+    const scanClientId = scan.clientId?._id?.toString() || scan.clientId?.toString();
+    const userClientId = req.user.clientId?._id?.toString() || req.user.clientId?.toString();
+    
+    if (!scanClientId || !userClientId || scanClientId !== userClientId) {
+      console.log('❌ [DOWNLOAD EXCEL] Client ID mismatch:', {
+        scanClientId,
+        userClientId,
+        scanId: scan._id.toString()
+      });
+      return res.status(403).json({ message: 'Access denied - scan does not belong to this client' });
     }
     
-    // Check if scan has been sent to client
-    if (scan.clientStatus !== 'sent' && scan.clientStatus !== 'viewed') {
-      return res.status(403).json({ message: 'This report has not been sent to you yet' });
-    }
+    // Allow clients to download their own scans regardless of status
     
     // Check if there's an existing report for this scan
     const Report = require('../models/Report');

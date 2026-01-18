@@ -194,12 +194,14 @@ router.put('/:id', adminAuth, upload.single('logo'), async (req, res) => {
 
     const {
       name,
+      status,
       subscription,
       contact,
       settings
     } = req.body;
 
     if (name) client.name = name;
+    if (status) client.status = status;
     if (subscription) client.subscription = JSON.parse(subscription);
     if (contact) client.contact = JSON.parse(contact);
     if (settings) client.settings = JSON.parse(settings);

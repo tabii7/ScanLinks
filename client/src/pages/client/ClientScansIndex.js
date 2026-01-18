@@ -67,11 +67,11 @@ const ClientScansIndex = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'completed':
-        return 'text-green-600 bg-green-50';
+        return 'text-green-200 bg-green-900';
       case 'running':
-        return 'text-blue-600 bg-blue-50';
+        return 'text-blue-200 bg-blue-900';
       case 'failed':
-        return 'text-red-600 bg-red-50';
+        return 'text-red-200 bg-red-900';
       default:
         return 'text-gray-400 bg-gray-800';
     }
@@ -200,7 +200,7 @@ const ClientScansIndex = () => {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold  mb-2">My Scans</h1>
+            <h1 className="text-3xl font-bold mb-2" style={{color: '#fafafa'}}>My Scans</h1>
             <p className="text-gray-400">View and manage all your scan results</p>
           </div>
           
@@ -225,7 +225,8 @@ const ClientScansIndex = () => {
                   placeholder="Search scans..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-gray-900 border border-gray-700 rounded-lg  placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 bg-gray-900 border border-gray-700 rounded-lg placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  style={{color: '#fafafa'}}
                 />
               </div>
 
@@ -233,37 +234,40 @@ const ClientScansIndex = () => {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg  focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                style={{color: '#fafafa'}}
               >
-                <option value="all">All Status</option>
-                <option value="completed">Completed</option>
-                <option value="running">Running</option>
-                <option value="failed">Failed</option>
+                <option value="all" style={{backgroundColor: '#1f2937', color: '#fafafa'}}>All Status</option>
+                <option value="completed" style={{backgroundColor: '#1f2937', color: '#fafafa'}}>Completed</option>
+                <option value="running" style={{backgroundColor: '#1f2937', color: '#fafafa'}}>Running</option>
+                <option value="failed" style={{backgroundColor: '#1f2937', color: '#fafafa'}}>Failed</option>
               </select>
 
               {/* Region Filter */}
               <select
                 value={filterRegion}
                 onChange={(e) => setFilterRegion(e.target.value)}
-                className="px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg  focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                style={{color: '#fafafa'}}
               >
-                <option value="all">All Regions</option>
-                <option value="US">United States</option>
-                <option value="UK">United Kingdom</option>
-                <option value="CA">Canada</option>
-                <option value="AU">Australia</option>
+                <option value="all" style={{backgroundColor: '#1f2937', color: '#fafafa'}}>All Regions</option>
+                <option value="US" style={{backgroundColor: '#1f2937', color: '#fafafa'}}>United States</option>
+                <option value="UK" style={{backgroundColor: '#1f2937', color: '#fafafa'}}>United Kingdom</option>
+                <option value="CA" style={{backgroundColor: '#1f2937', color: '#fafafa'}}>Canada</option>
+                <option value="AU" style={{backgroundColor: '#1f2937', color: '#fafafa'}}>Australia</option>
               </select>
 
               {/* Sort */}
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg  focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                style={{color: '#fafafa'}}
               >
-                <option value="latest">Latest First</option>
-                <option value="oldest">Oldest First</option>
-                <option value="results">Most Results</option>
-                <option value="status">By Status</option>
+                <option value="latest" style={{backgroundColor: '#1f2937', color: '#fafafa'}}>Latest First</option>
+                <option value="oldest" style={{backgroundColor: '#1f2937', color: '#fafafa'}}>Oldest First</option>
+                <option value="results" style={{backgroundColor: '#1f2937', color: '#fafafa'}}>Most Results</option>
+                <option value="status" style={{backgroundColor: '#1f2937', color: '#fafafa'}}>By Status</option>
               </select>
             </div>
           </motion.div>
@@ -290,7 +294,7 @@ const ClientScansIndex = () => {
                         <BarChart3 className="w-5 h-5 text-purple-400" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold  group-hover:text-purple-400 transition-colors">
+                        <h3 className="text-lg font-semibold group-hover:text-purple-400 transition-colors" style={{color: '#fafafa'}}>
                           {scan.clientName || 'Scan'}
                         </h3>
                         <p className="text-sm text-gray-400">
@@ -384,7 +388,7 @@ const ClientScansIndex = () => {
           className="text-center py-12"
         >
           <BarChart3 className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium  mb-2">No scans found</h3>
+          <h3 className="text-lg font-medium mb-2" style={{color: '#fafafa'}}>No scans found</h3>
           <p className="text-gray-400 mb-4">
             {searchTerm || filterStatus !== 'all' || filterRegion !== 'all'
               ? 'Try adjusting your filters to see more results.'

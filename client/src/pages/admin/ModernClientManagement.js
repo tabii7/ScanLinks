@@ -101,24 +101,43 @@ const ModernClientManagement = () => {
 
   const handleEditClient = async () => {
     try {
+      // Ensure contact and settings are properly structured
+      const contactData = selectedClient.contact || {};
+      const settingsData = selectedClient.settings || {};
+      
       // Format the data for the backend (convert nested objects to JSON strings)
       const clientData = {
-        name: selectedClient.name,
-        subscription: JSON.stringify(selectedClient.subscription || {}),
-        contact: JSON.stringify(selectedClient.contact || {}),
-        settings: JSON.stringify(selectedClient.settings || {})
+        name: selectedClient.name || '',
+        status: selectedClient.status || 'active',
+        contact: JSON.stringify(contactData),
+        settings: JSON.stringify(settingsData)
       };
       
       console.log('💾 Updating client with data:', clientData);
+      console.log('💾 Selected client:', selectedClient);
       
       const response = await api.put(`/clients/${selectedClient._id}`, clientData);
-      setClients(clients.map(c => c._id === selectedClient._id ? response.data : c));
-      setShowEditModal(false);
-      setSelectedClient(null);
-      toast.success('Client updated successfully');
+      console.log('✅ Update response:', response);
+      console.log('✅ Response data:', response.data);
+      
+      // Update the client in the list - use response.data.client if it exists, otherwise response.data
+      const updatedClient = response.data?.client || response.data;
+      if (updatedClient) {
+        setClients(clients.map(c => c._id === selectedClient._id ? updatedClient : c));
+        setShowEditModal(false);
+        setSelectedClient(null);
+        toast.success('Client updated successfully');
+        
+        // Refresh the clients list to ensure we have the latest data
+        await fetchClients();
+      } else {
+        throw new Error('No client data in response');
+      }
     } catch (error) {
       console.error('❌ Error updating client:', error);
-      toast.error('Failed to update client');
+      console.error('❌ Error response:', error.response?.data);
+      console.error('❌ Error message:', error.message);
+      toast.error(error.response?.data?.message || error.message || 'Failed to update client');
     }
   };
 
@@ -188,11 +207,11 @@ const ModernClientManagement = () => {
 
   const filteredClients = clients.filter(client => {
     const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         client.company.toLowerCase().includes(searchTerm.toLowerCase());
+                         (client.contact?.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (client.contact?.company || '').toLowerCase().includes(searchTerm.toLowerCase());
     
     if (filterStatus === 'all') return matchesSearch;
-    return matchesSearch && client.subscription?.status === filterStatus;
+    return matchesSearch && (client.status || 'active') === filterStatus;
   });
 
   if (loading) {
@@ -244,7 +263,7 @@ const ModernClientManagement = () => {
       </div>
 
       {/* Filters */}
-      <div className="rounded-2xl shadow-sm border border-gray-700 p-6" style={{backgroundColor: '#04041B'}}>
+      <div className="rounded-2xl shadow-sm border border-gray-700 p-6 bg-gray-800">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-4">
             <button
@@ -301,7 +320,7 @@ const ModernClientManagement = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="rounded-2xl shadow-sm border border-gray-700 p-6" style={{backgroundColor: '#04041B'}}>
+        <div className="rounded-2xl shadow-sm border border-gray-700 p-6 bg-gray-800">
           <div className="flex items-center">
             <div className="p-3 bg-blue-900 rounded-xl">
               <Users className="h-6 w-6 text-blue-600" />
@@ -313,7 +332,7 @@ const ModernClientManagement = () => {
           </div>
         </div>
         
-        <div className="rounded-2xl shadow-sm border border-gray-700 p-6" style={{backgroundColor: '#04041B'}}>
+        <div className="rounded-2xl shadow-sm border border-gray-700 p-6 bg-gray-800">
           <div className="flex items-center">
             <div className="p-3 bg-green-900 rounded-xl">
               <CheckCircle className="h-6 w-6 text-green-600" />
@@ -321,14 +340,14 @@ const ModernClientManagement = () => {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-400">Active</p>
               <p className="text-2xl font-bold" style={{color: '#fafafa'}}>
-                {clients.filter(c => c.subscription?.status === 'active').length}
+                {clients.filter(c => (c.status || 'active') === 'active').length}
               </p>
             </div>
           </div>
         </div>
         
         
-        <div className="rounded-2xl shadow-sm border border-gray-700 p-6" style={{backgroundColor: '#04041B'}}>
+        <div className="rounded-2xl shadow-sm border border-gray-700 p-6 bg-gray-800">
           <div className="flex items-center">
             <div className="p-3 bg-red-900 rounded-xl">
               <AlertCircle className="h-6 w-6 text-red-600" />
@@ -336,7 +355,7 @@ const ModernClientManagement = () => {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-400">Inactive</p>
               <p className="text-2xl font-bold" style={{color: '#fafafa'}}>
-                {clients.filter(c => c.subscription?.status === 'inactive').length}
+                {clients.filter(c => (c.status || 'active') === 'inactive').length}
               </p>
             </div>
           </div>
@@ -344,14 +363,14 @@ const ModernClientManagement = () => {
       </div>
 
       {/* Clients List */}
-      <div className="rounded-2xl shadow-sm border border-gray-700 overflow-hidden" style={{backgroundColor: '#04041B'}}>
-        <div className="px-6 py-4 border-b border-gray-700" style={{backgroundColor: '#04041B'}}>
+      <div className="rounded-2xl shadow-sm border border-gray-700 overflow-hidden bg-gray-800">
+        <div className="px-6 py-4 border-b border-gray-700 bg-gray-800">
           <h3 className="text-lg font-semibold" style={{color: '#fafafa'}}>Clients ({filteredClients.length})</h3>
         </div>
         
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead style={{backgroundColor: '#04041B'}}>
+            <thead className="bg-gray-800">
               <tr>
                 <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider" style={{color: '#f3f4f6'}}>
                   <button
@@ -382,7 +401,7 @@ const ModernClientManagement = () => {
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200" style={{backgroundColor: '#04041B'}}>
+            <tbody className="divide-y divide-gray-700 bg-gray-800">
               {filteredClients.map((client) => (
                 <motion.tr
                   key={client._id}
@@ -438,13 +457,13 @@ const ModernClientManagement = () => {
                   
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      client.subscription?.status === 'active' 
+                      (client.status || 'active') === 'active' 
                         ? 'bg-green-900 text-green-200' 
-                        : client.subscription?.status === 'trial'
+                        : (client.status || 'active') === 'suspended'
                           ? 'bg-yellow-900 text-yellow-200'
                           : 'bg-red-900 text-red-200'
                     }`}>
-                      {client.subscription?.status || 'inactive'}
+                      {client.status || 'active'}
                     </span>
                   </td>
                   
@@ -490,7 +509,7 @@ const ModernClientManagement = () => {
             <div className="space-y-6">
               {/* Basic Information */}
               <div>
-                <h4 className="text-md font-semibold text-gray-200 mb-3">Basic Information</h4>
+                <h4 className="text-md font-semibold mb-3" style={{color: '#fafafa'}}>Basic Information</h4>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -508,7 +527,7 @@ const ModernClientManagement = () => {
 
               {/* Contact Information */}
               <div>
-                <h4 className="text-md font-semibold  mb-3">Contact Information</h4>
+                <h4 className="text-md font-semibold mb-3" style={{color: '#fafafa'}}>Contact Information</h4>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -559,7 +578,7 @@ const ModernClientManagement = () => {
 
               {/* Settings Information */}
               <div>
-                <h4 className="text-md font-semibold  mb-3">Settings</h4>
+                <h4 className="text-md font-semibold mb-3" style={{color: '#fafafa'}}>Settings</h4>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -610,22 +629,22 @@ const ModernClientManagement = () => {
 
               {/* Status Information */}
               <div>
-                <h4 className="text-md font-semibold text-gray-200 mb-3">Status</h4>
+                <h4 className="text-md font-semibold mb-3" style={{color: '#fafafa'}}>Status</h4>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Status
                     </label>
                     <select
-                      value={selectedClient.subscription?.status || 'active'}
+                      value={selectedClient.status || 'active'}
                       onChange={(e) => setSelectedClient({ 
                         ...selectedClient, 
-                        subscription: { ...selectedClient.subscription, status: e.target.value }
+                        status: e.target.value
                       })}
                       className="w-full px-3 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800  placeholder-gray-400"
                     >
                       <option value="active">Active</option>
-                      <option value="trial">Trial</option>
+                      <option value="suspended">Suspended</option>
                       <option value="inactive">Inactive</option>
                     </select>
                   </div>

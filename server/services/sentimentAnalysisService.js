@@ -120,31 +120,39 @@ class SentimentAnalysisService {
     const userContext = this.buildUserContext(clientData);
     const searchResults = this.formatSearchResults(links);
 
-    return `Analyze these search results for sentiment:
+    return `You are an expert Online Reputation Management (ORM) analyst. Analyze the following Google search results to determine sentiment about the company/client.
 
 ${userContext}
 
-SEARCH RESULTS:
+SEARCH RESULTS FROM GOOGLE:
 ${searchResults}
 
-For each result, determine sentiment (positive/negative/neutral), confidence (0.0-1.0), and relevance (high/medium/low).
+INSTRUCTIONS:
+1. Analyze each search result carefully based on its title, snippet, and domain
+2. Determine sentiment based on how the content portrays the company/client:
+   - POSITIVE: Praise, positive reviews, achievements, good news, endorsements
+   - NEGATIVE: Complaints, criticism, negative reviews, scandals, legal issues, bad press
+   - NEUTRAL: Factual information, news without clear sentiment, general mentions, unrelated content
+3. Be accurate - only mark as positive/negative if there's clear sentiment. When in doubt, use neutral.
+4. Confidence should reflect how certain you are (0.0 = uncertain, 1.0 = very certain)
+5. Relevance indicates how directly related the content is to the company/client
 
-Return JSON format:
+Return ONLY valid JSON in this exact format:
 {
   "results": [
     {
       "index": 1,
       "sentiment": "positive|negative|neutral",
       "confidence": 0.0-1.0,
-      "reasoning": "Brief explanation",
-      "category": "reviews|news|social|other",
-      "keywords": ["keyword1"],
+      "reasoning": "Brief explanation of why this sentiment was chosen",
+      "category": "reviews|news|social|forums|press|other",
+      "keywords": ["relevant", "keywords"],
       "relevance": "high|medium|low"
     }
   ]
 }
 
-Return ONLY the JSON response.`;
+CRITICAL: Return ONLY the JSON object, no additional text or markdown formatting.`;
   }
 
   buildUserContext(clientData) {
@@ -161,12 +169,20 @@ USER DETAILS:
   }
 
   formatSearchResults(links) {
-    return links.map((link, index) => `
-${index + 1}. ${link.title}
-   URL: ${link.link}
-   Domain: ${link.domain}
-   Snippet: ${link.snippet}
-`).join('\n');
+    // Use original Google data - preserve exact titles, snippets, URLs
+    return links.map((link, index) => {
+      const title = link.metadata?.originalTitle || link.title || 'No title';
+      const snippet = link.metadata?.originalSnippet || link.snippet || link.description || 'No snippet';
+      const url = link.metadata?.originalUrl || link.originalUrl || link.link || link.url || 'No URL';
+      const domain = link.metadata?.originalDomain || link.domain || 'Unknown domain';
+      
+      return `
+${index + 1}. Title: ${title}
+   URL: ${url}
+   Domain: ${domain}
+   Snippet: ${snippet}
+`;
+    }).join('\n');
   }
 
   parseOpenAIResponse(responseText, originalLinks) {
@@ -184,7 +200,7 @@ ${index + 1}. ${link.title}
         throw new Error('Invalid analysis results format from OpenAI');
       }
       
-      // Map analysis back to original links
+      // Map analysis back to original links - PRESERVE ALL ORIGINAL GOOGLE DATA
       return originalLinks.map((link, index) => {
         const analysisResult = analysis.results.find(r => r.index === index + 1) || analysis.results[index];
         
@@ -192,8 +208,21 @@ ${index + 1}. ${link.title}
         const validSentiments = ['positive', 'negative', 'neutral'];
         const sentiment = validSentiments.includes(analysisResult?.sentiment) ? analysisResult.sentiment : 'neutral';
         
+        // CRITICAL: Preserve original Google search data
+        const originalTitle = link.metadata?.originalTitle || link.title;
+        const originalSnippet = link.metadata?.originalSnippet || link.snippet || link.description;
+        const originalUrl = link.metadata?.originalUrl || link.originalUrl || link.link || link.url;
+        const originalDomain = link.metadata?.originalDomain || link.domain;
+        
         return {
           ...link,
+          // Preserve original Google data
+          title: originalTitle,
+          snippet: originalSnippet,
+          url: originalUrl,
+          link: originalUrl,
+          domain: originalDomain,
+          // Add sentiment analysis results
           sentiment: sentiment,
           confidence: Math.max(0, Math.min(1, analysisResult?.confidence || 0.5)),
           reasoning: analysisResult?.reasoning || 'Neutral content - no specific sentiment detected',
@@ -201,8 +230,10 @@ ${index + 1}. ${link.title}
           category: analysisResult?.category || 'other',
           relevance: analysisResult?.relevance || 'medium',
           analyzedAt: new Date().toISOString(),
-          originalUrl: link.metadata?.originalUrl || link.link || link.url,
-          originalLink: link.metadata?.originalUrl || link.link || link.url
+          originalUrl: originalUrl,
+          originalLink: originalUrl,
+          // Flag that sentiment was analyzed
+          _sentimentAnalyzed: true
         };
       });
       

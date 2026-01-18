@@ -93,7 +93,7 @@ code {
 @layer components {
   .ar-theme .ar-card {
     /* Match sidebar gradient style */
-    background: linear-gradient(to bottom, #030f30, #060b16);
+    /* background: linear-gradient(to bottom, #030f30, #060b16); */
     border: 1px solid var(--ar-border);
     border-radius: 0.75rem;
     box-shadow: 0 4px 6px rgba(0,0,0,0.3);
@@ -137,10 +137,12 @@ code {
   /* Cards - match sidebar gradient */
   .ar-theme .rounded-2xl {
     border: 1px solid var(--ar-border);
-    background: linear-gradient(to bottom, #030f30, #060b16);
+    /* background: linear-gradient(to bottom, #030f30, #060b16); */
+    
+
   }
-  .ar-theme .border-gray-700 { border-color: var(--ar-border) !important; }
-  .ar-theme .bg-gray-800 { background-color: var(--ar-surface) !important; }
+  /* .ar-theme .border-gray-700 { border-color: var(--ar-border) !important; } */
+  .ar-theme .bg-gray-800:not(.sentiment-badge-positive):not(.sentiment-badge-negative):not(.sentiment-badge-neutral) { background-color: var(--ar-surface) !important; }
   .ar-theme .bg-gray-700 { background-color: var(--ar-surface-2) !important; }
   .ar-theme .bg-gray-600 { background-color: var(--ar-surface-3) !important; }
   /* Text colors - more visible */
@@ -177,6 +179,37 @@ code {
 
 .status-neutral {
   @apply bg-gray-100 text-gray-800 border border-gray-200;
+}
+
+/* Sentiment badges - override theme colors with maximum specificity */
+.ar-theme span.sentiment-badge-positive,
+span.sentiment-badge-positive,
+.sentiment-badge-positive {
+  background-color: #166534 !important; /* green-800 */
+  color: #bbf7d0 !important; /* green-200 */
+  border-color: #16a34a !important; /* green-600 */
+  border-width: 1px !important;
+  border-style: solid !important;
+}
+
+.ar-theme span.sentiment-badge-negative,
+span.sentiment-badge-negative,
+.sentiment-badge-negative {
+  background-color: #991b1b !important; /* red-800 */
+  color: #fecaca !important; /* red-200 */
+  border-color: #dc2626 !important; /* red-600 */
+  border-width: 1px !important;
+  border-style: solid !important;
+}
+
+.ar-theme span.sentiment-badge-neutral,
+span.sentiment-badge-neutral,
+.sentiment-badge-neutral {
+  background-color: #1e40af !important; /* blue-800 */
+  color: #bfdbfe !important; /* blue-200 */
+  border-color: #2563eb !important; /* blue-600 */
+  border-width: 1px !important;
+  border-style: solid !important;
 }
 
 .status-unrelated {

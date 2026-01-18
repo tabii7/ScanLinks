@@ -38,10 +38,103 @@ app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/orm-scan', require('./routes/orm-scan'));
 app.use('/api/schedule', require('./routes/schedule'));
 app.use('/api/admin-tools', require('./routes/admin-tools'));
+app.use('/api/notifications', require('./routes/notifications'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// Test OpenAI API Key endpoint
+app.get('/api/test/openai-key', async (req, res) => {
+  try {
+    const axios = require('axios');
+    const openaiApiKey = process.env.OPENAI_API_KEY;
+    
+    // Check if key exists
+    if (!openaiApiKey || openaiApiKey.trim() === '' || openaiApiKey === 'your-openai-api-key-here') {
+      return res.json({
+        status: 'error',
+        configured: false,
+        message: 'OpenAI API key is not configured',
+        details: 'Please set OPENAI_API_KEY in your .env file',
+        keyLength: 0
+      });
+    }
+    
+    const keyPreview = openaiApiKey.length > 8 
+      ? `${openaiApiKey.substring(0, 4)}...${openaiApiKey.substring(openaiApiKey.length - 4)}`
+      : '***';
+    
+    // Test the API key with a simple request
+    try {
+      const testResponse = await axios.post(
+        'https://api.openai.com/v1/chat/completions',
+        {
+          model: 'gpt-3.5-turbo',
+          messages: [{ role: 'user', content: 'Say "test" and nothing else.' }],
+          max_tokens: 5
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${openaiApiKey}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000
+        }
+      );
+      
+      return res.json({
+        status: 'success',
+        configured: true,
+        message: 'OpenAI API key is valid and working',
+        keyPreview: keyPreview,
+        keyLength: openaiApiKey.length,
+        testResponse: testResponse.data.choices[0]?.message?.content || 'No response',
+        model: 'gpt-3.5-turbo'
+      });
+      
+    } catch (apiError) {
+      let errorMessage = 'Unknown error';
+      let errorCode = 'UNKNOWN';
+      
+      if (apiError.response) {
+        errorCode = apiError.response.status;
+        if (apiError.response.status === 401) {
+          errorMessage = 'Invalid API key - Authentication failed';
+        } else if (apiError.response.status === 429) {
+          errorMessage = 'Rate limit exceeded (but key might be valid)';
+        } else if (apiError.response.status === 403) {
+          errorMessage = 'Access forbidden - Check API key permissions';
+        } else {
+          errorMessage = apiError.response.data?.error?.message || `HTTP ${apiError.response.status}`;
+        }
+      } else if (apiError.request) {
+        errorMessage = 'No response from OpenAI API - Network error';
+        errorCode = 'NETWORK_ERROR';
+      } else {
+        errorMessage = apiError.message;
+      }
+      
+      return res.json({
+        status: 'error',
+        configured: true,
+        message: 'OpenAI API key test failed',
+        keyPreview: keyPreview,
+        keyLength: openaiApiKey.length,
+        error: errorMessage,
+        errorCode: errorCode,
+        details: apiError.response?.data || null
+      });
+    }
+    
+  } catch (error) {
+    return res.status(500).json({
+      status: 'error',
+      message: 'Failed to test OpenAI API key',
+      error: error.message
+    });
+  }
 });
 
 app.listen(PORT, async () => {

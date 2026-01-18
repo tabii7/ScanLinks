@@ -482,7 +482,7 @@ class ScanService {
 
   async getScanResults(scanId, filters = {}) {
     try {
-      // Get real scan results from database
+      // Get ALL real scan results from database - don't filter by sentiment status
       let query = {};
       
       try {
@@ -493,6 +493,7 @@ class ScanService {
         query = { scanId: scanId };
       }
       
+      // IMPORTANT: Return ALL results regardless of sentiment analysis status
       const results = await ScanResult.find(query).sort({ position: 1 });
       
       if (results.length === 0) {
@@ -510,7 +511,7 @@ class ScanService {
         uniqueResults.push(result);
       }
       
-      // Ensure originalUrl is populated for all results
+      // Ensure originalUrl is populated for all results (preserve original Google results)
       const processedResults = uniqueResults.map(result => {
         const originalUrl = result.metadata?.originalUrl || result.originalUrl || result.link || result.url;
         const normalizedUrl = normalizeUrl(originalUrl);
@@ -520,11 +521,14 @@ class ScanService {
           originalUrl: originalUrl,
           originalLink: originalUrl,
           link: originalUrl || result.link || result.url,
-          normalizedUrl: normalizedUrl
+          normalizedUrl: normalizedUrl,
+          // Preserve original Google data even if sentiment failed
+          snippet: result.description || result.snippet || '',
+          domain: result.site || result.domain || ''
         };
       });
 
-      // Apply filters
+      // Apply filters (but don't filter out results without sentiment)
       let filteredResults = processedResults;
       
       if (filters.sentiment) {

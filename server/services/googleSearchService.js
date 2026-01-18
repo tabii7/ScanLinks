@@ -19,7 +19,7 @@ class GoogleSearchService {
     
     // Rate limiting
     this.lastRequestTime = 0;
-    this.minRequestInterval = 1000; // 1 second between requests
+    this.minRequestInterval = 2000; // 2 seconds between requests (matches previous_code implementation)
     
     if (this.isDemoMode) {
       console.log('⚠️ Google Custom Search API not configured');
@@ -31,7 +31,7 @@ class GoogleSearchService {
     }
   }
 
-  async searchKeywords(keywords, region = 'US', numResults = 5, searchOptions = {}, clientName = '') {
+  async searchKeywords(keywords, region = 'US', numResults = 100, searchOptions = {}, clientName = '') {
     try {
       // Check if API is configured - throw error if not
       if (this.isDemoMode) {
@@ -41,11 +41,13 @@ class GoogleSearchService {
         throw error;
       }
 
-      // Google Search API call
-      const results = [];
-      let finalSearchQuery = '';
+      // Cap numResults at 100 (Google's maximum per query)
+      const maxResults = Math.min(numResults, 100);
       
-      // Use numResults as TOTAL, not per keyword
+      // Track unique URLs across all keywords (like previous_code implementation)
+      const uniqueUrls = new Set();
+      const allResults = [];
+      let finalSearchQuery = '';
       
       // CRITICAL: For child scans, check if we should use parent's EXACT query
       const isChildScan = searchOptions.parentId !== undefined && searchOptions.parentId !== null;
@@ -56,6 +58,8 @@ class GoogleSearchService {
         console.log('   - parentDateRestrict:', searchOptions.parentDateRestrict || 'NOT PROVIDED');
       }
       
+      // Process each keyword individually (like previous_code implementation)
+      // Each keyword can get up to maxResults results
       for (const keywordObj of keywords) {
         // Extract keyword string from object
         let keyword = typeof keywordObj === 'string' ? keywordObj : keywordObj.keyword;
@@ -101,10 +105,11 @@ class GoogleSearchService {
         }
         
         try {
-          // CRITICAL: For single keyword (child scans), get exactly numResults
-          // For multiple keywords, still limit to numResults total
-          const resultsForThisKeyword = keywords.length === 1 ? numResults : Math.min(numResults, 10);
-          let allSearchResults = await this.performMultipleSearches(enhancedQuery, region, resultsForThisKeyword, searchOptions);
+          // Track results count before processing this keyword
+          const resultsBeforeKeyword = allResults.length;
+          
+          // Get up to maxResults for THIS keyword (like previous_code - each keyword gets up to 100 results)
+          let allSearchResults = await this.performMultipleSearches(enhancedQuery, region, maxResults, searchOptions);
           
           // CRITICAL: For child scans (when parentId exists), NEVER use fallback searches
           // This ensures child scans use EXACT same query as parent, even if no results
@@ -113,54 +118,62 @@ class GoogleSearchService {
             // Only use fallback for parent scans (when parentId is not set)
             console.log(`⚠️ No results for "${enhancedQuery}", trying general search...`);
             const generalQuery = keyword.split(' ')[0]; // Use first word only
-            allSearchResults = await this.performMultipleSearches(generalQuery, region, numResults, searchOptions);
+            allSearchResults = await this.performMultipleSearches(generalQuery, region, maxResults, searchOptions);
             
             // If still no results, try with a very basic search
             if (allSearchResults.length === 0) {
               console.log(`⚠️ Still no results, trying basic search...`);
-              allSearchResults = await this.performMultipleSearches('news', region, numResults, searchOptions);
+              allSearchResults = await this.performMultipleSearches('news', region, maxResults, searchOptions);
             }
           } else if (allSearchResults.length === 0 && isChildScan) {
             // Child scan with no results - log but don't use fallback
             console.log(`⚠️ CHILD SCAN: No results for "${enhancedQuery}" (using exact parent query, no fallback)`);
           }
           
-          // Process results
-          const processedResults = allSearchResults.map((result, index) => {
+          // Process results and filter duplicates (like previous_code)
+          for (const result of allSearchResults) {
             const cleanUrl = this.cleanAndValidateUrl(result.link);
+            const url = cleanUrl;
             
-            return {
-              keyword: keyword,
-              keywordId: keywordObj._id || keywordObj.id || null,
-              title: result.title,
-              link: cleanUrl,
-              url: cleanUrl,
-              snippet: result.snippet,
-              position: index + 1,
-              page: Math.ceil((index + 1) / 10),
-              region: region,
-              searchDate: new Date().toISOString(),
-              domain: this.extractDomain(cleanUrl),
-              isInternal: false,
-              metadata: {
-                displayLink: result.displayLink,
-                formattedUrl: result.formattedUrl,
-                htmlTitle: result.htmlTitle,
-                htmlSnippet: result.htmlSnippet,
-                originalUrl: result.link
-              }
-            };
-          });
+            // Only add if it's a new URL (unique URL tracking)
+            if (!uniqueUrls.has(url)) {
+              uniqueUrls.add(url);
+              
+              allResults.push({
+                keyword: keyword,
+                keywordId: keywordObj._id || keywordObj.id || null,
+                title: result.title,
+                link: cleanUrl,
+                url: cleanUrl,
+                snippet: result.snippet,
+                position: allResults.length + 1, // Global position across all keywords
+                page: Math.ceil((allResults.length + 1) / 10),
+                region: region,
+                searchDate: new Date().toISOString(),
+                domain: this.extractDomain(cleanUrl),
+                isInternal: false,
+                metadata: {
+                  displayLink: result.displayLink,
+                  formattedUrl: result.formattedUrl,
+                  htmlTitle: result.htmlTitle,
+                  htmlSnippet: result.htmlSnippet,
+                  originalUrl: result.link
+                }
+              });
+            }
+          }
           
-          results.push(...processedResults);
+          const newResultsAdded = allResults.length - resultsBeforeKeyword;
+          console.log(`✅ Keyword "${keyword}": Found ${allSearchResults.length} results, ${newResultsAdded} new unique URLs added`);
         } catch (error) {
           console.error(`❌ Error searching for keyword "${keyword}":`, error.message);
           // Continue with other keywords
         }
       }
 
-      const limitedResults = results.slice(0, numResults);
-      console.log(`Google Search Response: ${limitedResults.length} results`);
+      // Return all unique results (up to maxResults total)
+      const finalResults = allResults.slice(0, maxResults);
+      console.log(`Google Search Response: ${finalResults.length} unique results (from ${keywords.length} keyword(s))`);
       
       // Return exact query and dateRestrict used (for child scan inheritance)
       let exactGoogleQuery = finalSearchQuery;
@@ -188,7 +201,7 @@ class GoogleSearchService {
       }
       
       return { 
-        results: limitedResults, 
+        results: finalResults, 
         searchQuery: finalSearchQuery,
         exactGoogleQuery: exactGoogleQuery,
         exactDateRestrict: exactDateRestrict

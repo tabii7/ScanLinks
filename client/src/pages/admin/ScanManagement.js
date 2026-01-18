@@ -161,15 +161,6 @@ const ScanManagement = () => {
           <h1 className="text-3xl font-bold" style={{color: '#fafafa'}}>Scan Management</h1>
           <p className="text-gray-400 mt-2">Monitor and manage ORM scanning activities</p>
         </div>
-        <div className="mt-4 lg:mt-0">
-          <button
-            onClick={() => setShowTriggerModal(true)}
-            className="inline-flex items-center px-4 py-2 ar-btn-primary"
-          >
-            <Play className="h-4 w-4 mr-2" />
-            Trigger Scan
-          </button>
-        </div>
       </div>
 
       {/* Filters */}
@@ -334,80 +325,6 @@ const ScanManagement = () => {
           </div>
         </div>
 
-        {/* Trigger Scan Modal */}
-        {showTriggerModal && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-gray-800 border-gray-600">
-              <div className="mt-3">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium" style={{color: '#fafafa'}}>Trigger Manual Scan</h3>
-                  <button
-                    onClick={() => {
-                      setShowTriggerModal(false);
-                      setTriggerData({ clientId: '', region: 'US' });
-                    }}
-                    className="text-gray-400 hover:text-gray-400"
-                  >
-                    <span className="sr-only">Close</span>
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-                <form onSubmit={triggerScan} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300">Client</label>
-                    <select
-                      required
-                      value={triggerData.clientId}
-                      onChange={(e) => setTriggerData({ ...triggerData, clientId: e.target.value })}
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-ace-500 focus:border-ace-500 sm:text-sm"
-                    >
-                      <option value="">Select a client</option>
-                      {clients.map((client) => (
-                        <option key={client._id} value={client._id}>
-                          {client.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300">Region</label>
-                    <select
-                      value={triggerData.region}
-                      onChange={(e) => setTriggerData({ ...triggerData, region: e.target.value })}
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-ace-500 focus:border-ace-500 sm:text-sm"
-                    >
-                      <option value="US">United States</option>
-                      <option value="UK">United Kingdom</option>
-                      <option value="UAE">UAE</option>
-                      <option value="CA">Canada</option>
-                      <option value="AU">Australia</option>
-                    </select>
-                  </div>
-                  <div className="flex justify-end space-x-3 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowTriggerModal(false);
-                        setTriggerData({ clientId: '', region: 'US' });
-                      }}
-                      className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-800"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium  bg-ace-600 hover:bg-ace-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ace-500"
-                    >
-                      Trigger Scan
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        )}
     </div>
   );
 };

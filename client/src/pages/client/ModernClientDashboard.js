@@ -40,42 +40,63 @@ const ModernClientDashboard = () => {
   const fetchDashboardData = useCallback(async () => {
     try {
       const response = await api.get(`/dashboard/client?region=${selectedRegion}`);
+      
+      // Handle null response (like previous_code - always ensure we have data structure)
+      if (!response || !response.data) {
+        console.warn('⚠️ No response data received, using default structure');
+        setDashboardData({
+          client: {
+            name: 'Unknown Client',
+            logo: null,
+            campaignProgress: { percentage: 0, monthsElapsed: 0, totalMonths: 0, remainingMonths: 0 }
+          },
+          overview: {
+            totalScans: 0,
+            completedScans: 0,
+            runningScans: 0,
+            failedScans: 0,
+            totalResults: 0,
+            avgResults: 0,
+            negativeTrend: [],
+            positiveTrend: [],
+            sentimentDistribution: []
+          },
+          recentScans: [],
+          keywordRankings: []
+        });
+        return;
+      }
+      
       console.log('📊 Dashboard data received:', response.data);
       console.log('📈 Negative trend:', response.data?.overview?.negativeTrend);
       console.log('📈 Positive trend:', response.data?.overview?.positiveTrend);
       console.log('🥧 Sentiment distribution:', response.data?.overview?.sentimentDistribution);
       
-      // Add sample data if no real data exists
-      if (!response.data?.overview?.negativeTrend?.length) {
-        console.log('📊 No negative trend data, using sample data');
-        response.data.overview = {
-          ...response.data.overview,
-          negativeTrend: [
-            { scanDate: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(), negativeLinks: 2 },
-            { scanDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), negativeLinks: 3 },
-            { scanDate: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), negativeLinks: 1 },
-            { scanDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), negativeLinks: 4 },
-            { scanDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), negativeLinks: 2 },
-            { scanDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), negativeLinks: 3 },
-            { scanDate: new Date().toISOString(), negativeLinks: 1 }
-          ],
-          positiveTrend: [
-            { scanDate: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(), positiveLinks: 5 },
-            { scanDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), positiveLinks: 7 },
-            { scanDate: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), positiveLinks: 6 },
-            { scanDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), positiveLinks: 8 },
-            { scanDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), positiveLinks: 9 },
-            { scanDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), positiveLinks: 7 },
-            { scanDate: new Date().toISOString(), positiveLinks: 8 }
-          ],
-          sentimentDistribution: [
-            { name: 'Positive', value: 8, color: '#34d399' },
-            { name: 'Negative', value: 1, color: '#f87171' },
-            { name: 'Neutral', value: 3, color: '#9ca3af' }
-          ]
-        };
-      }
-      setDashboardData(response.data);
+      // Use only real data from API - no fake/sample data
+      const dashboardData = {
+        client: response.data.client || {
+          name: 'Unknown Client',
+          logo: null,
+          campaignProgress: { percentage: 0, monthsElapsed: 0, totalMonths: 0, remainingMonths: 0 }
+        },
+        overview: response.data.overview || {
+          totalScans: 0,
+          completedScans: 0,
+          runningScans: 0,
+          failedScans: 0,
+          totalResults: 0,
+          avgResults: 0,
+          negativeTrend: [],
+          positiveTrend: [],
+          sentimentDistribution: []
+        },
+        recentScans: response.data.recentActivity?.scans || [],
+        keywordRankings: response.data.keywordRankings || []
+      };
+      
+      // Only use real data - never add fake/sample data
+      console.log('📊 Using only real data from API - no sample data');
+      setDashboardData(dashboardData);
     } catch (error) {
       toast.error('Failed to load dashboard data');
       console.error('Dashboard error:', error);
@@ -148,28 +169,9 @@ const ModernClientDashboard = () => {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold" style={{color: '#fafafa'}}>Your ORM Dashboard</h1>
-          <p className="text-gray-300 mt-2">Track your online reputation progress</p>
-        </div>
-        <div className="mt-4 lg:mt-0 flex space-x-3">
-          <select
-            value={selectedRegion}
-            onChange={(e) => setSelectedRegion(e.target.value)}
-            className="px-4 py-2 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 "
-          >
-            {regions.map((region) => (
-              <option key={region.value} value={region.value}>
-                {region.flag} {region.label}
-              </option>
-            ))}
-          </select>
-          <button className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600  rounded-xl hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl">
-            <Download className="h-4 w-4 mr-2" />
-            Download Report
-          </button>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold" style={{color: '#fafafa'}}>Your ORM Dashboard</h1>
+        <p className="text-gray-300 mt-2">Track your online reputation progress</p>
       </div>
 
       {/* Stats Grid */}
@@ -180,8 +182,7 @@ const ModernClientDashboard = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+            className="rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 bg-gray-800 border border-gray-700"
           >
             <div className="flex items-center justify-between">
               <div>
@@ -197,7 +198,7 @@ const ModernClientDashboard = () => {
                 </div>
               </div>
               <div className="p-3 rounded-xl bg-gray-800">
-                <stat.icon className="h-6 w-6 " />
+                <stat.icon className="h-6 w-6" style={{color: '#9ca3af'}} />
               </div>
             </div>
           </motion.div>
@@ -206,55 +207,85 @@ const ModernClientDashboard = () => {
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Keyword Rankings */}
+        {/* Recent Scans Summary */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3 }}
-          className="lg:col-span-2 rounded-2xl p-6 shadow-lg border border-gray-700"
-          style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+          className="lg:col-span-2 rounded-2xl p-6 shadow-lg bg-gray-800 border border-gray-700"
         >
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold" style={{color: '#fafafa'}}>Keyword Rankings</h3>
+            <h3 className="text-xl font-semibold" style={{color: '#fafafa'}}>Recent Scans Summary</h3>
             <button 
-              onClick={() => navigate('/rank-tracking')}
+              onClick={() => navigate('/scans')}
               className="text-blue-400 hover:text-blue-300 text-sm font-medium"
             >
               View All
             </button>
           </div>
           <div className="space-y-4">
-            {keywordRankings?.slice(0, 5).map((keyword, index) => (
-              <div key={index} className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-800 transition-colors">
-                <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 bg-blue-900 rounded-full flex items-center justify-center">
-                    <Target className="h-5 w-5 text-blue-600" />
+            {recentScans && recentScans.length > 0 ? (
+              recentScans.slice(0, 5).map((scan, index) => (
+                <div 
+                  key={index} 
+                  onClick={() => navigate(`/scans/${scan._id || scan.id}`)}
+                  className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-800 transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      scan.status === 'completed' ? 'bg-green-900' :
+                      scan.status === 'running' ? 'bg-blue-900' :
+                      scan.status === 'failed' ? 'bg-red-900' :
+                      'bg-gray-800'
+                    }`}>
+                      {scan.status === 'completed' ? (
+                        <CheckCircle className="h-5 w-5 text-green-400" />
+                      ) : scan.status === 'running' ? (
+                        <Clock className="h-5 w-5 text-blue-400" />
+                      ) : scan.status === 'failed' ? (
+                        <AlertCircle className="h-5 w-5 text-red-400" />
+                      ) : (
+                        <Target className="h-5 w-5 text-gray-400" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium" style={{color: '#fafafa'}}>
+                        {scan.searchQuery || scan.region || 'Scan'}
+                      </p>
+                      <p className="text-sm" style={{color: '#9ca3af'}}>
+                        {scan.region} • {scan.resultsCount || 0} results
+                      </p>
+                      <p className="text-xs" style={{color: '#6b7280'}}>
+                        {scan.completedAt 
+                          ? new Date(scan.completedAt).toLocaleDateString()
+                          : scan.startedAt 
+                            ? new Date(scan.startedAt).toLocaleDateString()
+                            : 'N/A'}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-gray-200">{keyword.keyword}</p>
-                    <p className="text-sm text-gray-400">Position: {keyword.currentPosition}</p>
+                  <div className="flex items-center space-x-2">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      scan.status === 'completed' 
+                        ? 'bg-green-900 text-green-200' 
+                        : scan.status === 'running'
+                          ? 'bg-blue-900 text-blue-200'
+                          : scan.status === 'failed'
+                            ? 'bg-red-900 text-red-200'
+                            : 'bg-gray-700 text-gray-200'
+                    }`}>
+                      {scan.status || 'pending'}
+                    </span>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    keyword.change > 0 
-                      ? 'bg-green-900 text-green-200' 
-                      : keyword.change < 0 
-                        ? 'bg-red-900 text-red-200'
-                        : 'bg-gray-700 text-gray-200'
-                  }`}>
-                    {keyword.change > 0 ? '+' : ''}{keyword.change}
-                  </span>
-                  {keyword.change > 0 ? (
-                    <ArrowUpRight className="h-4 w-4 text-green-600" />
-                  ) : keyword.change < 0 ? (
-                    <ArrowDownRight className="h-4 w-4 text-red-600" />
-                  ) : (
-                    <div className="h-4 w-4 bg-gray-400 rounded-full"></div>
-                  )}
-                </div>
+              ))
+            ) : (
+              <div className="text-center py-12">
+                <Target className="h-12 w-12 mx-auto mb-4" style={{color: '#6b7280'}} />
+                <p className="text-gray-400 mb-2">No scans yet</p>
+                <p className="text-sm text-gray-500">Your scan results will appear here</p>
               </div>
-            ))}
+            )}
           </div>
         </motion.div>
 
@@ -263,10 +294,9 @@ const ModernClientDashboard = () => {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4 }}
-          className="rounded-2xl p-6 shadow-lg border border-gray-700"
-          style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+          className="rounded-2xl p-6 shadow-lg bg-gray-800 border border-gray-700"
         >
-          <h3 className="text-xl font-semibold  mb-6">Recent Activity</h3>
+          <h3 className="text-xl font-semibold mb-6" style={{color: '#fafafa'}}>Recent Activity</h3>
           <div className="space-y-4">
             {recentScans?.slice(0, 4).map((scan, index) => (
               <div 
@@ -315,8 +345,7 @@ const ModernClientDashboard = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="rounded-2xl p-6 shadow-lg border border-gray-700"
-          style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+          className="rounded-2xl p-6 shadow-lg bg-gray-800 border border-gray-700"
         >
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-semibold" style={{color: '#fafafa'}}>Negative Links Trend</h3>
@@ -328,9 +357,7 @@ const ModernClientDashboard = () => {
           
           <div className="h-64" style={{ backgroundColor: 'transparent' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={overview?.negativeTrend?.length > 0 ? overview.negativeTrend : [
-                { scanDate: new Date().toISOString(), negativeLinks: 0 }
-              ]}>
+              <AreaChart data={overview?.negativeTrend || []}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis 
                   dataKey="scanDate" 
@@ -380,8 +407,7 @@ const ModernClientDashboard = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="rounded-2xl p-6 shadow-lg border border-gray-700"
-          style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+          className="rounded-2xl p-6 shadow-lg bg-gray-800 border border-gray-700"
         >
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-semibold" style={{color: '#fafafa'}}>Positive Links Trend</h3>
@@ -393,9 +419,7 @@ const ModernClientDashboard = () => {
           
           <div className="h-64" style={{ backgroundColor: 'transparent' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={overview?.positiveTrend?.length > 0 ? overview.positiveTrend : [
-                { scanDate: new Date().toISOString(), positiveLinks: 0 }
-              ]}>
+              <AreaChart data={overview?.positiveTrend || []}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis 
                   dataKey="scanDate" 
@@ -446,8 +470,7 @@ const ModernClientDashboard = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.7 }}
-        className="rounded-2xl p-6 shadow-lg border border-gray-700"
-        style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+        className="rounded-2xl p-6 shadow-lg bg-gray-800 border border-gray-700"
       >
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-semibold" style={{color: '#fafafa'}}>Sentiment Distribution</h3>
@@ -462,24 +485,17 @@ const ModernClientDashboard = () => {
             <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
-                data={overview?.sentimentDistribution?.length > 0 ? overview.sentimentDistribution : [
-                  { name: 'Positive', value: 0, color: '#34d399' },
-                  { name: 'Negative', value: 0, color: '#f87171' },
-                  { name: 'Neutral', value: 0, color: '#9ca3af' }
-                ]}
+                data={overview?.sentimentDistribution || []}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
                   label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  labelStyle={{ fill: '#fafafa', fontSize: 12, fontWeight: 'medium' }}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {(overview?.sentimentDistribution?.length > 0 ? overview.sentimentDistribution : [
-                  { name: 'Positive', value: 0, color: '#34d399' },
-                  { name: 'Negative', value: 0, color: '#f87171' },
-                  { name: 'Neutral', value: 0, color: '#9ca3af' }
-                ]).map((entry, index) => (
+                  {(overview?.sentimentDistribution || []).map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -496,11 +512,7 @@ const ModernClientDashboard = () => {
           </div>
           
           <div className="space-y-4">
-            {(overview?.sentimentDistribution?.length > 0 ? overview.sentimentDistribution : [
-              { name: 'Positive', value: 0, color: '#34d399' },
-              { name: 'Negative', value: 0, color: '#f87171' },
-              { name: 'Neutral', value: 0, color: '#9ca3af' }
-            ]).map((item, index) => (
+            {(overview?.sentimentDistribution || []).map((item, index) => (
               <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-gray-800">
                 <div className="flex items-center space-x-3">
                   <div 
@@ -526,34 +538,34 @@ const ModernClientDashboard = () => {
         transition={{ delay: 0.6 }}
         className="grid grid-cols-1 md:grid-cols-3 gap-6"
       >
-        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-6 ">
+        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-6" style={{background: '#1f2937'}} >
           <div className="flex items-center justify-between mb-4">
-            <FileText className="h-8 w-8" />
-            <Download className="h-5 w-5" />
+            <FileText className="h-8 w-8" style={{color: '#ffffff'}} />
+            <Download className="h-5 w-5" style={{color: '#ffffff'}} />
           </div>
-          <h4 className="text-lg font-semibold mb-2">Download Report</h4>
-          <p className="text-blue-100 text-sm">Get your latest ORM report in PDF format</p>
+          <h4 className="text-lg font-semibold mb-2" style={{color: '#ffffff'}}>Download Report</h4>
+          <p className="text-sm" style={{color: '#e0e7ff'}}>Get your latest ORM report in PDF format</p>
         </div>
         
         <div 
           onClick={() => navigate('/scans')}
-          className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl p-6  cursor-pointer hover:from-green-600 hover:to-emerald-700 transition-all"
+          className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl p-6 cursor-pointer hover:from-green-600 hover:to-emerald-700 transition-all" style={{background: '#1f2937'}}
         >
           <div className="flex items-center justify-between mb-4">
-            <BarChart3 className="h-8 w-8" />
-            <Eye className="h-5 w-5" />
+            <BarChart3 className="h-8 w-8" style={{color: '#ffffff'}} />
+            <Eye className="h-5 w-5" style={{color: '#ffffff'}} />
           </div>
-          <h4 className="text-lg font-semibold mb-2">View All Scans</h4>
-          <p className="text-green-100 text-sm">See all your scan results and analysis</p>
+          <h4 className="text-lg font-semibold mb-2" style={{color: '#ffffff'}}>View All Scans</h4>
+          <p className="text-sm" style={{color: '#d1fae5'}}>See all your scan results and analysis</p>
         </div>
         
-        <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-2xl p-6 ">
+        <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-2xl p-6" style={{background: '#1f2937'}}>
           <div className="flex items-center justify-between mb-4">
-            <Calendar className="h-8 w-8" />
-            <Clock className="h-5 w-5" />
+            <Calendar className="h-8 w-8" style={{color: '#ffffff'}} />
+            <Clock className="h-5 w-5" style={{color: '#ffffff'}} />
           </div>
-          <h4 className="text-lg font-semibold mb-2">Schedule Scan</h4>
-          <p className="text-purple-100 text-sm">Set up automated weekly scans</p>
+          <h4 className="text-lg font-semibold mb-2" style={{color: '#ffffff'}}>Schedule Scan</h4>
+          <p className="text-sm" style={{color: '#f3e8ff'}}>Set up automated weekly scans</p>
         </div>
       </motion.div>
     </div>

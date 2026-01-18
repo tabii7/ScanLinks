@@ -7,7 +7,6 @@ import {
   ExternalLink, 
   Edit, 
   Trash2,
-  Search,
   TrendingUp,
   TrendingDown,
   Minus,
@@ -26,80 +25,12 @@ const ScanResultsPage = () => {
   const [scan, setScan] = useState(null);
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [resultsPerPage, setResultsPerPage] = useState(10); // Show 10 results per page
   const [sortBy, setSortBy] = useState('position');
-  const [searchInProgress, setSearchInProgress] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const hasInitialized = useRef(false);
-
-  const performGoogleSearch = useCallback(async (query = null) => {
-    const searchTerm = query || searchQuery;
-    
-    if (!searchTerm || !searchTerm.trim()) {
-      toast.error('Please enter a search query');
-      return;
-    }
-
-    // Prevent multiple simultaneous searches
-    if (searchInProgress) {
-      console.log('Search already in progress, skipping...');
-      return;
-    }
-
-    try {
-      setSearchInProgress(true);
-      setIsSearching(true);
-      console.log('Performing Google search for:', searchTerm);
-      
-      const response = await api.post('/orm-scan/test/google-search', {
-        query: searchTerm,
-        region: 'US',
-        resultsCount: 5 // Limited to 5 results for testing
-      });
-      
-      console.log('Google search response:', response.data);
-      const resultsData = response.data.results || [];
-      
-      // If no results, show error - NO FALLBACK DATA
-      if (resultsData.length === 0) {
-        console.log('⚠️ No results from Google API');
-        toast.error('No search results found. Please check your API configuration or try a different search query.');
-        setSearchResults([]);
-        setResults([]);
-        return;
-      }
-      
-      // Results from Google Search API - these should be analyzed by OpenAI during actual scan
-      // For test searches, we don't perform sentiment analysis here
-      // Real scans should fetch results from database which already have OpenAI sentiment
-      console.log('✅ Google search completed:', resultsData.length, 'results');
-      setSearchResults(resultsData);
-      setResults(resultsData);
-      
-      setCurrentPage(1); // Reset to first page
-      
-      // Update scan data with results count
-      setScan(prev => ({
-        ...prev,
-        resultsCount: resultsData.length,
-        status: 'completed'
-      }));
-      
-      toast.success(`Found ${resultsData.length} results with sentiment analysis`);
-      
-    } catch (error) {
-      console.error('Google search error:', error);
-      toast.error('Failed to perform Google search');
-    } finally {
-      setIsSearching(false);
-      setSearchInProgress(false);
-    }
-  }, [searchQuery, searchInProgress, scan?.clientId?.name, scan?.clientId?.settings?.businessType, scan?.clientName, scan?.clientId?.settings?.industry, scan?.clientId?.settings?.targetAudience, scan?.region, scan?.clientId?.settings?.website, scan?.clientId?.settings?.description]);
 
   const fetchScanDetails = useCallback(async () => {
     // Prevent multiple initializations
@@ -119,80 +50,69 @@ const ScanResultsPage = () => {
         return;
       }
       
-      // Get search query from URL params
-      const urlParams = new URLSearchParams(window.location.search);
-      const searchQuery = urlParams.get('q') || '';
-      
-      if (searchQuery) {
-        // If there's a search query in URL, perform the search automatically
-        console.log('Auto-searching with query from URL:', searchQuery);
-        setSearchQuery(searchQuery);
-        await performGoogleSearch(searchQuery);
-      } else {
-        // No search query, try to fetch scan results from database
-        console.log('No search query, fetching scan results from database...');
-        try {
-          console.log('🔍 Fetching scan details for ID:', scanId);
-          const scanResponse = await api.get(`/scans/${scanId}`);
-          console.log('📊 Scan response:', scanResponse.data);
-          const scanData = scanResponse.data;
+      // Fetch scan results from database
+      console.log('Fetching scan results from database...');
+      try {
+        console.log('🔍 Fetching scan details for ID:', scanId);
+        const scanResponse = await api.get(`/scans/${scanId}`);
+        console.log('📊 Scan response:', scanResponse.data);
+        const scanData = scanResponse.data;
+        
+        // Debug: Log client data structure
+        console.log('🔍 Client data in scan:', {
+          clientId: scanData.clientId,
+          clientName: scanData.clientName,
+          clientIdName: scanData.clientId?.name,
+          clientIdEmail: scanData.clientId?.email,
+          fullClientId: scanData.clientId
+        });
+        
+        if (scanData) {
+          setScan(scanData);
           
-          // Debug: Log client data structure
-          console.log('🔍 Client data in scan:', {
-            clientId: scanData.clientId,
-            clientName: scanData.clientName,
-            clientIdName: scanData.clientId?.name,
-            clientIdEmail: scanData.clientId?.email,
-            fullClientId: scanData.clientId
-          });
-          
-          if (scanData) {
-            setScan(scanData);
-            
-            // Try to fetch scan results
-            try {
-              console.log('🔍 Fetching scan results for ID:', scanId);
-              const resultsResponse = await api.get(`/scans/${scanId}/results`);
-              console.log('📊 Results response:', resultsResponse.data);
-              if (resultsResponse.data && resultsResponse.data.length > 0) {
-                setResults(resultsResponse.data);
-                console.log('📊 Loaded scan results from database:', resultsResponse.data.length);
-              } else {
-                console.log('⚠️ No results found for this scan');
-                setResults([]);
-              }
-            } catch (resultsError) {
-              console.error('❌ Could not fetch scan results:', resultsError);
+          // Try to fetch scan results
+          try {
+            console.log('🔍 Fetching scan results for ID:', scanId);
+            const resultsResponse = await api.get(`/scans/${scanId}/results`);
+            console.log('📊 Results response:', resultsResponse.data);
+            if (resultsResponse.data && resultsResponse.data.length > 0) {
+              setResults(resultsResponse.data);
+              console.log('📊 Loaded scan results from database:', resultsResponse.data.length);
+            } else {
+              console.log('⚠️ No results found for this scan');
               setResults([]);
             }
-          } else {
-            // No scan found - show error, NO DEMO DATA
-            console.error('❌ Scan not found in database');
-            toast.error('Scan not found');
-            navigate('/admin/scans');
-            return;
+          } catch (resultsError) {
+            console.error('❌ Could not fetch scan results:', resultsError);
+            setResults([]);
           }
-        } catch (error) {
-          console.error('❌ Error fetching scan details:', error);
-          console.error('❌ Error details:', {
-            message: error.message,
-            status: error.response?.status,
-            data: error.response?.data
-          });
-          toast.error('Failed to load scan details');
-          setResults([]);
-          setScan({
-            id: scanId,
-            clientId: 'demo-client',
-            clientName: 'Demo Client',
-            region: 'US',
-            scanType: 'manual',
-            status: 'completed',
-            resultsCount: 0,
-            createdAt: new Date().toISOString(),
-            completedAt: new Date().toISOString()
-          });
+        } else {
+          // No scan found - show error, NO DEMO DATA
+          console.error('❌ Scan not found in database');
+          toast.error('Scan not found');
+          navigate('/admin/scans');
+          return;
         }
+      } catch (error) {
+        console.error('❌ Error fetching scan details:', error);
+        console.error('❌ Error details:', {
+          message: error.message,
+          status: error.response?.status,
+          data: error.response?.data
+        });
+        toast.error('Failed to load scan details');
+        setResults([]);
+        setScan({
+          id: scanId,
+          clientId: 'demo-client',
+          clientName: 'Demo Client',
+          region: 'US',
+          scanType: 'manual',
+          status: 'completed',
+          resultsCount: 0,
+          createdAt: new Date().toISOString(),
+          completedAt: new Date().toISOString()
+        });
       }
       
     } catch (error) {
@@ -201,7 +121,7 @@ const ScanResultsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [scanId, navigate, performGoogleSearch]);
+  }, [scanId, navigate]);
 
   useEffect(() => {
     fetchScanDetails();
@@ -255,7 +175,6 @@ const ScanResultsPage = () => {
       
       const response = await api.post(`/scans/${scanId}/results`, {
         scanId: scanId,
-        query: searchQuery,
         results: results,
         clientData: {
           name: scan?.clientId?.name || scan?.clientName || 'Unknown Client',
@@ -320,7 +239,6 @@ const ScanResultsPage = () => {
       
       const response = await api.post('/scans/send-to-client', {
         scanId: parentScanId, // Always send parent scan ID
-        query: searchQuery,
         results: results,
         clientData: {
           name: scan?.clientId?.name || scan?.clientName || 'Unknown Client',
@@ -351,7 +269,7 @@ const ScanResultsPage = () => {
   };
 
   // Use search results if available, otherwise use scan results
-  const allResults = searchResults.length > 0 ? searchResults : (results || []);
+  const allResults = results || [];
   
   const sortedResults = [...allResults].sort((a, b) => {
     switch (sortBy) {
@@ -378,7 +296,7 @@ const ScanResultsPage = () => {
   // Reset to first page when results change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchResults, results]);
+  }, [results]);
 
   // Keyboard navigation for pagination
   useEffect(() => {
@@ -468,7 +386,9 @@ const ScanResultsPage = () => {
   };
   
   const isSentimentAnalyzed = (result) => {
-    return result?.metadata?.sentimentAnalyzed !== false && 
+    // Show all results even if sentiment is not analyzed
+    // Return true if sentiment exists, but don't hide results if it doesn't
+    return result?.metadata?.sentimentAnalyzed === true && 
            result?.sentiment !== null && 
            result?.sentiment !== undefined;
   };
@@ -482,7 +402,7 @@ const ScanResultsPage = () => {
   const getMovementIcon = (movement, currentRank, previousRank) => {
     switch (movement) {
       case 'new':
-        return <Plus className="w-4 h-4 text-blue-500" />;
+        return null; // Remove Plus icon for new entries
       case 'improved':
         return <TrendingUp className="w-4 h-4 text-green-500" />;
       case 'dropped':
@@ -516,7 +436,7 @@ const ScanResultsPage = () => {
   const getMovementText = (movement, currentRank, previousRank) => {
     switch (movement) {
       case 'new':
-        return 'New Entry';
+        return ''; // Remove "New Entry" text
       case 'improved':
         return `↑ Improved (was ${previousRank})`;
       case 'dropped':
@@ -532,7 +452,7 @@ const ScanResultsPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{backgroundColor: '#060b16'}}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-400">Loading scan results...</p>
@@ -543,14 +463,14 @@ const ScanResultsPage = () => {
 
   if (!scan) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{backgroundColor: '#060b16'}}>
         <div className="text-center">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-200 mb-2">Scan Not Found</h2>
+          <h2 className="text-2xl font-bold mb-2" style={{color: '#fafafa'}}>Scan Not Found</h2>
           <p className="text-gray-400 mb-4">The scan you're looking for doesn't exist.</p>
           <button
             onClick={() => navigate('/admin/scans')}
-            className="bg-blue-600  px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
           >
             Back to Scans
           </button>
@@ -582,7 +502,7 @@ const ScanResultsPage = () => {
     <div className="min-h-screen" style={{backgroundColor: '#060b16'}}>
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="rounded-xl shadow-lg p-6 mb-6 border border-gray-700" style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}>
+        <div className="rounded-xl shadow-lg p-6 mb-6 bg-gray-800 border border-gray-700">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-4">
               <button
@@ -591,50 +511,6 @@ const ScanResultsPage = () => {
               >
                 <ArrowLeft className="w-5 h-5" />
                 <span>Back to Scans</span>
-              </button>
-            </div>
-            
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={handleEditScan}
-                className="flex items-center space-x-2 bg-blue-600  px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <Edit className="w-4 h-4" />
-                <span>Edit Scan</span>
-              </button>
-              
-              <button
-                onClick={handleSaveResults}
-                disabled={isSaving || results.length === 0}
-                className="flex items-center space-x-2 bg-blue-600  px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSaving ? (
-                  <Clock className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Search className="w-4 h-4" />
-                )}
-                <span>{isSaving ? 'Saving...' : 'Save Results'}</span>
-              </button>
-              
-              <button
-                onClick={handleSendToClient}
-                disabled={isSending || results.length === 0}
-                className="flex items-center space-x-2 bg-green-600  px-4 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSending ? (
-                  <Clock className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Globe className="w-4 h-4" />
-                )}
-                <span>{isSending ? 'Sending...' : 'Send to Client'}</span>
-              </button>
-              
-              <button
-                onClick={handleDeleteScan}
-                className="flex items-center space-x-2 bg-red-600  px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
-              >
-                <Trash2 className="w-4 h-4" />
-                <span>Delete Scan</span>
               </button>
             </div>
           </div>
@@ -675,8 +551,7 @@ const ScanResultsPage = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+            className="rounded-xl shadow-lg p-6 bg-gray-800 border border-gray-700"
           >
             <div className="flex items-center justify-between">
               <div>
@@ -692,8 +567,7 @@ const ScanResultsPage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+            className="rounded-xl shadow-lg p-6 bg-gray-800 border border-gray-700"
           >
             <div className="flex items-center justify-between">
               <div>
@@ -709,8 +583,7 @@ const ScanResultsPage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+            className="rounded-xl shadow-lg p-6 bg-gray-800 border border-gray-700"
           >
             <div className="flex items-center justify-between">
               <div>
@@ -726,8 +599,7 @@ const ScanResultsPage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+            className="rounded-xl shadow-lg p-6 bg-gray-800 border border-gray-700"
           >
             <div className="flex items-center justify-between">
               <div>
@@ -741,166 +613,46 @@ const ScanResultsPage = () => {
           </motion.div>
         </div>
 
-        {/* Rank Movement Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-400">New Entries</p>
-                <p className="text-2xl font-bold text-blue-400">{movementStats.new}</p>
-              </div>
-              <Plus className="w-8 h-8 text-blue-500" />
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-400">Improved</p>
-                <p className="text-2xl font-bold text-green-400">{movementStats.improved}</p>
-              </div>
-              <TrendingUp className="w-8 h-8 text-green-500" />
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-400">Dropped</p>
-                <p className="text-2xl font-bold text-red-400">{movementStats.dropped}</p>
-              </div>
-              <TrendingDown className="w-8 h-8 text-red-500" />
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
-            className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-400">Unchanged</p>
-                <p className="text-2xl font-bold text-gray-400">{movementStats.unchanged}</p>
-              </div>
-              <Minus className="w-8 h-8 text-gray-400" />
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8 }}
-            className="rounded-xl shadow-lg p-6 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-400">Disappeared</p>
-                <p className="text-2xl font-bold text-orange-400">{movementStats.disappeared}</p>
-              </div>
-              <AlertCircle className="w-8 h-8 text-orange-500" />
-            </div>
-          </motion.div>
-        </div>
-
         {/* Google Search Interface */}
-        <div className="rounded-xl shadow-lg p-6 mb-6 border border-gray-700" style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}>
-          <div className="flex flex-col lg:flex-row gap-4 items-center">
-            <div className="flex-1">
-            <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                  placeholder="Search Google for keywords, brands, or topics..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && performGoogleSearch()}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800  placeholder-gray-400"
-                />
-              </div>
+        <div className="rounded-xl shadow-lg p-6 mb-6 bg-gray-800 border border-gray-700">
+          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <label className="text-sm font-medium" style={{color: '#f3f4f6'}}>Sort by:</label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="px-4 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800"
+                style={{color: '#fafafa'}}
+              >
+                <option value="position" style={{backgroundColor: '#1f2937', color: '#fafafa'}}>Position</option>
+                <option value="sentiment" style={{backgroundColor: '#1f2937', color: '#fafafa'}}>Sentiment</option>
+                <option value="confidence" style={{backgroundColor: '#1f2937', color: '#fafafa'}}>Confidence</option>
+                <option value="title" style={{backgroundColor: '#1f2937', color: '#fafafa'}}>Title</option>
+              </select>
             </div>
-
-            <button
-              onClick={performGoogleSearch}
-              disabled={isSearching || !searchQuery.trim()}
-              className="px-6 py-3 bg-blue-600  rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-            >
-              {isSearching ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  <span>Searching...</span>
-                </>
-              ) : (
-                <>
-                  <Search className="w-4 h-4" />
-                  <span>Search Google</span>
-                </>
-              )}
-            </button>
-          </div>
-          
-          {searchResults.length > 0 && (
-            <div className="mt-4 flex flex-col lg:flex-row gap-4 items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <label className="text-sm font-medium" style={{color: '#f3f4f6'}}>Sort by:</label>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="px-4 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-800 "
-            >
-                  <option value="position">Position</option>
-                  <option value="sentiment">Sentiment</option>
-                  <option value="confidence">Confidence</option>
-                  <option value="title">Title</option>
-            </select>
-          </div>
-              
-              <div className="text-sm text-gray-300">
-                {sortedResults.length} search results
-              </div>
+            
+            <div className="text-sm text-gray-300">
+              {sortedResults.length} results
             </div>
-          )}
+          </div>
         </div>
 
         {/* Results List */}
-        <div className="rounded-xl shadow-lg overflow-hidden border border-gray-700" style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}>
+        <div className="rounded-xl shadow-lg overflow-hidden bg-gray-800 border border-gray-700">
           <div className="p-6 border-b border-gray-600">
             <h2 className="text-xl font-bold" style={{color: '#fafafa'}}>
-              {searchResults.length > 0 ? 'Google Search Results' : 'Scan Results'} ({sortedResults.length} total)
+              Scan Results ({sortedResults.length} total)
             </h2>
             <p className="text-sm text-gray-300 mt-1">
               {shouldPaginate 
                 ? `Showing ${startIndex + 1}-${Math.min(endIndex, sortedResults.length)} of ${sortedResults.length} results`
                 : `Showing all ${sortedResults.length} results`
               }
-              {searchQuery && <span className="ml-2 text-blue-400">for "{searchQuery}"</span>}
             </p>
             {sortedResults.length > 0 && (
               <div className="mt-2 text-xs text-gray-400">
-                Actual results count: {sortedResults.length} | 
-                Scan data count: {scan?.resultsCount || 0} | 
-                Search results: {searchResults.length}
+                Results count: {sortedResults.length} | 
+                Scan data count: {scan?.resultsCount || 0}
               </div>
             )}
           </div>
@@ -910,7 +662,7 @@ const ScanResultsPage = () => {
             <div className="px-6 py-3 bg-gray-800 border-b border-gray-600">
               <div className="flex items-center justify-between text-sm text-gray-300">
                 <div>
-                  {searchResults.length > 0 ? 'Search Results' : 'Scan Results'} - 
+                  Scan Results - 
                   Showing {startIndex + 1}-{Math.min(endIndex, sortedResults.length)} of {sortedResults.length} results
                   {totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
                 </div>
@@ -934,7 +686,9 @@ const ScanResultsPage = () => {
               >
                 <div className="flex items-start space-x-4">
                   <div className="flex-shrink-0">
-                    {getSentimentIcon(result.sentiment)}
+                    <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-lg">
+                      {result.position || index + 1}
+                    </div>
                   </div>
                   
                   <div className="flex-1 min-w-0">
@@ -942,12 +696,13 @@ const ScanResultsPage = () => {
                       <div className="flex-1">
                         <h3 className="text-lg font-semibold mb-2 line-clamp-2" style={{color: '#f3f4f6'}}>
                           <a
-                            href={result.link || result.url || '#'}
+                            href={result.originalUrl || result.originalLink || result.link || result.url || '#'}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="hover:text-blue-400 transition-colors"
+                            className="transition-colors"
+                            style={{color: '#fafafa'}}
                             onClick={(e) => {
-                              const url = result.link || result.url;
+                              const url = result.originalUrl || result.originalLink || result.link || result.url;
                               if (!url || url === '#') {
                                 e.preventDefault();
                                 console.log('No valid URL found for result:', result);
@@ -955,19 +710,18 @@ const ScanResultsPage = () => {
                               }
                             }}
                           >
-                          {result.title}
+                          {result.metadata?.originalTitle || result.title || 'No title'}
                           </a>
                         </h3>
                         
                         <p className="text-gray-300 mb-3 line-clamp-2">
-                          {result.snippet}
+                          {result.metadata?.originalSnippet || result.snippet || result.description || 'No description available'}
                         </p>
                         
                         <div className="flex items-center space-x-4 text-sm text-gray-400">
-                          <span>Position: {result.position || 'N/A'}</span>
                           {result.page && <span>Page: {result.page}</span>}
-                          <span>Domain: {result.domain || new URL(result.url || result.link || '').hostname}</span>
-                          {result.movement && (
+                          <span>Domain: {result.metadata?.originalDomain || result.domain || (result.url || result.link ? new URL(result.url || result.link).hostname : 'N/A')}</span>
+                          {result.movement && result.movement !== 'new' && (
                             <div className="flex items-center space-x-1">
                               {getMovementIcon(result.movement, result.position, result.previousRank)}
                               <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getMovementColor(result.movement)}`}>
@@ -1001,9 +755,10 @@ const ScanResultsPage = () => {
                         rel="noopener noreferrer"
                         className={`flex items-center space-x-1 transition-colors ${
                           (result.originalUrl || result.originalLink || result.link || result.url) 
-                            ? 'text-blue-600 hover:text-blue-200 cursor-pointer' 
+                            ? 'cursor-pointer' 
                             : 'text-gray-400 cursor-not-allowed'
                         }`}
+                        style={(result.originalUrl || result.originalLink || result.link || result.url) ? {color: '#fafafa'} : {}}
                         onClick={(e) => {
                           const url = result.originalUrl || result.originalLink || result.link || result.url;
                           console.log('🔗 Frontend URL Debug:', {
@@ -1059,28 +814,13 @@ const ScanResultsPage = () => {
 
           {sortedResults.length === 0 && (
             <div className="p-12 text-center">
-              <Search className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-200 mb-2">
-                {searchResults.length > 0 ? 'No search results found' : 'No scan results available'}
+              <BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium mb-2" style={{color: '#fafafa'}}>
+                No scan results available
               </h3>
               <p className="text-gray-400 mb-4">
-                {searchResults.length > 0 
-                  ? `No results found for "${searchQuery}". Try a different search term.`
-                  : 'No scan results available for this scan. Try performing a Google search above.'
-                }
+                No scan results available for this scan.
               </p>
-              {searchResults.length > 0 && (
-                <button
-                  onClick={() => {
-                    setSearchQuery('');
-                    setSearchResults([]);
-                    setCurrentPage(1);
-                  }}
-                  className="px-4 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 transition-colors"
-                >
-                  Clear Search
-                </button>
-              )}
             </div>
           )}
 

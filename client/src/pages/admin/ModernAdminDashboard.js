@@ -199,27 +199,7 @@ const ModernAdminDashboard = () => {
           <h1 className="text-3xl font-bold" style={{color: '#fafafa'}}>Dashboard</h1>
           <p className="text-gray-400 mt-2">Monitor and manage your ORM campaigns</p>
         </div>
-        <div className="mt-4 lg:mt-0 flex items-center space-x-4">
-          <button className="p-2 text-gray-400 hover: transition-colors">
-            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-          </button>
-          <button className="relative p-2 text-gray-400 hover: transition-colors">
-            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4.828 7l2.586 2.586a2 2 0 002.828 0L15 7H4.828z" />
-            </svg>
-            <div className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></div>
-          </button>
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
-              <span className=" text-sm font-medium">A</span>
-            </div>
-            <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
-        </div>
+       
       </div>
 
       {/* Stats Grid */}
@@ -231,7 +211,7 @@ const ModernAdminDashboard = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
             className="rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-700"
-            style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+            style={{background: '#1f2937'}}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -262,7 +242,7 @@ const ModernAdminDashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           className="rounded-2xl p-6 shadow-lg border border-gray-700"
-          style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+          style={{background: '#1f2937'}}
         >
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-semibold" style={{color: '#fafafa'}}>Scan Trends</h3>
@@ -294,7 +274,7 @@ const ModernAdminDashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
           className="rounded-2xl p-6 shadow-lg border border-gray-700"
-          style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+          style={{background: '#1f2937'}}
         >
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-semibold" style={{color: '#fafafa'}}>Client Activity</h3>
@@ -329,7 +309,7 @@ const ModernAdminDashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
           className="rounded-2xl p-6 shadow-lg border border-gray-700"
-          style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+          style={{background: '#1f2937'}}
         >
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-semibold" style={{color: '#fafafa'}}>Sentiment Trends</h3>
@@ -364,7 +344,7 @@ const ModernAdminDashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
           className="rounded-2xl p-6 shadow-lg border border-gray-700"
-          style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+          style={{background: '#1f2937'}}
         >
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-semibold" style={{color: '#fafafa'}}>Keyword Performance</h3>
@@ -403,7 +383,7 @@ const ModernAdminDashboard = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3 }}
           className="lg:col-span-2 rounded-2xl p-6 shadow-lg border border-gray-700"
-          style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+          style={{background: '#1f2937'}}
         >
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-semibold" style={{color: '#fafafa'}}>Recent Activity</h3>
@@ -439,9 +419,9 @@ const ModernAdminDashboard = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4 }}
           className="rounded-2xl p-6 shadow-lg border border-gray-700"
-          style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}
+          style={{background: '#1f2937'}}
         >
-          <h3 className="text-xl font-semibold  mb-6">Quick Actions</h3>
+          <h3 className="text-xl font-semibold" style={{color: '#fafafa'}}>Quick Actions</h3>
           <div className="space-y-4">
             {quickActions.map((action, index) => (
               <button

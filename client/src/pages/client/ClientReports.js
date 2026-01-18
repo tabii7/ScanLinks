@@ -213,7 +213,7 @@ const ClientReports = () => {
         </div>
 
         {/* Filters */}
-        <div className="rounded-lg p-4 border border-gray-700" style={{background: 'linear-gradient(to bottom, #030f30, #060b16)'}}>
+        <div className="rounded-lg p-4 border border-gray-700" >
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">Search Reports</label>
